@@ -17,8 +17,8 @@ something to record
 # mermaid source
 ```mermaid
 graph LR
-    A[TeensyDelay.ino] --> B[setup()]
-    A --> C[loop()]
+    A[TeensyDelay.ino] --> B[setup]
+    A --> C[loop]
     B --> D[Initialize Components]
     B --> E[Configure AudioLinkSync]
     C --> F[Check AudioLinkSync Status]
