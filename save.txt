@@ -1,0 +1,3307 @@
+#include "led.h"
+#include "delay.h"
+#include "sys.h"
+#include "usart.h"
+#include "oled.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
+#include "scan.h"
+extern u8 hum_set,Is_Ture;
+u8 out_state[3];
+
+/*
+         1.ÏÔÊ¾ÈıÂ·³¬Éù²¨µÄ¾àÀë
+         2.µÚ¶şÆÁÄ»ÉèÖÃ ±¨¾¯¾àÀë
+*/
+void Targ_GPIO()
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_10|GPIO_Pin_1;	 //PD3,PD6ÍÆÍìÊä³ö  
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //ÍÆÍìÊä³ö
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//ËÙ¶È50MHz
+ 	GPIO_Init(GPIOB, &GPIO_InitStructure);	  //³õÊ¼»¯GPIOD3,6
+    
+ 	GPIO_ResetBits(GPIOB,GPIO_Pin_0|GPIO_Pin_10|GPIO_Pin_1);	//PD3,PD6 Êä³ö¸ß
+}
+extern volatile u8  TIM4_CAPTURE_STA,state;	//ÊäÈë²¶»ñ×´Ì¬		    				
+extern volatile u16 TIM4_CAPTURE_VAL;	//ÊäÈë²¶»ñÖµ
+float distance_circulate(u32 date,u8 state) //¼ÆËã¾àÀë,dis=340m/s*Ê±¼ä/2
+{
+    float dis;
+    if(state>0xc1) //³¬³ö·¶Î§,²»¼ÆËã
+        state=0xc1;
+    date+=(state-0xc0)*65535; //¼ÆËãÒç³öµÄÊ±¼ä,³¬³ö·¶Î§,²»¼ÆËã
+    date/=2;
+    dis=(date*340)/10000.0;
+    return dis;
+}
+u8 dis_warn(float warn,u8 dis)
+{
+  if((u8)warn<dis)
+  {
+    TIM_Cmd(TIM2,ENABLE);
+    TIM2->PSC=719;
+    
+      if((u8)warn+2<dis)
+       TIM2->PSC=366;
+    if((u8)warn+5<dis)
+        TIM2->PSC=71;
+    return 1;
+  }
+  return 0;
+}
+ int main(void) //Ö÷º¯Êı
+ { 
+    u32 distance[3];
+    float dis_save[3];
+     float dis_temp;
+    u8 distance_warning=10;
+	volatile u8 Key_vaule,num_pos=0;
+    
+	u8 buf[20],buf1[20],Is_distance_set=0,Heart_bit; //
+	delay_init();	    	 //ÑÓÊ±º¯Êı³õÊ¼»¯	  
+	TIM4_Cap_Init(0xffff,71);
+    
+  //  TIM4_Int_Init(0xffff,71);
+    Key_GPIO_Init();  // PA 0-7
+     
+   // TIM4_Cap_Init(0xffff,71);          //ÈıÂ·³¬Éù²¨³õÊ¼»¯ PB 7-9
+     OLED_Init();  //oled³¬ÊæÊÊ»¯  PB 3,4,5,6
+    Targ_GPIO();
+	memset(buf,0,16);
+    memset(buf1,0,16);
+    TIME_INIT(); 
+    TIM_Cmd(TIM4,ENABLE ); 	//Ê¹ÄÜ¶¨Ê±Æ÷2
+	while(1)
+	{
+      Key_vaule=Key_Scan(); //°´¼üÉ¨Ãè
+        
+       if(Heart_bit>100) //³¬Éù²¨²â¾à,Ã¿100ms²âÒ»´Î
+       {
+          
+ 
+            state=1;
+            PBout(0)=1;
+            delay_us(30);
+            PBout(0)=0;
+            TIM4_CAPTURE_VAL=0;
+            while(TIM4_CAPTURE_STA<0xc0);
+           out_state[0]=TIM4_CAPTURE_STA;
+            distance[0]=TIM4_CAPTURE_VAL;
+            TIM4_CAPTURE_STA=0; //ÖØÖÃ±êÖ¾Î»
+            state=2;
+            PBout(1)=1;
+            delay_us(30);
+            PBout(1)=0;
+            TIM4_CAPTURE_VAL=0;
+            while(TIM4_CAPTURE_STA<0xc0);
+           out_state[1]=TIM4_CAPTURE_STA;
+            distance[1]=TIM4_CAPTURE_VAL;
+            TIM4_CAPTURE_STA=0;  //ÖØÖÃ±êÖ¾Î»
+            state=3;
+            PBout(10)=1;
+            delay_us(30);
+            PBout(10)=0;
+            TIM4_CAPTURE_VAL=0;
+           while(TIM4_CAPTURE_STA<0xc0);
+           out_state[2]=TIM4_CAPTURE_STA;
+           distance[2]=TIM4_CAPTURE_VAL;
+           TIM4_CAPTURE_STA=0;  //ÖØÖÃ±êÖ¾Î»
+       }
+      if(Key_vaule=='A') //°´¼üA,ÉèÖÃ¾àÀë 
+      {
+        Is_distance_set=1;
+        OLED_Clear();//ÇåÆÁ ÏÔÊ¾ÉèÖÃµÄ¾àÀë
+        OLED_ShowString(5,0,"setting/cm");      
+        OLED_Refresh_Gram();	 
+          
+      }
+      if(Key_vaule>='0'&&Key_vaule<='9'&&Is_distance_set==1)
+      {
+        buf[num_pos++]=Key_vaule;
+        OLED_ShowString(5,20,buf);  //ÏÔÊ¾°´¼ü
+        OLED_Refresh_Gram();
+        if(num_pos>3)
+            num_pos=0;
+      }
+      if(Key_vaule=='#'&&(Is_distance_set==1))  //ÉèÖÃ¾àÀë
+      {
+        Is_distance_set=0; //ÉèÖÃÍê³É,Ìø³ö
+        if(strlen(buf)>0)
+            distance_warning=atoi(buf);
+        memset(buf,0,10);
+        delay_ms(1000);
+        OLED_Clear();
+        Heart_bit=111;  //ÎªÁËµÈÏÂÄÜ¿ìËÙ¿´µ½¾àÀë
+      }
+     
+      
+     if(Heart_bit>100&&(Is_distance_set==0)) //³¬Éù²¨²â¾à,Ã¿100ms²âÒ»´Î,²¢ÏÔÊ¾,²¢ÇÒÅĞ¶ÏÊÇ·ñ±¨¾¯
+     {
+        Heart_bit=0;
+         sprintf(buf1,"CH1:%.1f cm",dis_save[0]=distance_circulate(distance[0],out_state[0]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,0,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+         sprintf(buf1,"CH2:%.1f cm",dis_save[1]=distance_circulate(distance[1],out_state[1]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,16,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+         sprintf(buf1,"CH3:%.1f cm",dis_save[2]=distance_circulate(distance[2],out_state[2]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,32,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+     }
+     /*-----------------Èı¸öµÈ¼¶----------------------*/
+     if(dis_save[0]<distance_warning||dis_save[1]<distance_warning||dis_save[2]<distance_warning)
+     {
+        dis_warn(dis_save[0],distance_warning);
+        dis_warn(dis_save[1],distance_warning);
+        dis_warn(dis_save[2],distance_warning);
+     }else{
+     TIM_Cmd(TIM2,DISABLE);  //DISABLE
+     }
+//     dis_temp=0;
+//     dis_temp+=dis_save[0];
+//     dis_temp+=dis_save[1];
+//     dis_temp+=dis_save[2];
+//     if((int)dis_temp<distance_warning*3)
+//     {
+//        TIM_Cmd(TIM2,ENABLE);
+//        if((int)dis_temp<(distance_warning*3-20))
+//         TIM2->PSC=199;
+//        if((int)dis_temp<(distance_warning*3-30))
+//         TIM2->PSC=71;
+//     }else
+//     {
+//     
+//      TIM_Cmd(TIM2,DISABLE);  //DISABLE
+//     }
+     Heart_bit++;
+     delay_ms(10);   
+    }
+    
+}
+//TIM_SetCompare2(TIM1,light_table[pre_t][1]);
+#include "delay.h"
+#include "sys.h"
+#include "usart.h"
+#include "timer.h"
+#include "led.h"
+#include "key.h"
+
+#define LAMP_ON   1
+#define LAMP_OFF  0
+
+void bsp_init(void);
+int main(void)
+{
+	bsp_init();
+	 
+	while(1)
+	{
+		if(IO_LIGHT == 1) //Èõ¹â
+		{
+			if(IO_MAN  == 1|| IO_SOUND == 1)
+			{
+				sendMsgTout1 = 5000; //10s
+				if(!IO_LAMP)
+					IO_LAMP = LAMP_ON;
+			}
+		}
+		else
+		{
+			if(IO_LAMP)
+					IO_LAMP = LAMP_OFF;
+		}
+		
+		if(sendMsgTout1 == 0) 
+		{
+			if(IO_LAMP)
+				IO_LAMP = LAMP_OFF; //¹ØµÆ
+		}
+	}
+}
+
+void bsp_init(void)
+{
+	delay_init();	    	 //ÑÓÊ±º¯Êı³õÊ¼»¯	  
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//ÉèÖÃÖĞ¶ÏÓÅÏÈ¼¶·Ö×éÎª×é2£º2Î»ÇÀÕ¼ÓÅÏÈ¼¶£¬2Î»ÏìÓ¦ÓÅÏÈ¼¶
+	TIM3_Int_Init(9,7199);//10KhzµÄ¼ÆÊıÆµÂÊ£¬¼ÆÊıµ½9,1ms½øÈëÒ»´ÎÖĞ¶Ï
+	uart_init(9600);	 	//´®¿Ú³õÊ¼»¯Îª115200	 	
+	IO_Init();
+}
+
+
+#include "stm32f10x.h"
+#include "led.h"
+#include "delay.h"
+#include "key.h"
+#include "usart.h"
+#include <string.h>
+#include <stdio.h>
+#include <w25q128.h>
+#include <lcd.h>
+#include "sd.h" //SD¿¨
+#include "ff.h" //ÎÄ¼şÏµÍ³
+#include "vs1053b.h"
+#include "exti.h"
+#include "rtc.h"
+#include "timer.h"
+u8 ScanVSFile(const char *path);
+/*
+°´¼ü1 ¿ªÊ¼Â¼Òô
+°´¼ü2 ½áÊøÂ¼Òô
+°´¼ü3 ²¥·ÅÒôÆµ
+*/
+FATFS fs;  // ÓÃ»§¶¨ÒåµÄÎÄ¼şÏµÍ³½á¹¹Ìå
+u8 RecoderPlay(u8 *file_name);
+u8 VS1053_PlayOneMusic(u8 *pname);
+u8 *VS1053_FileBuff[10];
+u32  VS_Cnt=0;
+int main()
+{
+		        //ÎÄ¼şÊıÁ¿	
+	char clock_buff[1024];	//´æ·ÅÊ±¼ä×Ö·û´®
+	u8 key;
+	u32 sd_size;    //´æ·ÅSD¿¨·µ»ØµÄÈİÁ¿
+	BeepInit();		  //·äÃùÆ÷³õÊ¼»¯
+	LedInit();      //LEDµÆ³õÊ¼»¯ 
+	UsartInit(USART1,72,115200);
+	KeyInit();     //°´¼ü³õÊ¼»¯
+	W25Q128_Init();
+	LcdInit();
+	EXTI0_Init();
+	TIMx_Init(TIM2,72,20000);//20ms
+	RTC_Init();
+	LCD_Clear(WHITE);
+	
+	NT35310_LCD_ShowString(0,0,16,(u8*)"´®¿Ú¹¤×÷Õı³£!");
+	if(SDCardDeviceInit()) {NT35310_LCD_ShowString(0,16,16,(u8*)"SD¿¨³õÊ¼»¯Ê§°Ü!");}
+	else {NT35310_LCD_ShowString(0,16,16,(u8*)"SD¿¨³õÊ¼»¯³É¹¦!");}
+	sd_size=GetSDCardSectorCount();	//¼ì²âSD¿¨´óĞ¡£¬·µ»ØÖµÓÒÒÆ11Î»µÃµ½ÒÔMÎªµ¥Î»µÄÈİÁ¿
+	sprintf(clock_buff,"SD¿¨ÈİÁ¿:%d MB",sd_size>>11);
+	NT35310_LCD_ShowString(0,32,16,(u8*)clock_buff);
+	
+  if(f_mount(&fs,"0:",1)==FR_OK)NT35310_LCD_ShowString(0,48,16,(u8*)"ÎÄ¼şÏµÍ³³õÊ¼»¯³É¹¦!");  // ×¢²áÎÄ¼şÏµÍ³¹¤×÷Çø£¬Çı¶¯Æ÷ºÅ 0£¬³õÊ¼»¯ºóÆäËûº¯Êı¿ÉÊ¹ÓÃÀïÃæµÄ²ÎÊı
+	else NT35310_LCD_ShowString(0,48,16,(u8*)"ÎÄ¼şÏµÍ³³õÊ¼»¯Ê§°Ü!");
+	DelayMs(3000);
+	LCD_Clear(WHITE);
+	VS1053_Init();       					//VS1053³õÊ¼»¯
+	while(1)
+	{	
+			
+			if(VS_Start)	 // key interrupt for record
+			{
+				LCD_Clear(WHITE);
+				sprintf(clock_buff,"%d%d%d%d.wav",rtc_clock.day,rtc_clock.hour,rtc_clock.minue,rtc_clock.second);
+				NT35310_LCD_ShowString(0,0,16,(u8*)"ÕıÔÚÂ¼ÒôÖĞ............");
+				NT35310_LCD_ShowString(0,16,16,(u8*)"Â¼ÒôÃû³Æ£º");
+				NT35310_LCD_ShowString(80,16,16, (u8*)clock_buff);
+				RecoderPlay((u8*)clock_buff);
+				ScanVSFile("0:");
+				DelayMs(500);
+				LCD_Clear(WHITE);
+			}	
+		
+			key=GetKeyValue(1);
+			if(key==1) 
+			{
+				LCD_Clear(WHITE);
+				NT35310_LCD_ShowString(0,0,16,(u8*)"²¥·ÅÂ¼ÒôÖĞ............");
+				NT35310_LCD_ShowString(0,16,16,(u8*)"Â¼ÒôÃû³Æ£º");
+				NT35310_LCD_ShowString(80,16,16,(u8*)VS1053_FileBuff[VS_Cnt]);
+				printf("%s\r\n",VS1053_FileBuff[VS_Cnt]);
+				VS1053_PlayOneMusic(VS1053_FileBuff[VS_Cnt]);
+				if(VS_Cnt == 0)
+				{
+					NT35310_LCD_ShowString(0,0,32,(u8*)"ÕâÊÇµÚÒ»Ê×Â¼Òô............");
+					VS_Cnt++;
+				}
+				VS_Cnt--;
+				DelayMs(500);
+				LCD_Clear(WHITE);
+			}
+			else if(key==3)
+			{
+				LCD_Clear(WHITE);
+				NT35310_LCD_ShowString(0,00,16,(u8*)"²¥·ÅÂ¼ÒôÖĞ............");
+				NT35310_LCD_ShowString(0,16,16,(u8*)"Â¼ÒôÃû³Æ£º");
+				NT35310_LCD_ShowString(80,16,16,(u8*)VS1053_FileBuff[VS_Cnt]);
+				printf("%s\r\n",VS1053_FileBuff[VS_Cnt]);
+				if(VS_Cnt>10)
+				{
+					NT35310_LCD_ShowString(0,32,16,(u8*)"ÕâÊÇ×îºóÒ»Ê×Â¼Òô............");
+					VS_Cnt--;
+				}
+				 VS1053_PlayOneMusic(VS1053_FileBuff[VS_Cnt]);
+				 VS_Cnt++;
+				 DelayMs(500);
+				 LCD_Clear(WHITE);
+			}	
+			
+			LED1=!LED1;
+			DelayMs(200);
+			if(Flag_RX1)
+			{
+					if(buff[0]=='*')
+					{
+							rtc_clock.year=(buff[1]-48)*1000+(buff[2]-48)*100+(buff[3]-48)*10+(buff[4]-48)*1;
+							rtc_clock.month=(buff[5]-48)*10+(buff[6]-48)*1;
+							rtc_clock.day=(buff[7]-48)*10+(buff[8]-48)*1;
+							rtc_clock.hour=(buff[9]-48)*10+(buff[10]-48)*1;
+							rtc_clock.minue=(buff[11]-48)*10+(buff[12]-48)*1;
+							rtc_clock.second=(buff[13]-48)*10+(buff[14]-48)*1;
+							time_transfor(rtc_clock.year,rtc_clock.month,rtc_clock.day,rtc_clock.hour,rtc_clock.minue,rtc_clock.second);	
+					}
+					Flag_RX1=0;
+					cnt_RX1=0;
+					
+			}
+			sprintf(clock_buff,"%dÄê%dÔÂ%dÈÕ%dÊ±%d·Ö%dÃë",rtc_clock.year,rtc_clock.month,rtc_clock.day,rtc_clock.hour,rtc_clock.minue,rtc_clock.second);
+			NT35310_LCD_ShowString(0,0,16, (u8*)clock_buff);
+		
+			
+
+			
+	}
+}
+
+
+/*
+º¯Êı¹¦ÄÜ£ºÂ¼Òô
+²Î    Êı£ºÂ¼ÒôÎÄ¼şµÄÃû³Æ
+*/
+u8 RecoderPlay(u8 *file_name)
+{
+	u8 recagc=4,res;											//Ä¬ÈÏÔöÒæÎª4
+	u32 cnt;
+	u16 w;
+	u32 sectorsize=0;
+	u8 recbuf[512];													 //Êı¾İÄÚ´æ
+	u16 idx=0;
+	__WaveHeader wavhead;
+	FIL f_rec;															  //Â¼ÒôÎÄ¼ş
+	VS1053_RecoderInit(1024);			            //¼¤»îPCM Â¼ÒôÄ£Ê½
+	VS1053_RecoderWavInit(&wavhead);				  //³õÊ¼»¯wavÊı¾İ	
+	res=f_open(&f_rec,(const TCHAR*)file_name, FA_CREATE_ALWAYS | FA_WRITE);  //´´½¨´æ·ÅÂ¼ÒôµÄÎÄ¼ş
+	if(res){printf("Â¼ÒôÎÄ¼ş´´½¨Ê§°Ü!\r\n");return 0;}
+	else printf("Â¼ÒôÎÄ¼ş %s ´´½¨³É¹¦!\r\n",file_name);
+	res=f_write(&f_rec,(const void*)&wavhead,sizeof(__WaveHeader),&cnt);      //Ğ´ÈëÍ·Êı¾İ		 //Ğ´ÈëÍ·Êı¾İ
+	while(1)
+	{
+			//¶ÁÈ¡Êı¾İ			  
+			w=VS1053_ReadReg(SPI_HDAT1);	
+			if((w>=256)&&(w<896))
+			{
+				idx=0;				   	 
+				while(idx<512) 	//Ò»´Î¶ÁÈ¡512×Ö½Ú
+				{	 
+					w=VS1053_ReadReg(SPI_HDAT0);				   	    
+					recbuf[idx++]=w&0XFF;
+					recbuf[idx++]=w>>8;
+				}	  		 
+				res=f_write(&f_rec,recbuf,512,&cnt);//Ğ´ÈëÎÄ¼ş ,Ğ´Èë512×Ö½Ú
+				if(res)
+				{
+					printf("Ğ´Èë³ö´í.!\r\n");
+					break;  
+				}
+				sectorsize++;//ÉÈÇøÊıÔö¼Ó1,Ô¼Îª32ms	 
+			}
+      if(VS1053_OK)  //½áÊøÂ¼Òô
+			{
+					wavhead.riff.ChunkSize=sectorsize*512+36;	//Õû¸öÎÄ¼şµÄ´óĞ¡-8;
+					wavhead.data.ChunkSize=sectorsize*512;		//Êı¾İ´óĞ¡
+					f_lseek(&f_rec,0);							//Æ«ÒÆµ½ÎÄ¼şÍ·.
+					f_write(&f_rec,(const void*)&wavhead,sizeof(__WaveHeader),&cnt);//Ğ´ÈëÍ·Êı¾İ
+					f_close(&f_rec);
+					sectorsize=0;
+					printf("½áÊøÂ¼Òô!\r\n");
+					break;
+			}				
+		}	
+		
+		VS1053_OK=0;
+		VS_Start=0;
+		return res;
+		
+}
+
+
+//²¥·ÅÒôÆµ				     	   									    	 
+//·µ»ØÖµ:0,Õı³£²¥·ÅÍê³É
+u8 VS1053_PlayOneMusic(u8 *pname)
+{	 
+ 	FIL fmp3;
+  u16 br;
+	u8 res,rval;	  
+	u8 databuf[4096];	   		   
+	u16 i=0;
+
+	printf("VS1053_Reset=%d\r\n",VS1053_Reset());      								//Ó²¸´Î»MP3
+	VS1053_SoftReset(); 								//Èí¸´Î»VS10XX
+	VS1053_SetVol(250);								  //ÉèÖÃÒôÁ¿
+	
+	res=f_open(&fmp3,(const TCHAR*)pname,FA_READ);//´ò¿ªÎÄ¼ş	 
+	if(res!=0)return 1;  //ÎÄ¼ş´ò¿ªÊ§°Ü 
+	printf("%sÎÄ¼ş´ò¿ª³É¹¦!\r\n",pname);				   
+	while(1)
+	{
+		res=f_read(&fmp3,databuf,4096,(UINT*)&br);//¶Á³ö4096¸ö×Ö½Ú  
+		i=0;
+		while(i<4096) //Ã¿´Î²¥·Å4096¸ö×Ö½Ú
+		{  	
+				if(VS1053_SendMusicData(databuf+i)==0)//¸øVS10XX·¢ËÍÒôÆµÊı¾İ
+				{
+					i+=32;
+				}
+		}
+		if(br!=4096||res!=0)
+		{
+			rval=0;
+			break;//¶ÁÍêÁË.		  
+		} 							 
+	}
+	f_close(&fmp3);	  
+	return rval;	  	 		  	    
+}
+
+/*
+º¯Êı¹¦ÄÜ£ºÉ¨ÃèÂ¼Òô¸ùÄ¿Â¼
+º¯Êı·µ»ØÖµ£º0 ±íÊ¾³É¹¦ 1£º±íÊ¾Ê§°Ü
+*/
+u8 ScanVSFile(const char *path)
+{
+		int i=0;
+		DIR dp;
+		FRESULT res;
+		FILINFO fno; 
+		char *abs_path=NULL; 
+		/*1.´ò¿ªÄ¿Â¼*/
+		res=f_opendir(&dp,path);
+		if(res!=FR_OK) return 1;
+	
+		/*Ñ­»·¶ÁÈ¡Ä¿Â¼*/
+		while(f_readdir(&dp,&fno)==FR_OK)
+		{
+		
+			if(fno.fname[0]==0)break;
+			printf("ÎÄ¼şÃû³Æ: %s,ÎÄ¼ş´óĞ¡: %ld ×Ö½Ú\r\n",fno.fname,fno.fsize);
+			/*2.¹ıÂËÄ¿Â¼*/
+			if(strstr(fno.fname,".wav"))
+			{
+					
+					//ÉêÇë´æ·ÅÎÄ¼şÃû³Æ³¤¶ÈµÄ¿Õ¼ä
+					abs_path=malloc(strlen(fno.fname)+1);
+			 
+					if(abs_path==NULL)break;
+			
+					strcpy(abs_path,fno.fname);
+					VS1053_FileBuff[i++]=(u8*)abs_path;
+					if(i>10)i=0;
+				
+		   }
+	}
+				f_closedir(&dp);
+				return 0;
+}
+#include "sys.h"
+#include "delay.h"
+#include "usart.h"
+#include "LCD1602.h"
+#include "usart2.h"
+#include "AS608.h"
+#include "timer.h"
+#include "beep.h"
+#include "rtc.h"
+#include "date.h"
+#include "stm32f10x.h"
+#include "stm32f10x_rtc.h"
+#include "AT24CXX.h"
+#include "iic.h"
+
+#define usart2_baund  57600//´®¿Ú2²¨ÌØÂÊ£¬¸ù¾İÖ¸ÎÆÄ£¿é²¨ÌØÂÊ¸ü¸Ä£¨×¢Òâ£ºÖ¸ÎÆÄ£¿éÄ¬ÈÏ57600£©
+SysPara AS608Para;//Ö¸ÎÆÄ£¿éAS608²ÎÊı
+u16 ValidN;//Ä£¿éÄÚÓĞĞ§Ä£°å¸öÊı
+u8** kbd_tbl;
+
+u32 timedata=0;
+
+void Add_FR(u8 a);	//Â¼Ö¸ÎÆ
+void Del_FR(u8 a);	//É¾³ıÖ¸ÎÆ
+void press_FR(void);//Ë¢Ö¸ÎÆ
+void ShowErrMessage(u8 ensure);//ÏÔÊ¾È·ÈÏÂë´íÎóĞÅÏ¢
+
+int d=0;  //É¾³ıÖ¸ÎÆÊ±ÓÃµÄID²ÎÊı
+int get_d=0;  //·µ»Ø¸øQTµÃÖ¸ÎÆID
+
+u8 num = 1; //×¢²áID
+u8 num_24C02 = 0; //±£´æµØÖ·
+
+int KeyVal;	 //keyVal?????????
+int key_number = 0; 
+struct rtc_time systmtime;	
+
+unsigned char pass[6] = {1,2,3,4,5,6};
+unsigned char in_key[6];			//ÊäÈëÃÜÂë
+
+u16 nao_hour_start = 0;
+u16 nao_min_start = 0;
+
+u16 nao_hour_stop = 0;
+u16 nao_min_stop = 0;
+
+u8 number = 0; //Ö¸ÎÆ±àºÅ
+void GPIO_Configuration(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  	
+	SystemInit();
+
+	//GPIOÊäÈëÅäÖÃ
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
+
+	GPIO_InitStructure.GPIO_Pin= GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_9|GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_IN_FLOATING;
+//	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);	
+	GPIO_InitStructure.GPIO_Pin= GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA,&GPIO_InitStructure);
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);	
+	GPIO_InitStructure.GPIO_Pin= GPIO_Pin_0;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB,&GPIO_InitStructure);
+}
+
+int key_down(void)  //???????????,??????,???????????
+{
+	KeyVal = 99;
+
+	GPIO_ResetBits(GPIOA,GPIO_Pin_7); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_6); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_5); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_4); //????? 
+
+	if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9)==0)
+	{
+		 KeyVal = 15;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10)==0)
+	{
+		 KeyVal = 14;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1)==0)
+	{
+		 KeyVal = 13;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)==0)
+	{
+		 KeyVal = 12;
+	}
+
+	GPIO_SetBits(GPIOA,GPIO_Pin_7); //????? 
+	GPIO_ResetBits(GPIOA,GPIO_Pin_6); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_5); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_4); //????? 
+
+	if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9)==0)
+	{
+		 KeyVal = 11;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10)==0)
+	{
+		 KeyVal = 10;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1)==0)
+	{
+		 KeyVal = 9;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)==0)
+	{
+		 KeyVal = 8;
+	}
+
+	GPIO_SetBits(GPIOA,GPIO_Pin_7); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_6); //????? 
+	GPIO_ResetBits(GPIOA,GPIO_Pin_5); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_4); //????? 
+
+	if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9)==0)
+	{
+		 KeyVal = 7;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10)==0)
+	{
+		 KeyVal = 6;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1)==0)
+	{
+		 KeyVal = 5;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)==0)
+	{
+		 KeyVal = 4;
+	}
+
+	GPIO_SetBits(GPIOA,GPIO_Pin_7); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_6); //????? 
+	GPIO_SetBits(GPIOA,GPIO_Pin_5); //????? 
+	GPIO_ResetBits(GPIOA,GPIO_Pin_4); //????? 
+
+	if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9)==0)
+	{
+		 KeyVal = 3;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10)==0)
+	{
+		 KeyVal = 2;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1)==0)
+	{
+		 KeyVal = 1;
+	}
+	else if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)==0)
+	{
+		 KeyVal = 0;
+	}
+//	GPIO_Write(GPIOA,(GPIOA->ODR & 0xff0f | 0x00f0)); //?PB8?PB11?????,???????????
+//	while((GPIOA->IDR & 0x000f) != 0x0000);        //??????????
+	if(KeyVal!=99)
+	{
+		GPIO_SetBits(GPIOB,GPIO_Pin_0); //????? 
+		delay_ms(200); 
+		GPIO_ResetBits(GPIOB,GPIO_Pin_0); //????? 
+		switch(KeyVal)
+		{	
+			case 0:	 KeyVal = 12;
+				break;
+			case 1:	 KeyVal = 3;
+				break;
+			case 2:	 KeyVal = 2;
+				break;
+			case 3:	 KeyVal = 1;
+				break;
+			case 4:	 KeyVal = 13;
+				break;
+			case 5:	 KeyVal = 6;	
+				break;		 	
+			case 6:	 KeyVal = 5;
+				break;
+			case 7:	 KeyVal = 4;
+				break;
+			case 8:	 KeyVal = 14;
+				break;
+			case 9:	 KeyVal = 9;
+				break;		  
+			case 10: KeyVal = 8;
+				break;
+			case 11: KeyVal = 7;
+				break;
+			case 12: KeyVal = 15;
+				break;
+			case 13: KeyVal = 11;
+				break;
+			case 14: KeyVal = 0;
+				break;
+			case 15: KeyVal = 10;
+				break;
+		}
+	}
+	return KeyVal;		
+}
+
+//ĞŞ¸ÄÊ±¼ä
+void RTC_TimeAdjust(void)
+{
+  /* Wait until last write operation on RTC registers has finished */
+  RTC_WaitForLastTask();
+
+  RTC_SetCounter(mktimev(&systmtime));
+  /* Wait until last write operation on RTC registers has finished */
+  RTC_WaitForLastTask();
+}
+
+
+void set_time()
+{
+	int time_flag =0; 			//????????
+
+			//?
+					
+			LCD_Write_Com(0x80); 
+			LCD_Write_Data(systmtime.tm_year/1000+'0');
+			LCD_Write_Data((systmtime.tm_year%1000)/100+'0');
+			LCD_Write_Data(systmtime.tm_year%100/10+'0');
+			LCD_Write_Data(systmtime.tm_year%10+'0');   //?lcd1602????
+
+			time_flag =0; 
+			for(;;)
+			{				
+				LCD_Write_Com(0x80);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_year = time_flag*1000;
+					break;
+				}	
+		   }
+			
+			for(;;)
+			{
+				LCD_Write_Com(0x81);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_year += time_flag*100;
+					break;
+				}	
+			}
+
+			for(;;)
+			{
+				LCD_Write_Com(0x82);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_year += time_flag*10;
+					break;
+				}	
+			}
+
+			for(;;)
+			{
+				LCD_Write_Com(0x83);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_year += time_flag;
+
+					if(systmtime.tm_year>=2099)	   //?????
+						systmtime.tm_year = 2099;
+					else if(systmtime.tm_year<=1970)
+						systmtime.tm_year = 1970;	
+					break;
+				}	
+			}
+			//?
+			LCD_Write_Com(0x85);  //????
+			LCD_Write_Data(systmtime.tm_mon%100/10+'0');
+			LCD_Write_Data(systmtime.tm_mon%10+'0');   //?lcd1602????
+
+			for(;;)
+			{
+				LCD_Write_Com(0x85);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_mon = time_flag * 10;
+					break;
+				}	
+			}
+			//time_flag = Time_1[4]&0x0f;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0x86);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_mon += time_flag;
+					if(systmtime.tm_mon>=12)	   //???
+						systmtime.tm_mon = 12;
+					break;
+				}	
+			}
+
+			LCD_Write_Com(0x88);  //????
+			LCD_Write_Data(systmtime.tm_mday%100/10+'0');
+			LCD_Write_Data(systmtime.tm_mday%10+'0');   //?lcd1602????
+			//?
+			time_flag = systmtime.tm_mday;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0x88);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_mday = time_flag * 10;
+					break;
+				}	
+			}
+
+
+			//time_flag = Time_1[4]&0x0f;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0x89);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(key_number + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_mday += time_flag;
+					if(systmtime.tm_mday>=31)	   //???
+						systmtime.tm_mday = 31;
+					break;
+				}	
+			}
+
+			//?
+			LCD_Write_Com(0xc2);  //????
+			LCD_Write_Data(systmtime.tm_hour%100/10+'0');
+			LCD_Write_Data(systmtime.tm_hour%10+'0');   //?lcd1602????
+			for(;;)
+			{
+				LCD_Write_Com(0xc2);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_hour = time_flag * 10;
+					break;
+				}	
+			}
+			//time_flag = Time_1[4]&0x0f;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0xc3);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_hour += time_flag;
+					if(systmtime.tm_hour>=23)	   //????
+						systmtime.tm_hour = 23;
+					break;
+				}	
+			}
+
+
+			//?
+			LCD_Write_Com(0xc5);  //????
+			LCD_Write_Data(systmtime.tm_min%100/10+'0');
+			LCD_Write_Data(systmtime.tm_min%10+'0');   //?lcd1602????
+			for(;;)
+			{
+				LCD_Write_Com(0xc5);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_min = time_flag * 10;
+
+					break;
+				}	
+			}
+			//time_flag = Time_1[4]&0x0f;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0xc6);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_min+= time_flag;
+					if(systmtime.tm_min>=59)	   //????
+						systmtime.tm_min = 59;
+					break;
+				}	
+			}
+			//sec
+			LCD_Write_Com(0xc8);  //????
+			LCD_Write_Data(systmtime.tm_sec%100/10+'0');
+			LCD_Write_Data(systmtime.tm_sec%10+'0');   //?lcd1602????
+			for(;;)
+			{
+				LCD_Write_Com(0xc8);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_sec = time_flag * 10;
+					break;
+				}	
+			}
+			//time_flag = Time_1[4]&0x0f;		//??DS1302 ????
+			for(;;)
+			{
+				LCD_Write_Com(0xc9);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_sec+= time_flag;
+					if(systmtime.tm_sec>=59)	   //???
+						systmtime.tm_sec = 59;
+					break;
+				}	
+			}
+
+			//xing?
+			LCD_Write_Com(0xc0);  //????
+			LCD_Write_Data(systmtime.tm_wday%10+'0');   //?lcd1602????
+			for(;;)
+			{
+				LCD_Write_Com(0xc0);  //????	 
+				LCD_Write_Com(0x0e);  //??
+				delay_ms(200);	
+				LCD_Write_Com(0x0c);  //??	
+				key_number = key_down();	  //????
+				
+				if(key_number<=9)	
+				{
+					time_flag = key_number;
+					LCD_Write_Data(time_flag + '0');
+				}
+				else if(key_number==11) //#??
+				{
+					systmtime.tm_wday = time_flag;
+					if(systmtime.tm_wday>=7)	   //????
+						systmtime.tm_wday = 7;
+					break;
+				}	
+			}
+				
+			RTC_TimeAdjust();//????
+}
+void set_nao()
+{
+
+	int time_flag =0; 			//????????
+
+		LCD_Write_Com(0x8b);
+		LCD_Write_Data('0'+ nao_hour_start/10);
+		LCD_Write_Data('0'+ nao_hour_start%10);
+		LCD_Write_Data(':');
+		LCD_Write_Data('0'+ nao_min_start/10);
+		LCD_Write_Data('0'+ nao_min_start%10);
+		delay_ms(200);	
+
+				
+		for(;;)		 //???? ??
+		{
+
+			key_number = key_down();	  //????
+			LCD_Write_Com(0x8b);  //????	 
+			LCD_Write_Com(0x0e);  //??
+			delay_ms(200);	
+			LCD_Write_Com(0x0c);  //??
+			if(key_number<=9)
+			{
+				time_flag =  key_number;
+				LCD_Write_Com(0x8b);
+				LCD_Write_Data('0'+ time_flag);
+			}
+			else if(key_number==11) //#?? ??
+			{
+				nao_hour_start = 	time_flag*10;
+				break;
+			}
+		}
+
+		for(;;)		 //???? ??
+		{
+
+			key_number = key_down();	  //????
+			LCD_Write_Com(0x8c);  //????	 
+			LCD_Write_Com(0x0e);  //??
+			delay_ms(200);	
+			LCD_Write_Com(0x0c);  //??
+			if(key_number<=9)
+			{
+				time_flag =  key_number;
+				LCD_Write_Com(0x8c);
+				LCD_Write_Data('0'+ time_flag);
+			}
+			else if(key_number==11) //#?? ??
+			{
+				nao_hour_start += time_flag;
+				if(nao_hour_start>=23)	   //??????
+					nao_hour_start = 23;
+				break;
+			}
+		}
+
+//		for(;;)		 //??miao
+//		{
+
+//			key_number = key_down();	  //????
+//			LCD_Write_Com(0x8e);  //????	 
+//			LCD_Write_Com(0x0e);  //??
+//			delay_ms(200);	
+//			LCD_Write_Com(0x0c);  //??
+//			if(key_number<=9)
+//			{					
+//				time_flag =  key_number;
+//				LCD_Write_Com(0x8e);
+//				LCD_Write_Data('0'+ time_flag);
+//			}
+//			else if(key_number==11) //#?? ??
+//			{
+//				nao_min_start = 	time_flag*10;
+//				break;
+//			}
+//		}
+
+//		for(;;)		 //??? ??
+//		{
+
+//			key_number = key_down();	  //????
+//			LCD_Write_Com(0x8f);  //????	 
+//			LCD_Write_Com(0x0e);  //??
+//			delay_ms(200);	
+//			LCD_Write_Com(0x0c);  //??
+//			if(key_number<=9)
+//			{
+//				time_flag =  key_number;
+//				LCD_Write_Com(0x8f);
+//				LCD_Write_Data('0'+ time_flag);
+//			}
+//			else if(key_number==11) //#?? ??
+//			{
+//				nao_min_start += time_flag;
+//				if(nao_min_start>=59)	   //??????
+//					nao_min_start = 59;
+//				break;
+//			}
+//		}
+//		
+
+		LCD_Write_Com(0xcb);
+		LCD_Write_Data('0'+ nao_hour_stop/10);
+		LCD_Write_Data('0'+ nao_hour_stop%10);
+		LCD_Write_Data(':');
+		LCD_Write_Data('0'+ nao_min_stop/10);
+		LCD_Write_Data('0'+ nao_min_stop%10);
+		delay_ms(200);	
+
+				
+		for(;;)		 //???? ??
+		{
+
+			key_number = key_down();	  //????
+			LCD_Write_Com(0xcb);  //????	 
+			LCD_Write_Com(0x0e);  //??
+			delay_ms(200);	
+			LCD_Write_Com(0x0c);  //??
+			if(key_number<=9)
+			{
+				time_flag =  key_number;
+				LCD_Write_Com(0xcb);
+				LCD_Write_Data('0'+ time_flag);
+			}
+			else if(key_number==11) //#?? ??
+			{
+				nao_hour_stop = 	time_flag*10;
+				break;
+			}
+		}
+
+		for(;;)		 //???? ??
+		{
+
+			key_number = key_down();	  //????
+			LCD_Write_Com(0xcc);  //????	 
+			LCD_Write_Com(0x0e);  //??
+			delay_ms(200);	
+			LCD_Write_Com(0x0c);  //??
+			if(key_number<=9)
+			{
+				time_flag =  key_number;
+				LCD_Write_Com(0xcc);
+				LCD_Write_Data('0'+ time_flag);
+			}
+			else if(key_number==11) //#?? ??
+			{
+				nao_hour_stop += time_flag;
+				if(nao_hour_stop>=23)	   //??????
+					nao_hour_stop = 23;
+				break;
+			}
+		}
+
+//		for(;;)		 //??miao
+//		{
+
+//			key_number = key_down();	  //????
+//			LCD_Write_Com(0xce);  //????	 
+//			LCD_Write_Com(0x0e);  //??
+//			delay_ms(200);	
+//			LCD_Write_Com(0x0c);  //??
+//			if(key_number<=9)
+//			{					
+//				time_flag =  key_number;
+//				LCD_Write_Com(0xce);
+//				LCD_Write_Data('0'+ time_flag);
+//			}
+//			else if(key_number==11) //#?? ??
+//			{
+//				nao_min_stop = 	time_flag*10;
+//				break;
+//			}
+//		}
+
+//		for(;;)		 //??? ??
+//		{
+
+//			key_number = key_down();	  //????
+//			LCD_Write_Com(0xcf);  //????	 
+//			LCD_Write_Com(0x0e);  //??
+//			delay_ms(200);	
+//			LCD_Write_Com(0x0c);  //??
+//			if(key_number<=9)
+//			{
+//				time_flag =  key_number;
+//				LCD_Write_Com(0xcf);
+//				LCD_Write_Data('0'+ time_flag);
+//			}
+//			else if(key_number==11) //#?? ??
+//			{
+//				nao_min_stop += time_flag;
+//				if(nao_min_stop>=59)	   //??????
+//					nao_min_stop = 59;
+//				break;
+//			}
+//		}
+}
+
+
+//·äÃùÆ÷ÏìÒ»Éù
+void beep()
+{
+		 GPIO_SetBits(GPIOB,GPIO_Pin_0); //·äÃùÆ÷±¨¾¯
+		 delay_ms(200); 			//ÑÓÊ±200ms
+		 GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+		 delay_ms(200); 			//ÑÓÊ±200ms			
+}
+
+
+void set_number()
+{
+	  char num_flag = 0;
+	 	LCD_Write_Com(0xc0);  //??
+		LCD_Write_Data('N');
+		LCD_Write_Data('u');
+		LCD_Write_Data('m');
+		LCD_Write_Data('b');
+		LCD_Write_Data('e');
+		LCD_Write_Data('r');
+		LCD_Write_Data(' ');
+		LCD_Write_Data('>');
+		LCD_Write_Data('0'+number%100/10);
+		LCD_Write_Data('0'+number%10);			
+
+	for(;;)
+	{
+		key_number = key_down();	  //????
+		LCD_Write_Com(0xc8);  //????	 
+		LCD_Write_Com(0x0e);  //??
+		delay_ms(100); 
+		LCD_Write_Com(0x0c);  //??	
+     delay_ms(100); 		
+		if(key_number <= 9)   //????????
+		{  
+			 num_flag =  key_number;
+			 LCD_Write_Com(0xc8);  //????
+			 LCD_Write_Data('0'+key_number);
+		}
+		if(key_number==11) //#??
+		{
+			 number = num_flag*10;
+			 break;
+		}
+	}
+
+	for(;;)
+	{
+			key_number = key_down();	  //????
+			LCD_Write_Com(0xc9);  //????	 
+			LCD_Write_Com(0x0e);  //??
+			delay_ms(100); 
+			LCD_Write_Com(0x0c);  //??	
+			delay_ms(100); 		
+		
+			if(key_number <= 9)   //????????
+			{  
+				 num_flag =  key_number;
+				 LCD_Write_Com(0xc9);  //????
+				 LCD_Write_Data('0'+key_number);
+			}
+			if(key_number==11) //#??
+			{
+				 number += num_flag;
+				 break;
+			}
+	}
+
+	LCD_Write_Com(0x01); 
+}
+
+void set_zhuce(u8 a)
+{
+		if(a==0)
+		{
+				
+			LCD_Write_Com(0x80);  
+			LCD_Write_Data('z');
+			LCD_Write_Data('h');
+			LCD_Write_Data('u');
+			LCD_Write_Data(' ');
+			LCD_Write_Data('c');
+			LCD_Write_Data('e');
+			
+		}
+		else if(a==1)
+		{
+			LCD_Write_Com(0x80);  
+			LCD_Write_Data('D');
+			LCD_Write_Data('e');
+			LCD_Write_Data('l');
+			LCD_Write_Data('e');
+			LCD_Write_Data('t');
+			LCD_Write_Data('e');
+		}	
+		set_number();
+}
+
+
+void time_display()
+{
+
+	LCD_Write_Com(0x80);  //LCD1602??????
+	LCD_Write_Data('0' + (systmtime.tm_year%10000)/1000);
+	LCD_Write_Data('0' + (systmtime.tm_year%1000)/100);
+	LCD_Write_Data('0'+(systmtime.tm_year%100)/10);
+	LCD_Write_Data('0'+systmtime.tm_year%10);
+	LCD_Write_Data('-');
+	LCD_Write_Data('0'+systmtime.tm_mon/10);
+	LCD_Write_Data('0'+systmtime.tm_mon%10);
+	LCD_Write_Data('-');
+	LCD_Write_Data('0'+systmtime.tm_mday/10);
+	LCD_Write_Data('0'+systmtime.tm_mday%10);
+	LCD_Write_Data(' ');	
+
+							
+	LCD_Write_Com(0xC0);	//LCD1602
+	if(systmtime.tm_wday==0)
+	{
+			LCD_Write_Data('7');
+	}
+	else
+	{
+			LCD_Write_Data('0'+ systmtime.tm_wday);
+	}
+	LCD_Write_Data(' ');
+	LCD_Write_Data('0'+systmtime.tm_hour/10);
+	LCD_Write_Data('0'+systmtime.tm_hour%10);
+	LCD_Write_Data(':');
+	LCD_Write_Data('0'+systmtime.tm_min/10);
+	LCD_Write_Data('0'+systmtime.tm_min%10);
+	LCD_Write_Data(':');
+	LCD_Write_Data('0'+systmtime.tm_sec/10);
+	LCD_Write_Data('0'+systmtime.tm_sec%10);
+	LCD_Write_Data(' ');
+
+}
+
+
+void RTC_IRQHandler()	//RTCÊµÊ±Ê±ÖÓ
+{
+	if(RTC_GetITStatus((RTC_IT_SEC))!=RESET)
+	{
+		RTC_ClearITPendingBit(RTC_IT_SEC);
+		timebz=1;	
+	}
+}
+
+//¶ÁÈ¡24c02´æ´¢ĞÅÏ¢
+void read_24C02()				 //??24C02????
+{
+	u8 i = 0; //??forÑ­»·
+	u8 read_num = 0;
+	for(i=0;i<10;i++)
+	{
+	 	systmtime.tm_year = At24c02Read(0 + 8*i)+1970;	delay_ms(1);	
+		systmtime.tm_wday = At24c02Read(1 + 8*i);	delay_ms(1);	
+		systmtime.tm_mon = At24c02Read(2 + 8*i);		delay_ms(1);	
+		systmtime.tm_mday= At24c02Read(3 + 8*i);	delay_ms(1);	
+		systmtime.tm_hour = At24c02Read(4 + 8*i);	delay_ms(1);		
+		systmtime.tm_min = At24c02Read(5 + 8*i);	delay_ms(1);	
+		systmtime.tm_sec = At24c02Read(6 + 8*i);	delay_ms(1);	
+		read_num = At24c02Read(7 + 8*i);	delay_ms(1);		
+		time_display();
+	 	LCD_Write_Com(0x8c);
+		LCD_Write_Data('0'+i%10);
+		LCD_Write_Data(' ');
+	 	LCD_Write_Data(' ');
+	 	LCD_Write_Com(0xcc);
+		LCD_Write_Data('0'+ read_num/10);
+		LCD_Write_Data('0'+ read_num%10);
+		if(systmtime.tm_hour<nao_hour_start)
+		{
+			LCD_Write_Com(0x8F);	//LCD1602
+			LCD_Write_Data('A');						
+		}
+		else if((systmtime.tm_hour>=nao_hour_start)&&(systmtime.tm_hour<12))
+		{
+			LCD_Write_Com(0x8F);	//LCD1602
+			LCD_Write_Data('B');						
+		}
+		else if((systmtime.tm_hour<nao_hour_stop)&&(systmtime.tm_hour>=12))
+		{
+			LCD_Write_Com(0x8F);	//LCD1602
+			LCD_Write_Data('C');						
+		}		
+		else
+		{
+			LCD_Write_Com(0x8F);	//LCD1602
+			LCD_Write_Data('D');						
+		}
+		delay_ms(1000);
+		delay_ms(1000);
+	}
+	LCD_1602Clear(); //ÇåÆÁ
+}
+
+void Save_24C02(u8 a)
+{
+	 At24c02Write(0 + 8*num_24C02,(systmtime.tm_year-1970));
+	 delay_ms(1);	
+	 At24c02Write(1 + 8*num_24C02,systmtime.tm_wday);delay_ms(1);	
+	 At24c02Write(2 + 8*num_24C02,systmtime.tm_mon);delay_ms(1);	
+	 At24c02Write(3 + 8*num_24C02,systmtime.tm_mday);delay_ms(1);	
+	 At24c02Write(4 + 8*num_24C02,systmtime.tm_hour);delay_ms(1);	
+	 At24c02Write(5 + 8*num_24C02,systmtime.tm_min);delay_ms(1);	
+	 At24c02Write(6 + 8*num_24C02,systmtime.tm_sec);delay_ms(1);	
+	 At24c02Write(7 + 8*num_24C02,a);delay_ms(1);	
+
+	 num_24C02++;
+	 if(num_24C02>=10)
+	 	num_24C02 = 0;
+}
+
+//ems????
+void ems_diaplay()
+{
+	LCD_1602Clear();  //??
+
+	LCD_Write_Com(0xc0);
+	LCD_Write_Data('I'); 
+	LCD_Write_Data('N');  
+	LCD_Write_Data('P');
+	LCD_Write_Data('U');  
+	LCD_Write_Data('T');
+	LCD_Write_Data(':'); 
+}
+
+void input_pass()
+{
+	 unsigned char x=0,z=0,y=0;
+	 
+	 ems_diaplay();
+	 for(;;)
+	 {
+
+		key_number = key_down();  //????
+
+		if(key_number <= 9)   //????????
+		{  			
+			LCD_Write_Com(0xc6 + z);
+			LCD_Write_Data('*'); 	//acsii??*?	 
+		  	in_key[z] = key_number;		//????
+			z++;
+		}
+		
+		if(key_number == 11)			 //????
+		{
+			for(x=0;x<6;x++)
+			{
+				if(pass[x] == in_key[x])
+					y++;
+			}
+			break;	//??????
+		}
+	 }
+	 if(y>=6)  	//????????;
+	 {	 
+			LCD_1602Clear();
+			for(;;)
+		  {
+				LCD_Write_Com(0xc0);
+				LCD_Write_Data('V'); 
+				LCD_Write_Data('I');  
+				LCD_Write_Data('P');
+				LCD_Write_Data(':');  
+				LCD_Write_Data(' ');
+				LCD_Write_Data(' '); 
+					key_number = key_down();  //¶ÁÈ¡°´¼ü
+					if(key_number==10)
+					{
+							break;
+					}
+					else if(key_number==11)
+					{
+							time_display(); //ÏÔÊ¾Ê±¼ä
+							set_time(); //ÉèÖÃÏµÍ³Ê±¼ä
+						  LCD_1602Clear();
+					}
+					else if(key_number==12) //×¢²áÖ¸ÎÆ
+					{	    
+							LCD_1602Clear();	//ÇåÆÁ
+							set_zhuce(0);
+							Add_FR(number);		//Â¼Ö¸ÎÆ	
+							LCD_1602Clear();
+					}
+					else if(key_number==13)  //É¾³ıÖ¸ÎÆ
+					{
+						LCD_1602Clear();	//ÇåÆÁ
+						set_zhuce(1);
+						Del_FR(number);	 //É¾³ıÖ¸ÎÆ
+						LCD_1602Clear();
+					}
+					else if(key_number==14) 
+					{
+							read_24C02();
+						  LCD_1602Clear();
+					}
+					else if(key_number==15) 
+					{
+							set_nao();   //ÉèÖÃ¶¨Ê±
+							LCD_1602Clear();
+					}
+			}	
+
+	 }
+
+}
+
+
+
+int main(void)
+{		
+ 
+	u8 ensure;
+	delay_init();
+
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//ÉèÖÃÏµÍ³ÖĞ¶ÏÓÅÏÈ¼¶·Ö×é2
+
+	//uart_init(115200);	//³õÊ¼»¯´®¿Ú1²¨ÌØÂÊÎª115200£¬ÓÃÓÚÖ§³ÖUSMART
+
+	usart2_init(usart2_baund);//³õÊ¼»¯´®¿Ú2,ÓÃÓÚÓëÖ¸ÎÆÄ£¿éÍ¨Ñ¶
+	
+	clockinit_RTC();  //³õÊ¼»¯RTCÊ±ÖÓ
+	
+	LCD_1602Init();  //³õÊ¼»¯lcd1602
+	
+	PS_StaGPIO_Init();	//³õÊ¼»¯FR¶Á×´Ì¬Òı½Å
+	
+	GPIO_Configuration(); //³õÊ¼»¯GPIO
+	
+	I2C_INIT();		 //IIC³õÊ¼»¯
+	
+	while(PS_HandShake(&AS608Addr))//ÓëAS608Ä£¿éÎÕÊÖ
+	{
+//		printf("Cannot connect with AS608!"); 
+		delay_ms(200);
+	//  printf("Try to connect again....");		
+		delay_ms(200);	  
+	}
+	
+  // printf("\nÍ¨Ñ¶³É¹¦\n");
+
+	ensure=PS_ValidTempleteNum(&ValidN);//¶Á¿âÖ¸ÎÆ¸öÊı
+	
+//	if(ensure!=0x00)
+//		 printf("´íÎó");
+		  
+	ensure=PS_ReadSysPara(&AS608Para);  //¶ÁAS608Ä£¿é²ÎÊı 
+
+//	d = 1;			
+//	printf("µ±Ç°ÊäÈëµÄidÎª %d\n",d);
+
+	//Del_FR();						
+	while(1)
+	{			
+			
+			key_number = key_down();  //¶ÁÈ¡°´¼ü
+
+			if(key_number==10)  
+			{
+					input_pass();  
+				  LCD_1602Clear();	//ÇåÆÁ
+			}
+
+			if(timebz==1)	   //Ê±ÖÓÃëÖĞ¶Ï
+			{
+					timebz=0;	  //ÇåÁã
+
+					timedata=RTC_GetCounter();//»ñÈ¡RTC¼ÆÊıÆ÷µÄÖµ
+
+					to_tm(timedata, &systmtime); //Ê±¼ä×ª»»
+					
+					time_display(); //ÏÔÊ¾Ê±¼ä
+			}
+
+			if(PS_Sta)	 //¼ì²âPS_Sta×´Ì¬£¬Èç¹ûÓĞÊÖÖ¸°´ÏÂ
+			{
+					press_FR();//Ë¢Ö¸ÎÆ		
+			}		
+				
+			delay_ms(100);	
+
+		}		 
+	} 	
+
+
+//ÏÔÊ¾È·ÈÏÂë´íÎóĞÅÏ¢
+void ShowErrMessage(u8 ensure)
+{  	
+//	printf("´íÎóĞÅÏ¢ ");
+
+}
+
+//Â¼Ö¸ÎÆ
+void Add_FR(u8 a)
+{
+	u8 i=0,ensure ,processnum=0;
+	u16 ID;
+	
+	while(1)
+	{  
+			delay_ms(50);	
+		switch (processnum)
+		{
+			case 0:
+				i++;
+		   //	printf("Çë°´ÊÖÖ¸\n");
+			 
+			  delay_ms(50);
+				ensure=PS_GetImage();
+				if(ensure==0x00) 
+				{	delay_ms(50);	
+					ensure=PS_GenChar(CharBuffer1);//Éú³ÉÌØÕ÷
+					if(ensure==0x00)
+					{ delay_ms(50);
+						//printf("Ö¸ÎÆÕıÈ·\n");
+						beep();
+						i=0;
+						delay_ms(50);
+						processnum=1;//Ìøµ½µÚ¶ş²½						
+					}else ShowErrMessage(ensure);	
+	      delay_ms(50);						
+				}else ShowErrMessage(ensure);		
+	      delay_ms(50);					
+				break;
+			
+			case 1:
+				i++;
+				//printf("ÔÙ°´Ò»´ÎÊÖÖ¸\n");//
+			  
+			 delay_ms(50);
+				ensure=PS_GetImage();
+				if(ensure==0x00) 
+				{   	delay_ms(50);	
+					ensure=PS_GenChar(CharBuffer2);//Éú³ÉÌØÕ÷			
+					if(ensure==0x00)
+					{ 	delay_ms(50);	
+					//	printf("Ö¸ÎÆÕıÈ·\n");
+	        
+						i=0;
+						processnum=2;//Ìøµ½µÚÈı²½
+					}else ShowErrMessage(ensure);	
+						delay_ms(50);	
+				}else ShowErrMessage(ensure);		
+					delay_ms(50);	
+				break;
+
+			case 2:
+				//printf("¶Ô±ÈÁ½´ÎÖ¸ÎÆ\n");//
+					  
+				ensure=PS_Match();
+				if(ensure==0x00) 
+				{	delay_ms(50);	
+					//printf("Á½´ÎÖ¸ÎÆÊÇÒ»ÑùµÄ\n");//
+					beep();beep();  
+					processnum=3;//Ìøµ½µÚËÄ²½
+				}
+				else 
+				{  
+  					delay_ms(50);	
+				//	 printf("¶Ô±ÈÊ§°Ü£¬ÇëÖØĞÂ°´ÊÖÖ¸\n");//
+					
+					ShowErrMessage(ensure);
+					i=0;
+					processnum=0;//Ìø»ØµÚÒ»²½		
+				}
+				delay_ms(1000);
+				break;
+
+			case 3:
+				//printf("²úÉúÒ»¸öÖ¸ÎÆÄ£°å\n");//
+			
+				ensure=PS_RegModel();
+				if(ensure==0x00) 
+				{	delay_ms(50);	 
+			//		printf("Éú³ÉÖ¸ÎÆÄ£°å³É¹¦\n");//
+									
+					processnum=4;//Ìøµ½µÚÎå²½
+				}else {processnum=0;ShowErrMessage(ensure);}
+				delay_ms(500);
+				break;
+				
+			case 4:	
+		
+				do
+				{	
+					PS_ValidTempleteNum(&ValidN);//¶Á¿âÖ¸ÎÆ¸öÊı
+					ID = a;
+					delay_ms(50);
+				}
+				while(!(ID<300));//ÊäÈëDI±ØĞëĞ¡ÓÚ300
+				ensure=PS_StoreChar(CharBuffer2,ID);//´¢´æÄ£°å
+				delay_ms(50);
+				if(ensure==0x00) 
+				{			
+					delay_ms(50);
+			//		printf("Ìí¼ÓÖ¸ÎÆ³É¹¦\n");//
+					PS_ValidTempleteNum(&ValidN);//¶Á¿âÖ¸ÎÆ¸öÊı
+					d=0;
+					delay_ms(50);
+				//	printf("Ê£ÓàÖ¸ÎÆ¸öÊı  %d  \n",AS608Para.PS_max-ValidN);				
+					 delay_ms(500);			
+					beep();beep();beep();
+					return ;
+				}else {processnum=0;ShowErrMessage(ensure);}					
+				break;				
+		}
+		delay_ms(800);
+		if(i==5)//³¬¹ı5´ÎÃ»ÓĞ°´ÊÖÖ¸ÔòÍË³ö
+		{
+      // printf("Ìí¼ÓÖ¸ÎÆÊ§°Ü\n");
+			break;	
+		}				
+	}
+}
+//Ë¢Ö¸ÎÆ
+void press_FR(void)
+{
+	SearchResult seach;
+	u8 ensure;
+
+	ensure=PS_GetImage();
+	if(ensure==0x00)//»ñÈ¡Í¼Ïñ³É¹¦ 
+	{	
+		
+		ensure=PS_GenChar(CharBuffer1);
+		//printf("»ñÈ¡Í¼Ïñ³É¹¦ \n");
+		if(ensure==0x00) //Éú³ÉÌØÕ÷³É¹¦
+		{	
+			
+			//printf("»ñÈ¡Í¼Ïñ³É¹¦ \n");
+			ensure=PS_HighSpeedSearch(CharBuffer1,0,300,&seach);
+			if(ensure==0x00)//ËÑË÷³É¹¦
+			{			
+			//	printf("ËÑË÷Ö¸ÎÆ³É¹¦\n ");//ËÑË÷Ö¸ÎÆ³É¹¦	
+
+				get_d = seach.pageID;	
+			//	printf(" Æ¥ÅäÖ¸ÎÆµÄID%d\n",get_d);
+				LCD_Write_Com(0x8C);	//LCD1602
+				LCD_Write_Data('O');
+				LCD_Write_Data('K');				
+				
+				if(systmtime.tm_hour<nao_hour_start)
+				{
+					LCD_Write_Com(0x8F);	//LCD1602
+					LCD_Write_Data('A');						
+				}
+				else if((systmtime.tm_hour>=nao_hour_start)&&(systmtime.tm_hour<12))
+				{
+					LCD_Write_Com(0x8F);	//LCD1602
+					LCD_Write_Data('B');						
+				}
+				else if((systmtime.tm_hour<nao_hour_stop)&&(systmtime.tm_hour>=12))
+				{
+					LCD_Write_Com(0x8F);	//LCD1602
+					LCD_Write_Data('C');						
+				}		
+				else
+				{
+					LCD_Write_Com(0x8F);	//LCD1602
+					LCD_Write_Data('D');						
+				}
+				
+				LCD_Write_Com(0xCC);	//LCD1602
+				LCD_Write_Data('0'+ get_d/10);
+				LCD_Write_Data('0'+ get_d%10);
+				Save_24C02(get_d); //±£´æµØÖ·
+				beep();
+				delay_ms(1000);
+				delay_ms(1000);
+				LCD_Write_Com(0xCC);	//LCD1602
+				LCD_Write_Data(' ');
+				LCD_Write_Data(' ');
+				LCD_Write_Com(0x8C);	//LCD1602
+				LCD_Write_Data(' ');
+				LCD_Write_Data(' ');
+				LCD_Write_Data(' ');
+				LCD_Write_Data(' ');
+			}
+			else 
+			{				
+					LCD_Write_Com(0x8b);	//LCD1602
+					LCD_Write_Data('E');
+					LCD_Write_Data('R');	
+				  LCD_Write_Data('R');
+				  LCD_Write_Data('O');
+				  LCD_Write_Data('R');
+					beep();beep();beep();//·äÃùÆ÷Ïì3ÏÂ
+					LCD_Write_Com(0x8b);	//LCD1602
+					LCD_Write_Data(' ');
+					LCD_Write_Data(' ');	
+				  LCD_Write_Data(' ');
+				  LCD_Write_Data(' ');
+				  LCD_Write_Data(' ');
+			}
+			//	printf("Ê§°ÜAA\n ");		
+	   delay_ms(50);			
+	  }
+		else
+			//printf("Ê§°ÜBB\n ");	
+			delay_ms(50);
+
+	}
+		
+}
+
+//É¾³ıÖ¸ÎÆ
+void Del_FR(u8 a)
+{
+	u8  ensure;
+  int v;
+   PS_ValidTempleteNum(&ValidN);//¶Á¿âÖ¸ÎÆ¸öÊı
+			v=ValidN;		 
+		ensure=PS_DeletChar(a,1);//É¾³ıµ¥¸öÖ¸ÎÆ 
+	  PS_ValidTempleteNum(&ValidN);//¶Á¿âÖ¸ÎÆ¸öÊı
+	if(ensure==0&&v==ValidN+1)
+	{
+		     // printf("É¾³ı³É¹¦"); 
+	}
+  else
+	{	
+		ShowErrMessage(ensure);	
+   // printf("É¾³ıÊ§°Ü"); 
+
+	}       
+}
+
+
+
+/**
+  ******************************************************************************
+  * @file    main.c
+  * @author  pcf
+  * @version V4.0
+  * @date    2018-4-23
+  * @brief   ÖÇÄÜÊÖ»·
+  ******************************************************************************
+  */ 
+
+#include "stm32f10x.h"
+#include "led.h"
+#include "bsp_exti.h"
+#include "delay.h"
+#include "GY-MCU90615.h"
+#include "OLED_I2C.h"
+#include "bsp_adc.h"
+#include "bsp_TiMbase.h" 
+#include "Step_Num.h"
+#include "./mpu6050/mpu6050.h"
+#include "bsp_GeneralTim.h" 
+
+extern int LED_SIGN;							//¹¦ÄÜÇĞ»»±êÖ¾	
+float ADC_ConvertedValueLocal; 			// ¾Ö²¿±äÁ¿£¬ÓÃÓÚ±£´æ×ª»»¼ÆËãºóµÄµçÑ¹Öµ 	 
+extern __IO unsigned char QS;       	// µ±·¢ÏÖÒ»¸ö½ÚÅÄÊ±£¬±äÎªÕæ
+int sign1=0, sign2=0;
+/**
+  * @brief  Ö÷º¯Êı
+  * @param  ÎŞ
+  * @retval ÎŞ
+  */ 
+int main(void)
+{
+	int i = 0;
+	/*ÏµÍ³Ê±ÖÓÉèÖÃ*/
+	delay_init(72);
+	
+	/* LED ¶Ë¿Ú³õÊ¼»¯ */
+	LED_Init();
+
+	/*³õÊ¼»¯´®¿ÚÒ»£¬ÓÃÓÚÎÂ¶È¼ì²â£¨½ÓÊÕÊı¾İ£©*/ 	
+	Usart1_Int(115200);
+
+	/*ÅäÖÃIIC1£¬ÓÃÓÚOLEDÏÔÊ¾ÆÁ*/
+	I2C_Configuration();	
+
+	/*³õÊ¼»¯OLED*/
+	OLED_Init();											
+	
+	MPU6050_Init();
+	
+	/*µÈ´ıÄ£¿é³õÊ¼»¯Íê³É*/
+	delay_ms(1);
+
+	/*¿ª»úÏÔÊ¾*/
+	LED_ON;
+	for(i=0;i<4;i++)
+	{
+		OLED_ShowCN(22+i*16,3,i);									//²âÊÔÏÔÊ¾"ÖÇÄÜÊÖ»·"
+	}
+	delay_ms(3000);
+	OLED_Fill(0x00);	//È«ÆÁÃğ
+	
+	
+	/*Íâ²¿ÖĞ¶Ï³õÊ¼»¯£¬ÓÃÓÚ¹¦ÄÜÇĞ»»*/
+	EXTI_Key_Config(); 
+	
+	/*ADC ³õÊ¼»¯*/ 
+	ADCx_Init();
+	
+	/*¶¨Ê±Æ÷³õÊ¼»¯*/
+	BASIC_TIM_Init();
+	
+	GENERAL_TIM_Init();	
+
+	LED_OFF;
+	/* µÈ´ıÖĞ¶Ï£¬ÓÉÓÚÊ¹ÓÃÖĞ¶Ï·½Ê½£¬CPU²»ÓÃÂÖÑ¯°´¼ü */
+	while(1)                            
+	{
+		switch(LED_SIGN%4)
+		{
+			/*³õÊ¼×´Ì¬*/
+			case 0 :
+				LED_OFF;
+				OLED_Fill(0x00);	//È«ÆÁÃğ
+				break;
+			/*¹¦ÄÜ1£º²âÁ¿Ìå±íÎÂ¶È*/
+			case 1 :
+				send_com(0x15);				//·¢ËÍÃüÁî
+				delay_ms(1000); 				//µÈ´ıÃüÁî½ÓÊÕÍê±Ï
+				temp_float();					//Êı¾İ×ª»»
+				OLED_Display_Temp();			//ÏÔÊ¾¶ÁÈ¡µÄÎÂ¶È
+				break;
+			/*¹¦ÄÜ2£º²âÁ¿ĞÄÂÊ*/
+			case 2 :
+				if (sign1 ==0)
+				{
+					OLED_Fill(0x00);	//È«ÆÁÃğ
+//					delay_ms(100); 
+				}
+				if (QS == 1)
+				{
+					sign1 = 1;
+					
+					OLED_Display_HeareRate();
+					delay_ms(1000); 				//µÈ´ıÃüÁî½ÓÊÕÍê±Ï
+					QS = 0;                    // ÏÂ´ÎÖØĞÂÉèÖÃÁ¿»¯µÄ×ÔÎÒ±êÖ¾
+				}
+				break;
+			/*¹¦ÄÜ3£º¼Æ²½*/
+			case 3 :
+				
+				if (sign2 == 0)
+				{
+					OLED_Fill(0x00);	//È«ÆÁÃğ
+//					delay_ms(100); 
+				}
+				sign2 = 1;
+				OLED_Display_StepNumber();
+				delay_ms(1000);
+				break;
+		}
+		
+	}
+}
+/*********************************************END OF FILE**********************/
+#include "led.h"
+#include "delay.h"
+#include "sys.h"
+#include "usart.h"
+#include "oled.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
+#include "adc.h"
+#include "DHT11.h"
+extern u8 hum_set;
+
+
+ int main(void)
+ { 
+	volatile u16 adcx;
+	u8 temp,hum,buf[20],buf1[20],times;
+	delay_init();	    	 //ÑÓÊ±º¯Êı³õÊ¼»¯	  
+	uart_init(9600);	 	//´®¿Ú³õÊ¼»¯Îª9600
+    OLED_Init();  //oled³¬ÊæÊÊ»¯  PB 3,4,5,6
+    DHT11_Init();  //PB 0
+    Adc_Init();  //PA1
+    Relay_Init();// PB 12,13
+	memset(buf,0,16);
+    memset(buf1,0,16);
+    Relay_Init(); 
+	while(1)
+	{
+    
+           // Relay=1;
+     	adcx=Get_Adc_Average(ADC_Channel_3,10);
+	    if(times>3)
+        {
+            times=0;
+            DHT11_Read_Data(&temp,&hum);
+            sprintf( buf,"T %d -- H %d",temp,hum-30);
+            OLED_ShowString(5,0,buf); 
+            sprintf(buf,"ADC %d ",adcx);
+            OLED_ShowString(5,20,buf);
+            memset(buf,0,16);            
+            OLED_Refresh_Gram();	 
+                    //ÏÔÊ¾Êı¾İ
+        }
+        if(hum_set>0)
+        {
+             if(adcx>1800+((100-hum_set)*23))  //1800  ËµÃ÷Êµ²âÒ»°ãadc ÔÚ1800 Ë®·Ö³ä×ã
+            {
+                Relay=0; 
+                Beep=1;       //·äÃùÆ÷ ºÍ¼ÌµçÆ÷¹²ÓÃÒ»¸öIO
+            }else
+            {
+                Relay=1;
+                Beep=0;
+              
+            }
+        }
+        delay_ms(1000);
+        
+        times++;
+	}						
+ 
+}
+					    
+#include "led.h"
+#include "delay.h"
+#include "sys.h"
+#include "usart.h"
+#include "oled.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
+#include "scan.h"
+extern u8 hum_set,Is_Ture;
+u8 out_state[3];
+
+/*
+         1.ÏÔÊ¾ÈıÂ·³¬Éù²¨µÄ¾àÀë
+         2.µÚ¶şÆÁÄ»ÉèÖÃ ±¨¾¯¾àÀë
+*/
+void Targ_GPIO()
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_10|GPIO_Pin_1;	 //PD3,PD6ÍÆÍìÊä³ö  
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //ÍÆÍìÊä³ö
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//ËÙ¶È50MHz
+ 	GPIO_Init(GPIOB, &GPIO_InitStructure);	  //³õÊ¼»¯GPIOD3,6
+    
+ 	GPIO_ResetBits(GPIOB,GPIO_Pin_0|GPIO_Pin_10|GPIO_Pin_1);	//PD3,PD6 Êä³ö¸ß
+}
+extern volatile u8  TIM4_CAPTURE_STA,state;	//ÊäÈë²¶»ñ×´Ì¬		    				
+extern volatile u16 TIM4_CAPTURE_VAL;	//ÊäÈë²¶»ñÖµ
+float distance_circulate(u32 date,u8 state)
+{
+    float dis;
+    if(state>0xc1)
+        state=0xc1;
+    date+=(state-0xc0)*65535;
+    date/=2;
+    dis=(date*340)/10000.0;
+    return dis;
+}
+u8 dis_warn(float warn,u8 dis)
+{
+  if((u8)warn<dis)
+  {
+    TIM_Cmd(TIM2,ENABLE);
+    TIM2->PSC=719;
+    
+      if((u8)warn+2<dis)
+       TIM2->PSC=366;
+    if((u8)warn+5<dis)
+        TIM2->PSC=71;
+    return 1;
+  }
+  return 0;
+}
+ int main(void)
+ { 
+    u32 distance[3];
+    float dis_save[3];
+     float dis_temp;
+    u8 distance_warning=10;
+	volatile u8 Key_vaule,num_pos=0;
+    
+	u8 buf[20],buf1[20],Is_distance_set=0,Heart_bit;
+	delay_init();	    	 //ÑÓÊ±º¯Êı³õÊ¼»¯	  
+	TIM4_Cap_Init(0xffff,71);
+    
+  //  TIM4_Int_Init(0xffff,71);
+    Key_GPIO_Init();  // PA 0-7
+     
+   // TIM4_Cap_Init(0xffff,71);          //ÈıÂ·³¬Éù²¨³õÊ¼»¯ PB 7-9
+     OLED_Init();  //oled³¬ÊæÊÊ»¯  PB 3,4,5,6
+    Targ_GPIO();
+	memset(buf,0,16);
+    memset(buf1,0,16);
+    TIME_INIT(); 
+    TIM_Cmd(TIM4,ENABLE ); 	//Ê¹ÄÜ¶¨Ê±Æ÷2
+	while(1)
+	{
+      Key_vaule=Key_Scan();
+        
+       if(Heart_bit>100)
+       {
+          
+ 
+            state=1;
+            PBout(0)=1;
+            delay_us(30);
+            PBout(0)=0;
+            TIM4_CAPTURE_VAL=0;
+            while(TIM4_CAPTURE_STA<0xc0);
+           out_state[0]=TIM4_CAPTURE_STA;
+            distance[0]=TIM4_CAPTURE_VAL;
+            TIM4_CAPTURE_STA=0; //ÖØÖÃ±êÖ¾Î»
+            state=2;
+            PBout(1)=1;
+            delay_us(30);
+            PBout(1)=0;
+            TIM4_CAPTURE_VAL=0;
+            while(TIM4_CAPTURE_STA<0xc0);
+           out_state[1]=TIM4_CAPTURE_STA;
+            distance[1]=TIM4_CAPTURE_VAL;
+            TIM4_CAPTURE_STA=0;  //ÖØÖÃ±êÖ¾Î»
+            state=3;
+            PBout(10)=1;
+            delay_us(30);
+            PBout(10)=0;
+            TIM4_CAPTURE_VAL=0;
+           while(TIM4_CAPTURE_STA<0xc0);
+           out_state[2]=TIM4_CAPTURE_STA;
+           distance[2]=TIM4_CAPTURE_VAL;
+           TIM4_CAPTURE_STA=0;  //ÖØÖÃ±êÖ¾Î»
+       }
+      if(Key_vaule=='A')  
+      {
+        Is_distance_set=1;
+        OLED_Clear();//ÇåÆÁ ÏÔÊ¾ÉèÖÃµÄ¾àÀë
+        OLED_ShowString(5,0,"setting/cm");      
+        OLED_Refresh_Gram();	 
+          
+      }
+      if(Key_vaule>='0'&&Key_vaule<='9'&&Is_distance_set==1)
+      {
+        buf[num_pos++]=Key_vaule;
+        OLED_ShowString(5,20,buf);  //ÏÔÊ¾°´¼ü
+        OLED_Refresh_Gram();
+        if(num_pos>3)
+            num_pos=0;
+      }
+      if(Key_vaule=='#'&&(Is_distance_set==1))  //ÉèÖÃ¾àÀë
+      {
+        Is_distance_set=0;
+        if(strlen(buf)>0)
+            distance_warning=atoi(buf);
+        memset(buf,0,10);
+        delay_ms(1000);
+        OLED_Clear();
+        Heart_bit=111;  //ÎªÁËµÈÏÂÄÜ¿ìËÙ¿´µ½¾àÀë
+      }
+     
+      
+     if(Heart_bit>100&&(Is_distance_set==0))
+     {
+        Heart_bit=0;
+         sprintf(buf1,"CH1:%.1f cm",dis_save[0]=distance_circulate(distance[0],out_state[0]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,0,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+         sprintf(buf1,"CH2:%.1f cm",dis_save[1]=distance_circulate(distance[1],out_state[1]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,16,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+         sprintf(buf1,"CH3:%.1f cm",dis_save[2]=distance_circulate(distance[2],out_state[2]));               //²âÁ¿¾àÀë
+         OLED_ShowString(5,32,buf1);      
+         OLED_Refresh_Gram();	
+         memset(buf1,0,strlen(buf1)+1);
+     }
+     /*-----------------Èı¸öµÈ¼¶----------------------*/
+     if(dis_save[0]<distance_warning||dis_save[1]<distance_warning||dis_save[2]<distance_warning)
+     {
+        dis_warn(dis_save[0],distance_warning);
+        dis_warn(dis_save[1],distance_warning);
+        dis_warn(dis_save[2],distance_warning);
+     }else{
+     TIM_Cmd(TIM2,DISABLE);  //DISABLE
+     }
+//     dis_temp=0;
+//     dis_temp+=dis_save[0];
+//     dis_temp+=dis_save[1];
+//     dis_temp+=dis_save[2];
+//     if((int)dis_temp<distance_warning*3)
+//     {
+//        TIM_Cmd(TIM2,ENABLE);
+//        if((int)dis_temp<(distance_warning*3-20))
+//         TIM2->PSC=199;
+//        if((int)dis_temp<(distance_warning*3-30))
+//         TIM2->PSC=71;
+//     }else
+//     {
+//     
+//      TIM_Cmd(TIM2,DISABLE);  //DISABLE
+//     }
+     Heart_bit++;
+     delay_ms(10);   
+    }
+    
+}
+//TIM_SetCompare2(TIM1,light_table[pre_t][1]);
+#include "stm32f10x.h"
+#include "led.h"
+#include "key.h"
+#include "sys.h"
+#include "exti.h"
+#include "usart.h"
+#include "timer.h"
+#include "delay.h"
+#include <string.h>
+#include "adc.h"
+#include "oled.h"
+#include "oledshow.h"
+#include "temperature.h"
+#include "mpu6050.h"
+#include "step.h"
+
+extern int BPM;          //ĞÄÂÊÖµ        
+
+int main()
+{
+	Led_Init();		//³õÊ¼»¯LEDµÆ
+	OLED_Init();	//³õÊ¼»¯OLED
+	Usart_X_Init(USART1,72,115200);	//³õÊ¼»¯´®¿Ú1
+	ADC1_Init();	//ADC³õÊ¼»¯
+	TimerX_Init(TIM3,72,2000);  //¶¨Ê±ÖÜÆÚ2ms ÓÃÓÚĞÄÂÊ¼ì²â
+	
+	OLED_Clear();//oledÇåÆÁ
+	while(1)
+	{
+		OLEDPag1();
+	}
+}
+
+
+å…¶è¯´æ˜å¯¹äºæ ˆæ¥è®²ï¼Œä½¿ç”¨äº†å¤šå°‘å†…å­˜ï¼Œå°±å ç”¨å¤šå°‘ç‰©ç†é¡µé¢ï¼Œè¿™ä¸å †æ¥è®²æ˜¯ä¸ä¸€æ ·çš„ã€‚
+ä¸å¤ªæ¸…æ¥šä¸ºä»€ä¹ˆä¼šè¿™ä¹ˆè®¾è®¡ï¼Œæˆ‘çŒœæµ‹å¯èƒ½æœ‰ä¸¤æ–¹é¢çš„åŸå› ï¼š
+1ã€ ç¡®å®æ²¡æœ‰åˆé€‚çš„äº‹ä»¶æ¥è§¦å‘æ ˆæ®µå†…å­˜çš„å›æ”¶ã€‚
+2ã€ Linux çš„æ ˆæ®µè™½ç„¶åœ¨å‡½æ•°é€€å‡ºæ—¶ä¸ä¼šè¢«é‡Šæ”¾ï¼Œä½†åœ¨ä¸‹æ¬¡è¿›å…¥å‡½æ•°æ—¶å¯ä»¥å¤ç”¨ï¼Œå› æ­¤å¯èƒ½
+è®¤ä¸º Linux çš„æ ˆæ®µå†…å­˜é‡Šæ”¾é—®é¢˜å¯¹äºæ•´ä¸ªè¿›ç¨‹çš„å†…å­˜ä½¿ç”¨å½±å“ä¸å¤§ã€‚
+è€Œå¯¹æˆ‘ä»¬æ¥è®²ï¼Œæ…ç”¨é€’å½’å‡½æ•°åŠåœ¨å‡½æ•°å†…åˆ†é…å¤§å—å†…å­˜ï¼Œå› ä¸ºé‚£æ˜¯æœ‰ä»£ä»·çš„ã€‚
+è¯´æ˜è¯¥å­—ç¬¦ä½äºå †æ®µï¼Œç¨‹åºå‘ç°åœ¨æ ˆçš„é¡¶éƒ¨æ— æ³•ä¿å­˜æ–°çš„ç¯å¢ƒå˜é‡ï¼Œå…¶ä¾¿åœ¨å †æ®µç”³è¯·äº†
+ä¸€æ®µå†…å­˜ç”¨æ¥ä¿å­˜ç¯å¢ƒå˜é‡ã€‚
+2ã€ ç¯å¢ƒå˜é‡å­—ç¬¦ä¸²æŒ‡é’ˆæ•°ç»„çš„åœ°å€ä» 0xbefffeac å˜ä¸º 0x11050ã€‚
+å› ä¸ºç¯å¢ƒå˜é‡å­—ç¬¦ä¸²æŒ‡é’ˆæ•°ç»„åˆå¤šäº†ä¸€ä¸ªæŒ‡é’ˆï¼ŒåŸæ¥çš„æ ˆçš„é¡¶éƒ¨å°±æ²¡æœ‰ç©ºé—´ä¿å­˜äº†ï¼Œæ‰€
+ä»¥è¿›ç¨‹åœ¨å †æ®µåˆç”³è¯·äº†ä¸€æ®µå†…å­˜ï¼Œç”¨æ¥ä¿å­˜æ‰€æœ‰çš„ç¯å¢ƒå˜é‡æŒ‡é’ˆã€‚
+å› æ­¤å¦‚æœè¿›ç¨‹æ–°å¢ä¸€ä¸ªç¯å¢ƒå˜é‡ï¼Œç³»ç»Ÿå°†æ¶ˆè€—çš„å†…å­˜=4Ã—ç³»ç»Ÿç¯å¢ƒå˜é‡æ€»æ•°+æ–°å¢ç¯å¢ƒ
+å˜é‡çš„é•¿åº¦+1ã€‚
+æˆ‘ä»¬å¯ä»¥é€šè¿‡ glibc çš„æºç ï¼Œæ¥è·å¾—ç›¸å…³çš„ä¿¡æ¯ï¼Œè¯¦ç»†å¯ä»¥å‚è§/glibc/sysdeps/generic/setenv.c
+çš„__add_to_environ å‡½æ•°ã€‚
+å½“æˆ‘ä»¬æ›´æ–°ä¸€ä¸ªç¯å¢ƒå˜é‡æ—¶ï¼Œlibc å¹¶ä¸ä¼šå»åˆ¤æ–­å¯¹åº”çš„ç¯å¢ƒå˜é‡æ˜¯å¦ä¿å­˜åœ¨å †ä¸­ï¼Œç„¶åå»è¯•
+å›¾é‡Šæ”¾å®ƒï¼›è€Œæ˜¯ç›´æ¥å¦å¤–åˆ†é…ä¸€å—å †å†…å­˜ï¼Œæ¥ä¿å­˜æ–°çš„ç¯å¢ƒå˜é‡å€¼ï¼Œè¿™æ—¶ä¼šæœ‰ä¸€ç‚¹çš„å†…å­˜æ³„
+æ¼ï¼Œå¥½åœ¨å¹¶ä¸ä¸¥é‡ã€‚
+å®ƒå°† ELF æ–‡ä»¶ä¸­æ‰€éœ€è¦ä¿å­˜çš„ä¿¡æ¯æŒ‰ç…§ä¿¡æ¯çš„ç±»å‹ã€æ ¼å¼çš„ä¸åŒï¼Œåˆ†åˆ«ä¿å­˜åœ¨æ–‡ä»¶çš„ä¸åŒ
+åŒºåŸŸã€‚è¿™äº›åŒºåŸŸï¼Œä¸­æ–‡æˆ‘ä»¬å«å®ƒâ€œèŠ‚â€ï¼Œè‹±æ–‡ç§°ä¹‹ä¸ºâ€œsectionâ€ã€‚ä¸ºäº†è®¿é—®è¿™äº›èŠ‚åŒºï¼Œåœ¨ ELF
+æ–‡ä»¶ä¸­åˆåŒ…å«äº†ä¸€ä¸ªè¿™äº›èŠ‚åŒºä½ç½®çš„ç´¢å¼•ï¼ŒèŠ‚åŒºå¤´éƒ¨è¡¨ section headersã€‚
+å¦ä¸€ç§ä¸»è¦æ˜¯é¢å‘ç¨‹åºçš„åŠ è½½å’Œè¿è¡Œï¼Œç§°ä¹‹ä¸ºæ‰§è¡Œè§†å›¾ã€‚
+åœ¨æ‰§è¡Œè§†å›¾ä¸­ï¼Œå®ƒåˆä¼šå¯¹å‰é¢æåˆ°çš„ sectionï¼ŒæŒ‰ç…§è¿è¡Œæ—¶çš„éœ€è¦ï¼Œåˆ’åˆ†ä¸ºä¸åŒçš„ç»„ï¼Œä¸­æ–‡
+ç§°ä¹‹ä¸ºâ€œæ®µâ€ï¼Œè‹±æ–‡ç§°ä¹‹ä¸ºâ€œsegmentâ€ã€‚ä¸ºäº†è¯´æ˜æ®µï¼ˆsegmentï¼‰ä¸èŠ‚ï¼ˆsectionï¼‰çš„å…³ç³»ï¼Œåœ¨
+ELF æ–‡ä»¶ä¸­åˆå¼•å…¥äº†ç¨‹åºå¤´éƒ¨è¡¨ program headersã€‚
+è€Œåœ¨æ–‡ä»¶å¼€å§‹å¤„æ˜¯ä¸€ä¸ª ELF å¤´éƒ¨ï¼ˆELF Headerï¼‰
+å¯ä»¥çœ‹åˆ°ä»åŸæ¥çš„ 9172 ä¸ªå­—èŠ‚ï¼Œç¼©å‡åˆ° 3628ï¼Œæ•ˆæœå¾ˆæ˜æ˜¾ï¼Œä¸æ˜¯å—ã€‚
+4ã€ æˆ‘ä»¬ä½¿ç”¨ readelf æ¥æŸ¥çœ‹ä¿®æ”¹åçš„ ELF æ–‡ä»¶çš„èŠ‚çš„æƒ…å†µã€‚
+
+æˆ‘ä»¬æˆåŠŸçš„å°† section çš„æ•°é‡ä» 39 ä¸ªå‡å°‘åˆ° 29 ä¸ªã€‚
+5ã€ æˆ‘ä»¬è¿˜å¯ä»¥æŠŠ.comment èŠ‚ä» ELF æ–‡ä»¶ä¸­åˆ é™¤ã€‚
+>strip --remove-section=.comment hello
+.bssï¼š
+ä¸»è¦ç”¨æ¥ä¿å­˜æœªåˆå§‹åŒ–æˆ–åˆå§‹åŒ–ä¸ä¸º 0 çš„å…¨å±€å˜é‡å’Œé™æ€å˜é‡ã€‚
+.dataï¼š
+ä¸»è¦ç”¨æ¥ä¿å­˜åˆå§‹åŒ–ä¸ä¸º 0 çš„å…¨å±€å˜é‡æˆ–é™æ€å˜é‡ã€‚
+ä¸ºä»€ä¹ˆåˆå€¼æ˜¯å¦ä¸º 0ï¼Œå˜å¾—å¦‚æ­¤å…³é”®å‘¢ï¼Ÿ
+è¿™ä¸»è¦æ˜¯å› ä¸º loader å¯ä»¥å¯¹åˆå€¼ä¸º 0 çš„å˜é‡é‡‡å–ä¸€å®šçš„ä¼˜åŒ–æªæ–½ã€‚
+åœ¨ g++ä¸­ï¼Œconst å£°æ˜çš„æ ‡è¯†ç¬¦ï¼Œå°†å…·æœ‰å†…éƒ¨é“¾æ¥å±æ€§ï¼Œè¿™æ˜¯ä¸ gcc æ‰€ä¸åŒçš„ã€‚è¿™æ ·åœ¨ç¼–è¯‘
+a1.c æ—¶ï¼Œå…¨å±€å˜é‡ m åªæ˜¯åœ¨ a1.c ä¸­ç”Ÿæ•ˆï¼Œå…¶ä»–çš„ç¼–è¯‘å•å…ƒï¼Œçœ‹ä¸åˆ°è¯¥å…¨å±€å˜é‡ mï¼›åœ¨ç¼–è¯‘
+a2.c æ—¶ï¼Œç¼–è¯‘å™¨åˆç”Ÿæˆä¸€ä¸ªå…¨å±€å˜é‡ mï¼Œå…¶åªæ˜¯åœ¨ a2.c ä¸­ç”Ÿæ•ˆã€‚
+æ‰€ä»¥ï¼Œæˆ‘ä»¬æ‰ä¼šçœ‹åˆ°åœ¨ç¼–è¯‘å‡ºæ¥çš„ hello ä¸­ï¼Œæœ‰ä¸¤ä¸ªéƒ½å« m çš„ç¬¦å·
+00008540 r m
+00008544 r m
+å®ƒä»¬æŒ‡å‘ä¸åŒçš„åœ°å€ã€‚
+ä¸ºå…¼å®¹æ•°æ®æ€»çº¿å®½åº¦ä¸º 16 ä½çš„åº”ç”¨ç³»ç»Ÿï¼Œ ARM ä½“ç³»ç»“æ„é™¤äº†æ”¯æŒæ‰§è¡Œæ•ˆç‡å¾ˆé«˜çš„ 32
+ä½ ARM æŒ‡ä»¤é›†ä»¥å¤–ï¼ŒåŒæ—¶æ”¯æŒ 16 ä½çš„ Thumb æŒ‡ä»¤é›†ã€‚ Thumb æŒ‡ä»¤é›†æ˜¯ ARM æŒ‡ä»¤
+é›†çš„ä¸€ä¸ªå­é›†ï¼Œå…è®¸æŒ‡ä»¤ç¼–ç ä¸º 16 ä½çš„é•¿åº¦ã€‚ä¸ç­‰ä»·çš„ 32 ä½ä»£ç ç›¸æ¯”è¾ƒï¼Œ Thumb æŒ‡ä»¤
+é›†åœ¨ä¿ç•™ 32 ä»£ç ä¼˜åŠ¿çš„åŒæ—¶ï¼Œå¤§å¤§çš„èŠ‚çœäº†ç³»ç»Ÿçš„å­˜å‚¨ç©ºé—´ã€‚
+æ‰€æœ‰çš„ Thumb æŒ‡ä»¤éƒ½æœ‰å¯¹åº”çš„ ARM æŒ‡ä»¤ï¼Œè€Œä¸” Thumb çš„ç¼–ç¨‹æ¨¡å‹ä¹Ÿå¯¹åº”äº ARM çš„
+ç¼–ç¨‹æ¨¡å‹ï¼Œåœ¨åº”ç”¨ç¨‹åºçš„ç¼–å†™è¿‡ç¨‹ä¸­ï¼Œåªè¦éµå¾ªä¸€å®šè°ƒç”¨çš„è§„åˆ™ï¼Œ Thumb å­ç¨‹åºå’Œ ARM
+å­ç¨‹åºå°±å¯ä»¥äº’ç›¸è°ƒç”¨ã€‚å½“å¤„ç†å™¨åœ¨æ‰§è¡Œ ARM ç¨‹åºæ®µæ—¶ï¼Œç§° ARM å¤„ç†å™¨å¤„äº ARM å·¥
+ä½œçŠ¶æ€ï¼Œå½“å¤„ç†å™¨åœ¨æ‰§è¡Œ Thumb ç¨‹åºæ®µæ—¶ï¼Œç§° ARM å¤„ç†å™¨å¤„äº Thumb å·¥ä½œçŠ¶æ€ã€‚
+ä¸ ARM æŒ‡ä»¤é›†ç›¸æ¯”è¾ƒï¼Œ Thumb æŒ‡ä»¤é›†ä¸­çš„æ•°æ®å¤„ç†æŒ‡ä»¤çš„æ“ä½œæ•°ä»ç„¶æ˜¯ 32 ä½ï¼ŒæŒ‡ä»¤
+åœ°å€ä¹Ÿä¸º 32 ä½ï¼Œä½† Thumb æŒ‡ä»¤é›†ä¸ºå®ç° 16 ä½çš„æŒ‡ä»¤é•¿åº¦ï¼Œèˆå¼ƒäº† ARM æŒ‡ä»¤é›†çš„ä¸€äº›
+ç‰¹æ€§ï¼Œå¦‚å¤§å¤šæ•°çš„ Thumb æŒ‡ä»¤æ˜¯æ— æ¡ä»¶æ‰§è¡Œçš„ï¼Œè€Œå‡ ä¹æ‰€æœ‰çš„ ARM æŒ‡ä»¤éƒ½æ˜¯æœ‰æ¡ä»¶æ‰§è¡Œ
+çš„ï¼›å¤§å¤šæ•°çš„ Thumb æ•°æ®å¤„ç†æŒ‡ä»¤çš„ç›®çš„å¯„å­˜å™¨ä¸å…¶ä¸­ä¸€ä¸ªæºå¯„å­˜å™¨ç›¸åŒã€‚
+Thumb æŒ‡ä»¤çš„ç¼–è¯‘
+
+hello.c
+#include <stdlib.h>
+#include <stdio.h>
+int main()
+{
+printf("hello world!\n");
+return 0;
+}
+ç¼–è¯‘ï¼š
+#gcc -o hello -mthumb a.c
+æˆ‘ä»¬å°† a1.c ç¼–è¯‘æˆ thumb æŒ‡ä»¤:
+#gcc -o a1.o -c -mthumb a1.c
+å°† a2.c ç¼–è¯‘æˆ ARM æŒ‡ä»¤ï¼š
+#gcc -o a2.o -c a2.c'
+å°†å…¶é“¾æ¥æˆä¸€ä¸ªå¯æ‰§è¡Œæ–‡ä»¶
+#gcc -o hello a1.o a2.o
+æˆ‘ä»¬ä¸‹è½½åˆ°è®¾å¤‡ä¸Šï¼Œè¿è¡Œã€‚
+# ./hello
+
+ä»ä¸Šé¢æˆ‘ä»¬å¯ä»¥çœ‹åˆ°ï¼Œä¸ºäº† funca ä¸º Thumb æŒ‡ä»¤ï¼Œfuncb å’Œ main ä¸º ARM æŒ‡ä»¤ï¼Œä¸ºäº†æ”¯æŒ
+ARM æŒ‡ä»¤å’Œ Thumb æŒ‡ä»¤çš„è°ƒç”¨ï¼ŒGCC åˆå®‰æ’ç”Ÿæˆäº† 3 ä¸ªå‡½æ•°__funcb_from_thumbã€
+__funcb_change_to_arm å’Œ__funca_from_armã€‚
+åŠ¨æ€åº“æœ‰ä¸¤ç§å…¶åŠ è½½æ–¹å¼ï¼š
+1ã€é™æ€åŠ è½½
+åœ¨ç¨‹åºç¼–è¯‘çš„æ—¶å€™åŠ ä¸Šâ€œ-lâ€é€‰é¡¹ï¼ŒæŒ‡å®šå…¶æ‰€ä¾èµ–çš„åŠ¨æ€åº“ï¼Œè¿™ä¸ªåº“çš„åå­—å°†è®°å½•åœ¨ ELF æ–‡
+ä»¶çš„.dynamic èŠ‚ã€‚åœ¨ç¨‹åºè¿è¡Œæ—¶ï¼Œloader ä¼šé¢„å…ˆå°†ç¨‹åºæ‰€ä¾èµ–çš„æ‰€æœ‰åŠ¨æ€åº“éƒ½åŠ è½½åœ¨è¿›ç¨‹ç©º
+é—´ä¸­ã€‚
+é™æ€åŠ è½½çš„ä¼˜ç‚¹ï¼š
+åŠ¨æ€åº“çš„æ¥å£è°ƒç”¨ç®€å•ï¼Œå¯ä»¥ç›´æ¥è°ƒç”¨ã€‚
+ç¼ºç‚¹ï¼š
+åŠ¨æ€åº“çš„ç”Ÿå­˜å‘¨æœŸç­‰äºè¿›ç¨‹çš„ç”Ÿå­˜å‘¨æœŸï¼Œå…¶åŠ è½½æ—¶æœºä¸çµæ´»ã€‚
+2ã€åŠ¨æ€åŠ è½½
+æˆ‘ä»¬è¿˜å¯ä»¥åœ¨ç¨‹åºä¸­ç¼–ç æ¥æŒ‡å®šåŠ è½½åŠ¨æ€åº“çš„æ—¶æœºï¼Œç»å¸¸ä½¿ç”¨çš„å‡½æ•° dlopen dlcloseã€‚
+åŠ¨æ€åŠ è½½çš„ä¼˜ç‚¹ï¼š
+åŠ¨æ€åº“åŠ è½½çš„æ—¶æœºéå¸¸çµæ´»ï¼Œå¯ä»¥éå¸¸ç»†è‡´çš„å®šä¹‰åŠ¨æ€åº“çš„ç”Ÿå­˜å‘¨æœŸã€‚
+åŠ¨æ€åŠ è½½çš„ç¼ºç‚¹:
+åŠ¨æ€åº“çš„æ¥å£è°ƒç”¨èµ·æ¥æ¯”è¾ƒéº»çƒ¦ï¼ŒåŒæ—¶è¿˜è¦å…³æ³¨åŠ¨æ€åº“çš„ç”Ÿå­˜å‘¨æœŸã€‚
+>gcc â€“L./ -la hello.c â€“o hello
+>gcc â€“shared â€“fPIC
+
+a.c â€“o liba.so
+è™½ç„¶æˆ‘ä»¬æ²¡æœ‰ä½¿ç”¨ bss æ•°æ®ï¼Œä½†ç³»ç»Ÿè¿˜æ˜¯å ç”¨äº†ç‰©ç†é¡µé¢ï¼Œè¿™å¯èƒ½ä¸è¿›ç¨‹å¤åˆ¶å…±äº«åº“çš„æ•°æ®
+æ®µæ‰€é€ æˆçš„ã€‚
+å› æ­¤ï¼Œä¸è¦åœ¨è¿›ç¨‹ä¸­é€šè¿‡ extern çš„æ–¹å¼å¼•ç”¨å…±äº«åº“ä¸­çš„å…¨å±€å˜é‡ï¼›ä¸€æ—¦å¼•ç”¨ï¼Œä¸è®ºå…¶æ˜¯å¦ä½¿
+ç”¨ï¼Œéƒ½å°†ä¼šå ç”¨ç‰©ç†å†…å­˜ã€‚åŒæ—¶è¿˜ä¼šå¢åŠ ç³»ç»Ÿå¯åŠ¨æ—¶ï¼Œå†…å­˜å¤åˆ¶çš„ä»£ä»·ï¼Œä¼šå¯¼è‡´æ€§èƒ½çš„ä¸‹é™ã€‚
+æˆ‘ä»¬ä¹Ÿæ³¨æ„åˆ°ï¼Œæ•°æ®æ®µçš„åœ°å€ä¸å †æ ˆæ®µçš„åœ°å€æ˜¯è¿ç€çš„ï¼Œè¿™ä¹Ÿå°±æ˜¯è¯´ï¼Œå½“ä¸»ç¨‹åºé“¾æ¥äº†ä¸€ä¸ª
+å…±äº«åº“çš„å…¨å±€å˜é‡æ—¶ï¼Œå®ƒä¼šä¸ºè¯¥å˜é‡å®šä¹‰ä¸€ä¸ªåœ°å€ï¼Œä½†å®ƒä¸ä¼šå½±å“æ•°æ®æ®µçš„å¤§å°ï¼Œå°†è¯¥å€¼æ‹·
+è´åˆ°è¿™ä¸ªåœ°å€ä¸Šã€‚å¦‚æœåœ°å€æ®µä¸å¤Ÿç”¨ï¼Œå®ƒå°†å ç”¨å †æ®µï¼Œç³»ç»Ÿå°†è°ƒç”¨ brk æ¥æ‰©å±•å †æ®µã€‚
+æˆ‘ä»¬é€šè¿‡ strace å¯ä»¥æ¥éªŒè¯è¿™ä¸ªè§‚ç‚¹ï¼š
+å› æ­¤ï¼Œæˆ‘ä»¬å¯ä»¥é€šè¿‡è¿›ç¨‹çš„.rel.dyn å’Œ.rel.pltsection å’Œå…±äº«åº“ä¸­çš„ç¬¦å·ï¼Œæ‰¾å‡ºè¿›ç¨‹ä¸å…±äº«åº“ä¹‹
+é—´çš„è°ƒç”¨å…³ç³»ã€‚
+1ã€ å¦‚æœå…¨å±€å˜é‡å£°æ˜åœ¨è¿›ç¨‹ä¸­ï¼Œåœ¨å…±äº«åº“ä¸­ä½¿ç”¨ï¼Œåˆ™è¯¥å˜é‡ä½äºè¿›ç¨‹çš„æ•°æ®æ®µã€‚
+2ã€ å¦‚æœå…¨å±€å˜é‡å£°æ˜åœ¨å…±äº«åº“ä¸­ï¼Œåœ¨è¿›ç¨‹ä¸­ä½¿ç”¨ï¼Œåˆ™è¯¥å˜é‡è¢«å¤åˆ¶åˆ°è¿›ç¨‹çš„æ•°æ®æ®µï¼ŒåŒæ—¶
+ä¿®æ”¹ä½¿ç”¨è¯¥å˜é‡çš„å…±äº«åº“çš„æŒ‡å‘ã€‚
+3ã€ å¦‚æœè¯¥å˜é‡åœ¨å…±äº«åº“ä¸­å£°æ˜ï¼Œåœ¨å…±äº«åº“ä¸­ä½¿ç”¨ï¼Œåˆ™è¯¥å˜é‡ä½äºå£°æ˜å®ƒçš„å…±äº«åº“çš„æ•°æ®æ®µ
+ä¸­ã€‚
+PIC ä½¿.so æ–‡ä»¶çš„ä»£ç æ®µå˜ä¸ºçœŸæ­£æ„ä¹‰ä¸Šçš„å…±äº«ã€‚
+å¦‚æœä¸åŠ -fPIC,åˆ™åŠ è½½.so æ–‡ä»¶çš„ä»£ç æ®µæ—¶,ä»£ç æ®µå¼•ç”¨çš„æ•°æ®å¯¹è±¡éœ€è¦é‡å®šä½, é‡å®šä½ä¼šä¿®æ”¹
+ä»£ç æ®µçš„å†…å®¹,è¿™å°±é€ æˆæ¯ä¸ªä½¿ç”¨è¿™ä¸ª.so æ–‡ä»¶ä»£ç æ®µçš„è¿›ç¨‹åœ¨å†…æ ¸é‡Œéƒ½ä¼šç”Ÿæˆè¿™ä¸ª.so æ–‡ä»¶
+ä»£ç æ®µçš„ copy.æ¯ä¸ª copy éƒ½ä¸ä¸€æ ·,å–å†³äºè¿™ä¸ª.so æ–‡ä»¶ä»£ç æ®µå’Œæ•°æ®æ®µå†…å­˜æ˜ å°„çš„ä½ç½®.
+æˆ‘ä»¬å¯ä»¥ä½¿ç”¨ ulimit å‘½ä»¤ï¼Œæ¥æŸ¥çœ‹å’Œè®¾ç½®ä¸€ä¸ªè¿›ç¨‹çš„æ ˆç©ºé—´çš„å¤§å°ï¼š
+ä¸€èˆ¬æƒ…å†µä¸‹ï¼Œä¸€ä¸ªè¿›ç¨‹æ‰€æ‹¥æœ‰çš„çº¿ç¨‹æ•°é‡å¾ˆå°ï¼Œå¤§æ¦‚ 10 ä¸ªä»¥å†…ï¼Œå¦‚æœæ¯ä¸ªçº¿ç¨‹çš„æ ˆä½¿ç”¨ 20K
+çš„å†…å­˜çš„è¯ï¼Œé‚£ä¹ˆæ€»å…±æ¶ˆè€— 200K çš„å†…å­˜ï¼Œå¯¹ç³»ç»Ÿçš„å½±å“è¿˜æ˜¯å¾ˆå°çš„ã€‚
+æ³¨ï¼šæ¯ä¸€ä¸ªå…±äº«å†…å­˜åŒºéƒ½æœ‰ä¸€ä¸ªæ§åˆ¶ç»“æ„ struct shmid_kernelï¼Œshmid_kernel æ˜¯å…±äº«å†…å­˜åŒºåŸŸ
+ä¸­éå¸¸é‡è¦çš„ä¸€ä¸ªæ•°æ®ç»“æ„ï¼Œå®ƒæ˜¯å­˜å‚¨ç®¡ç†å’Œæ–‡ä»¶ç³»ç»Ÿç»“åˆèµ·æ¥çš„æ¡¥æ¢ï¼Œå®šä¹‰å¦‚ä¸‹ï¼š
+æ­£å¦‚æ¶ˆæ¯é˜Ÿåˆ—å’Œä¿¡å·ç¯ä¸€æ ·ï¼Œå†…æ ¸é€šè¿‡æ•°æ®ç»“æ„ struct ipc_ids shm_ids ç»´æŠ¤ç³»ç»Ÿä¸­çš„æ‰€æœ‰å…±
+äº«å†…å­˜åŒºåŸŸã€‚ä¸Šå›¾ä¸­çš„ shm_ids.entries å˜é‡æŒ‡å‘ä¸€ä¸ª ipc_id ç»“æ„æ•°ç»„ï¼Œè€Œæ¯ä¸ª ipc_id ç»“æ„æ•°
+ä¸ºä»€ä¹ˆæˆ‘çš„ç¨‹åºä½¿ç”¨äº†è¿™ä¹ˆå¤šçš„å†…å­˜ï¼Ÿ
+æ€æ ·æ£€æµ‹å†…å­˜æ³„æ¼ï¼Ÿ
+1ã€ åŠ å…¥å¤´æ–‡ä»¶<mcheck.h>
+2ã€ åœ¨éœ€è¦å†…å­˜æ³„æ¼æ£€æŸ¥çš„ä»£ç çš„å¼€å§‹è°ƒç”¨ void mtrace()ï¼Œåœ¨éœ€è¦å†…å­˜æ³„æ¼æ£€æŸ¥ä»£ç çš„ç»“æŸ
+è°ƒç”¨ void muntrace()ã€‚
+ä¸€èˆ¬æƒ…å†µä¸‹ä¸è¦è°ƒç”¨ muntraceï¼Œè€Œè®©ç¨‹åºè‡ªç„¶ç»“æŸï¼Œå› ä¸ºå¯èƒ½æœ‰äº›å†…å­˜é‡Šæ”¾ä»£ç è¦åˆ°
+muntrace ä¹‹åè¿è¡Œã€‚
+3ã€ ç”¨ debug æ¨¡å¼ç¼–è¯‘æ£€æŸ¥ä»£ç ï¼ˆ-g æˆ–-ggdbï¼‰
+4ã€ åœ¨è¿è¡Œç¨‹åºé’±ï¼Œå…ˆè®¾ç½®ç¯å¢ƒå˜é‡ MALLOC_TRACE ä¸ºä¸€æ–‡ä»¶åï¼Œè¿™ä¸€æ–‡ä»¶å°†å­˜æœ‰å†…å­˜
+åˆ†é…ä¿¡æ¯ã€‚
+5ã€ è¿è¡Œç¨‹åºï¼Œå†…å­˜åˆ†é…çš„ log å°†è¾“å‡ºåˆ° MALLOC_TRACE æ‰€æŒ‡å‘çš„æ–‡ä»¶ä¸­ã€‚
+åœ¨ glibc ä¸­ï¼Œæä¾›äº† mallocã€freeã€reallocã€memalign çš„é’©å­å‡½æ•°ã€‚
+ä½ å¯ä»¥æŒ‰ç…§é’©å­å‡½æ•°çš„åŸå‹ï¼Œå®šä¹‰è‡ªå·±çš„å‡½æ•°ï¼Œå¹¶åœ¨ glibc ä¸­è®¾ç½®ç›¸åº”çš„é’©å­å‡½æ•°ï¼Œè¿™æ · glibc
+åœ¨å¤„ç†å‡½æ•°æ—¶ï¼Œä¼šè°ƒç”¨ä½ çš„é’©å­å‡½æ•°ï¼Œä»è€Œè·å¾—ç›¸åº”çš„ä¿¡æ¯ã€‚
+#! /usr/bin/perl
+my $log = shift (@ARGV);
+open flog ,"<$log" or die "cannot open $log:$!";
+while(<flog>)
+{
+if(/^@@@/)
+{
+@items = split/\s+/;
+if($items[2] eq '+')
+{
+$size=hex(substr($items[4],2));
+$memory{$items[3]}=$size;
+}
+if($items[2] eq '-')
+{
+delete $memory{$items[3]};
+}
+}
+}
+foreach $key(sort keys %memory)
+{
+print "$key $memory{$key}\n";
+}
+4.1. gcc ä¸ g++çš„ä¸åŒ
+gcc å’Œ g++éƒ½æ˜¯ GNU çš„ä¸€ä¸ªç¼–è¯‘å™¨ã€‚
+å¾ˆå¤šäººéƒ½è®¤ä¸º gcc åªèƒ½ç¼–è¯‘ C ç¨‹åºï¼Œè€Œ g++åªèƒ½ç¼–è¯‘ C++ä»£ç ã€‚å®é™…ä¸Šè€Œè¿™éƒ½å¯ä»¥ã€‚
+1.åç¼€ä¸º.c çš„ï¼Œgcc æŠŠå®ƒå½“ä½œæ˜¯ C ç¨‹åºï¼Œè€Œ g++å½“ä½œæ˜¯ c++ç¨‹åºï¼›åç¼€ä¸º.cpp çš„ï¼Œä¸¤è€…éƒ½ä¼š
+è®¤ä¸ºæ˜¯ c++ç¨‹åºï¼Œæ³¨æ„ï¼Œè™½ç„¶ c++æ˜¯ c çš„è¶…é›†ï¼Œä½†æ˜¯ä¸¤è€…å¯¹è¯­æ³•çš„è¦æ±‚æ˜¯æœ‰åŒºåˆ«çš„ã€‚C++çš„
+è¯­æ³•è§„åˆ™æ›´åŠ ä¸¥è°¨ä¸€äº›ã€‚
+2.ç¼–è¯‘é˜¶æ®µï¼Œg++ä¼šè°ƒç”¨ gccï¼Œå¯¹äº c++ä»£ç ï¼Œä¸¤è€…æ˜¯ç­‰ä»·çš„ï¼Œä½†æ˜¯å› ä¸º gcc å‘½ä»¤ä¸èƒ½è‡ªåŠ¨å’Œ
+Cï¼‹ï¼‹ç¨‹åºä½¿ç”¨çš„åº“è”æ¥ï¼Œæ‰€ä»¥é€šå¸¸ç”¨ g++æ¥å®Œæˆé“¾æ¥ï¼Œä¸ºäº†ç»Ÿä¸€èµ·è§ï¼Œå¹²è„†ç¼–è¯‘/é“¾æ¥ç»Ÿç»Ÿ
+ç”¨ g++äº†ï¼Œè¿™å°±ç»™äººä¸€ç§é”™è§‰ï¼Œå¥½åƒ cpp ç¨‹åºåªèƒ½ç”¨ g++ä¼¼çš„ã€‚
+åœ¨è¿™é‡Œæœ‰ä¸€ç¯‡æ–‡ç« åšäº†è¯¦ç»†é˜è¿°ã€‚
+http://blog.chinaunix.net/u/30686/showart.php?id=519752
+è¿™é‡Œæˆ‘è¦ç€é‡è¯´æ˜çš„æ˜¯ï¼Œåœ¨ä½¿ç”¨ g++ç¼–è¯‘çš„æ—¶å€™ï¼Œæ— è®ºè¿™ä¸ªç¨‹åºæ˜¯å¦ä½¿ç”¨äº†ç±»ï¼Œéƒ½å°†ä¼šå°†ä¾
+èµ–äº C++çš„åŠ¨æ€åº“ï¼ˆlibstdc++.soï¼‰ã€‚
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+int main()
+{
+pause();
+return 0;
+}
+ç¼–è¯‘ï¼š
+gcc â€“o hello hello.c
+è¿è¡Œ
+# ./hello
+# cat maps
+
+æˆ‘ä»¬ä¼šå‘ç° hello æ‰€ä¾èµ–çš„åº“å¢åŠ äº† 3 ä¸ª libstdc++.so libm.so libgcc_s.so,å…¶ä¸­ libm.so å’Œ
+libgcc_s.so æ˜¯ç”± libstdc++.so å¼•å…¥çš„ã€‚ä¸è¦å°çœ‹è¿™ä¸‰ä¸ªåº“ï¼Œè¿›ç¨‹æ¯åŠ è½½ä¸€ä¸ªåº“ï¼Œå°±è¦ä¸ºå…¶åˆ†
+é…ç›¸åº”çš„æ•°æ®æ®µï¼Œåšä¸€äº›é‡å®šå‘å·¥ä½œç­‰ï¼Œæ¯ä¸ªåº“çš„æ•°æ®æ®µæœ€å°‘è¦å æ® 4K çš„ç‰©ç†å†…å­˜ï¼Œä¹Ÿå°±
+æ˜¯è¯´ä½¿ç”¨ g++ç¼–è¯‘å‡ºçš„ helloï¼Œè¦æ¯”ä½¿ç”¨ gcc ç¼–è¯‘å‡ºæ¥çš„ï¼Œæœ€å°‘å†…å­˜å¤šäº† 12Kã€‚
+/proc/sys/vm/pagecache
+è¯¥æ–‡ä»¶ä¸ /proc/sys/vm/buffermem çš„å·¥ä½œå†…å®¹ä¸€æ ·ï¼Œä½†å®ƒæ˜¯é’ˆå¯¹æ–‡ä»¶çš„å†…å­˜æ˜ å°„å’Œä¸€èˆ¬é«˜é€Ÿ
+å®ç°ä¸€ä¸ªstm32h750 ADCè¿˜å…·æœ‰æ¨¡æ‹Ÿçœ‹é—¨ç‹—åŠŸèƒ½ï¼Œå…è®¸ç²¾ç¡®åœ°ç›‘æµ‹ä¸€ä¸ªæˆ–å¤šä¸ªæ¨¡æ‹Ÿç”µå‹ï¼Œå½“æ¨¡æ‹Ÿç”µå‹è¶…å‡ºå¯ç¼–ç¨‹é˜ˆå€¼æ—¶ä¼šäº§ç”Ÿä¸€ä¸ªä¸­æ–­ã€‚
+ç›¸æ¯”è€Œè¨€ï¼ŒAndroidåˆ™æ›´è¿›ä¸€æ­¥ï¼Œå®ƒæ”¯æŒå¤šä¸ªåº”ç”¨å…¥å£ç‚¹ï¼Œå¼•å…¥äº†æ›´ä¸°å¯Œçš„æœºåˆ¶ã€‚åœ¨Androidç³»ç»Ÿä¸­å‡å®šçš„å‰ææ˜¯ï¼Œç³»ç»Ÿä¼šåœ¨ä¸åŒçš„åœ°æ–¹å¯åŠ¨å®ƒä»¬ï¼Œè¿™å–å†³äºç”¨æˆ·å½“å‰æ­£åœ¨å“ªé‡Œä»¥åŠç”¨æˆ·æ¥ä¸‹æ¥æƒ³åšçš„æ˜¯ä»€ä¹ˆã€‚
+åœ¨å…¶ä¸­ä¸€ä¸ªæŠ½è±¡å±‚ï¼ŒAndroidåº”ç”¨çœ‹èµ·æ¥å’ŒWebåº”ç”¨å¾ˆç›¸ä¼¼ã€‚æ´»åŠ¨ç±»ä¼¼äºWebåº”ç”¨ä¸­çš„servletã€‚è®¾è®¡è‰¯å¥½çš„æ´»åŠ¨è´Ÿè´£ç®¡ç†å•ä¸ªUIé¡µé¢ï¼Œæ¯ä¸ªUIéƒ½æœ‰è‡ªå·±å”¯ä¸€çš„åç§°ã€‚ç”¨æˆ·æ ¹æ®è¿™äº›é“¾æ¥ï¼Œä»Webé¡µé¢çš„ä¸€ä¸ªé¡µé¢è·³è½¬åˆ°å¦ä¸€ä¸ªé¡µé¢ï¼Œè€Œåœ¨Androidåº”ç”¨ä¸­ï¼Œç”¨æˆ·äº¤äº’æ˜¯é€šè¿‡intentè°ƒç”¨çš„ã€‚æ–°é¡µé¢å¯ä»¥é€šè¿‡é“¾æ¥å¯¼èˆªåˆ°è€é¡µé¢ã€‚æ­£å¦‚åœ¨Webåº”ç”¨ä¸–ç•Œä¸­ï¼Œæœ‰äº›servletæä¾›UIåŠŸèƒ½ï¼Œå…¶ä»–çš„æä¾›æœåŠ¡çš„APIã€‚å› æ­¤ï¼Œåœ¨Androidä¸–ç•Œä¸­ï¼Œæ´»åŠ¨æä¾›UIï¼Œè€ŒServiceå’ŒContentProviderç±»ï¼ˆå¾ˆå¿«ä¼šä»‹ç»ï¼‰æä¾›å¯¹è¿™äº›æœåŠ¡çš„è®¿é—®åŠŸèƒ½ã€‚ç†è§£è¿™ç§æ¶æ„ä¸Šçš„ç›¸ä¼¼æ€§æœ‰åŠ©äºå……åˆ†æœ‰æ•ˆåˆ©ç”¨Androidæ¡†æ¶è®¾è®¡Androidåº”ç”¨ã€‚
+Androidåº”ç”¨è¿˜æœ‰ä¸€äº›å…¶ä»–ç»„ä»¶ï¼Œå…·ä½“åŒ…æ‹¬ï¼šServiceï¼ˆæœåŠ¡ï¼‰ã€Content Providerï¼ˆå†…å®¹æä¾›è€…ï¼‰å’ŒBroadcast Receiverï¼ˆå¹¿æ’­æ¥æ”¶å™¨ï¼‰ã€‚Serviceç±»è´Ÿè´£ä¸ºåå°åŠŸèƒ½æä¾›æ”¯æŒï¼ŒContentProviderç±»æ˜¯å¤šä¸ªåº”ç”¨ä½¿ç”¨æ•°æ®å­˜å‚¨çš„è®¿é—®æ–¹å¼ï¼ŒBroadcast Receiveræ”¯æŒå¤šæ–¹æ¥æ”¶åº”ç”¨æ‰€å¹¿æ’­çš„æ„å›¾ä¿¡æ¯ã€‚
+æåˆ°æ–‡ä»¶çš„è¯»å–ï¼Œé‚£ä¹ˆä¸å¾—ä¸æåˆ°æ–‡ä»¶ç³»ç»Ÿè¿™ä¸ªæ“ä½œç³»ç»Ÿä¸­æœ€ä¸ºé‡è¦çš„ç»„æˆéƒ¨åˆ†ä¹‹ä¸€ã€‚æ–‡ä»¶ç³»ç»Ÿç®¡ç†ç€ç£ç›˜ä¸­æ–‡ä»¶çš„å­˜å‚¨æ–¹å¼ï¼Œæ¯”å¦‚æˆ‘ä»¬åœ¨Linuxç³»ç»Ÿä¸‹æœ‰ä¸€ä¸ªæ–‡ä»¶â€œ/home/user/test.datâ€ï¼Œé•¿åº¦ä¸º8 000ä¸ªå­—èŠ‚ã€‚é‚£ä¹ˆæˆ‘ä»¬åœ¨åˆ›å»ºè¿™ä¸ªæ–‡ä»¶çš„æ—¶å€™ï¼ŒLinuxçš„ext3æ–‡ä»¶ç³»ç»Ÿæœ‰å¯èƒ½å°†è¿™ä¸ªæ–‡ä»¶æŒ‰ç…§è¿™æ ·çš„æ–¹å¼å­˜å‚¨åœ¨ç£ç›˜ä¸­ï¼šæ–‡ä»¶çš„å‰4 096å­—èŠ‚å­˜å‚¨åœ¨ç£ç›˜çš„1000å·æ‰‡åŒºåˆ°1007å·æ‰‡åŒºï¼Œæ¯ä¸ªæ‰‡åŒº512å­—èŠ‚ï¼Œ8ä¸ªæ‰‡åŒºåˆšå¥½4 096å­—èŠ‚ï¼›æ–‡ä»¶çš„ç¬¬4 097ä¸ªå­—èŠ‚åˆ°ç¬¬8 000å­—èŠ‚å…±3 904ä¸ªå­—èŠ‚ï¼Œå­˜å‚¨åœ¨ç£ç›˜çš„2000å·æ‰‡åŒºåˆ°2007å·æ‰‡åŒºï¼Œ8ä¸ªæ‰‡åŒºä¹Ÿæ˜¯4 096å­—èŠ‚ï¼Œåªä¸è¿‡åªå­˜å‚¨äº†3 904ä¸ªæœ‰æ•ˆçš„å­—èŠ‚ï¼Œå‰©ä¸‹çš„192ä¸ªå­—èŠ‚æ— æ•ˆã€‚å¦‚æœæŠŠè¿™ä¸ªæ–‡ä»¶çš„å­˜å‚¨æ–¹å¼çœ‹ä½œæ˜¯ä¸€ä¸ªé“¾çŠ¶çš„ç»“æ„ï¼Œå®ƒçš„ç»“æ„å¦‚å›¾1-4æ‰€ç¤ºã€‚
+è¿™é‡Œæˆ‘ä»¬å…ˆç©¿æ’ä¸€ä¸ªå…³äºç¡¬ç›˜çš„ç»“æ„ä»‹ç»ï¼Œå…³äºç¡¬ç›˜ç»“æ„å¯èƒ½å¾ˆå¤šè¯»è€…å·²ç»æœ‰ä¸€ä¸ªå¤§æ¦‚çš„äº†è§£ï¼Œé‚£å°±æ˜¯ç¡¬ç›˜åŸºæœ¬å­˜å‚¨å•ä½ä¸ºæ‰‡åŒºï¼ˆSectorï¼‰ï¼Œæ¯ä¸ªæ‰‡åŒºä¸€èˆ¬ä¸º512å­—èŠ‚ã€‚ä¸€ä¸ªç¡¬ç›˜å¾€å¾€æœ‰å¤šä¸ªç›˜ç‰‡ï¼Œæ¯ä¸ªç›˜ç‰‡åˆ†ä¸¤é¢ï¼Œæ¯é¢æŒ‰ç…§åŒå¿ƒåœ†åˆ’åˆ†ä¸ºè‹¥å¹²ä¸ªç£é“ï¼Œæ¯ä¸ªç£é“åˆ’åˆ†ä¸ºè‹¥å¹²ä¸ªæ‰‡åŒºã€‚æ¯”å¦‚ä¸€ä¸ªç¡¬ç›˜æœ‰2ä¸ªç›˜ç‰‡ï¼Œæ¯ä¸ªç›˜é¢åˆ†65 536ç£é“ï¼Œæ¯ä¸ªç£é“åˆ†1 024ä¸ªæ‰‡åŒºï¼Œé‚£ä¹ˆç¡¬ç›˜çš„å®¹é‡å°±æ˜¯2 * 2 * 65 536 * 1 024 * 512 = 137 438 953 472å­—èŠ‚ï¼ˆ128GBï¼‰ã€‚ä½†æ˜¯æˆ‘ä»¬å¯ä»¥æƒ³è±¡ï¼Œæ¯ä¸ªç›˜é¢ä¸ŠåŒå¿ƒåœ†çš„å‘¨é•¿ä¸ä¸€æ ·ï¼Œå¦‚æœæŒ‰ç…§æ¯ä¸ªç£é“éƒ½æ‹¥æœ‰ç›¸åŒæ•°é‡çš„æ‰‡åŒºï¼Œé‚£ä¹ˆé è¿‘ç›˜é¢å¤–å›´çš„ç£é“å¯†åº¦è‚¯å®šæ¯”å†…åœˆæ›´åŠ ç¨€ç–ï¼Œè¿™æ ·æ˜¯æ¯”è¾ƒæµªè´¹ç©ºé—´çš„ã€‚ä½†æ˜¯å¦‚æœä¸åŒçš„ç£é“æ‰‡åŒºæ•°åˆä¸åŒï¼Œè®¡ç®—èµ·æ¥å°±ååˆ†éº»çƒ¦ã€‚ä¸ºäº†å±è”½è¿™äº›å¤æ‚çš„ç¡¬ä»¶ç»†èŠ‚ï¼Œç°ä»£çš„ç¡¬ç›˜æ™®éä½¿ç”¨ä¸€ç§å«åšLBAï¼ˆLogical Block Addressï¼‰çš„æ–¹å¼ï¼Œå³æ•´ä¸ªç¡¬ç›˜ä¸­æ‰€æœ‰çš„æ‰‡åŒºä»0å¼€å§‹ç¼–å·ï¼Œä¸€ç›´åˆ°æœ€åä¸€ä¸ªæ‰‡åŒºï¼Œè¿™ä¸ªæ‰‡åŒºç¼–å·å«åšé€»è¾‘æ‰‡åŒºå·ã€‚é€»è¾‘æ‰‡åŒºå·æŠ›å¼ƒäº†æ‰€æœ‰å¤æ‚çš„ç£é“ã€ç›˜é¢ä¹‹ç±»çš„æ¦‚å¿µã€‚å½“æˆ‘ä»¬ç»™å‡ºä¸€ä¸ªé€»è¾‘çš„æ‰‡åŒºå·æ—¶ï¼Œç¡¬ç›˜çš„ç”µå­è®¾å¤‡ä¼šå°†å…¶è½¬æ¢æˆå®é™…çš„ç›˜é¢ã€ç£é“ç­‰è¿™äº›ä½ç½®ã€‚
+è¿™é‡Œæˆ‘ä»¬å…ˆç©¿æ’ä¸€ä¸ªå…³äºç¡¬ç›˜çš„ç»“æ„ä»‹ç»ï¼Œå…³äºç¡¬ç›˜ç»“æ„å¯èƒ½å¾ˆå¤šè¯»è€…å·²ç»æœ‰ä¸€ä¸ªå¤§æ¦‚çš„äº†è§£ï¼Œé‚£å°±æ˜¯ç¡¬ç›˜åŸºæœ¬å­˜å‚¨å•ä½ä¸ºæ‰‡åŒºï¼ˆSectorï¼‰ï¼Œæ¯ä¸ªæ‰‡åŒºä¸€èˆ¬ä¸º512å­—èŠ‚ã€‚ä¸€ä¸ªç¡¬ç›˜å¾€å¾€æœ‰å¤šä¸ªç›˜ç‰‡ï¼Œæ¯ä¸ªç›˜ç‰‡åˆ†ä¸¤é¢ï¼Œæ¯é¢æŒ‰ç…§åŒå¿ƒåœ†åˆ’åˆ†ä¸ºè‹¥å¹²ä¸ªç£é“ï¼Œæ¯ä¸ªç£é“åˆ’åˆ†ä¸ºè‹¥å¹²ä¸ªæ‰‡åŒºã€‚æ¯”å¦‚ä¸€ä¸ªç¡¬ç›˜æœ‰2ä¸ªç›˜ç‰‡ï¼Œæ¯ä¸ªç›˜é¢åˆ†65 536ç£é“ï¼Œæ¯ä¸ªç£é“åˆ†1 024ä¸ªæ‰‡åŒºï¼Œé‚£ä¹ˆç¡¬ç›˜çš„å®¹é‡å°±æ˜¯2 * 2 * 65 536 * 1 024 * 512 = 137 438 953 472å­—èŠ‚ï¼ˆ128GBï¼‰ã€‚ä½†æ˜¯æˆ‘ä»¬å¯ä»¥æƒ³è±¡ï¼Œæ¯ä¸ªç›˜é¢ä¸ŠåŒå¿ƒåœ†çš„å‘¨é•¿ä¸ä¸€æ ·ï¼Œå¦‚æœæŒ‰ç…§æ¯ä¸ªç£é“éƒ½æ‹¥æœ‰ç›¸åŒæ•°é‡çš„æ‰‡åŒºï¼Œé‚£ä¹ˆé è¿‘ç›˜é¢å¤–å›´çš„ç£é“å¯†åº¦è‚¯å®šæ¯”å†…åœˆæ›´åŠ ç¨€ç–ï¼Œè¿™æ ·æ˜¯æ¯”è¾ƒæµªè´¹ç©ºé—´çš„ã€‚ä½†æ˜¯å¦‚æœä¸åŒçš„ç£é“æ‰‡åŒºæ•°åˆä¸åŒï¼Œè®¡ç®—èµ·æ¥å°±ååˆ†éº»çƒ¦ã€‚ä¸ºäº†å±è”½è¿™äº›å¤æ‚çš„ç¡¬ä»¶ç»†èŠ‚ï¼Œç°ä»£çš„ç¡¬ç›˜æ™®éä½¿ç”¨ä¸€ç§å«åšLBAï¼ˆLogical Block Addressï¼‰çš„æ–¹å¼ï¼Œå³æ•´ä¸ªç¡¬ç›˜ä¸­æ‰€æœ‰çš„æ‰‡åŒºä»0å¼€å§‹ç¼–å·ï¼Œä¸€ç›´åˆ°æœ€åä¸€ä¸ªæ‰‡åŒºï¼Œè¿™ä¸ªæ‰‡åŒºç¼–å·å«åšé€»è¾‘æ‰‡åŒºå·ã€‚é€»è¾‘æ‰‡åŒºå·æŠ›å¼ƒäº†æ‰€æœ‰å¤æ‚çš„ç£é“ã€ç›˜é¢ä¹‹ç±»çš„æ¦‚å¿µã€‚å½“æˆ‘ä»¬ç»™å‡ºä¸€ä¸ªé€»è¾‘çš„æ‰‡åŒºå·æ—¶ï¼Œç¡¬ç›˜çš„ç”µå­è®¾å¤‡ä¼šå°†å…¶è½¬æ¢æˆå®é™…çš„ç›˜é¢ã€ç£é“ç­‰è¿™äº›ä½ç½®ã€‚
+
+æ–‡ä»¶ç³»ç»Ÿä¿å­˜äº†è¿™äº›æ–‡ä»¶çš„å­˜å‚¨ç»“æ„ï¼Œè´Ÿè´£ç»´æŠ¤è¿™äº›æ•°æ®ç»“æ„å¹¶ä¸”ä¿è¯ç£ç›˜ä¸­çš„æ‰‡åŒºèƒ½å¤Ÿæœ‰æ•ˆåœ°ç»„ç»‡å’Œåˆ©ç”¨ã€‚é‚£ä¹ˆå½“æˆ‘ä»¬åœ¨Linuxæ“ä½œç³»ç»Ÿä¸­ï¼Œè¦è¯»å–è¿™ä¸ªæ–‡ä»¶çš„å‰4 096ä¸ªå­—èŠ‚æ—¶ï¼Œæˆ‘ä»¬ä¼šä½¿ç”¨ä¸€ä¸ªreadçš„ç³»ç»Ÿè°ƒç”¨æ¥å®ç°ã€‚æ–‡ä»¶ç³»ç»Ÿæ”¶åˆ°readè¯·æ±‚ä¹‹åï¼Œåˆ¤æ–­å‡ºæ–‡ä»¶çš„å‰4 096ä¸ªå­—èŠ‚ä½äºç£ç›˜çš„1000å·é€»è¾‘æ‰‡åŒºåˆ°1007å·é€»è¾‘æ‰‡åŒºã€‚ç„¶åæ–‡ä»¶ç³»ç»Ÿå°±å‘ç¡¬ç›˜é©±åŠ¨å‘å‡ºä¸€ä¸ªè¯»å–é€»è¾‘æ‰‡åŒºä¸º1000å·å¼€å§‹çš„8ä¸ªæ‰‡åŒºçš„è¯·æ±‚ï¼Œç£ç›˜é©±åŠ¨ç¨‹åºæ”¶åˆ°è¿™ä¸ªè¯·æ±‚ä»¥åå°±å‘ç¡¬ç›˜å‘å‡ºç¡¬ä»¶å‘½ä»¤ã€‚å‘ç¡¬ä»¶å‘é€I/Oå‘½ä»¤çš„æ–¹å¼æœ‰å¾ˆå¤šç§ï¼Œå…¶ä¸­æœ€ä¸ºå¸¸è§çš„ä¸€ç§å°±æ˜¯é€šè¿‡è¯»å†™I/Oç«¯å£å¯„å­˜å™¨æ¥å®ç°ã€‚åœ¨x86å¹³å°ä¸Šï¼Œå…±æœ‰65 536ä¸ªç¡¬ä»¶ç«¯å£å¯„å­˜å™¨ï¼Œä¸åŒçš„ç¡¬ä»¶è¢«åˆ†é…åˆ°äº†ä¸åŒçš„I/Oç«¯å£åœ°å€ã€‚CPUæä¾›äº†ä¸¤æ¡ä¸“é—¨çš„æŒ‡ä»¤â€œinâ€å’Œâ€œoutâ€æ¥å®ç°å¯¹ç¡¬ä»¶ç«¯å£çš„è¯»å’Œå†™ã€‚
+? ç¬¬0x1F3ï½0x1F6 4ä¸ªå­—èŠ‚çš„ç«¯å£åœ°å€æ˜¯ç”¨æ¥å†™å…¥LBAåœ°å€çš„ï¼Œé‚£ä¹ˆ1000å·é€»è¾‘æ‰‡åŒºçš„LBAåœ°å€ä¸º0x000003E8ï¼Œæ‰€ä»¥æˆ‘ä»¬éœ€è¦å¾€0x1F3ã€0x1F4å†™å…¥0x00ï¼Œå¾€0x1F5å†™å…¥0x03ï¼Œå¾€0x1F6å†™å…¥0xE8ã€‚
+? 0x1F2è¿™ä¸ªåœ°å€ç”¨æ¥å†™å…¥å‘½ä»¤æ‰€éœ€è¦è¯»å†™çš„æ‰‡åŒºæ•°ã€‚æ¯”å¦‚è¯»å–8ä¸ªæ‰‡åŒºå³å†™å…¥8ã€‚
+
+? 0x1F7è¿™ä¸ªåœ°å€ç”¨æ¥å†™å…¥è¦æ‰§è¡Œçš„æ“ä½œçš„å‘½ä»¤ç ï¼Œå¯¹äºè¯»å–æ“ä½œæ¥è¯´ï¼Œå‘½ä»¤å­—ä¸º0x20ã€‚
+æ‰€ä»¥æˆ‘ä»¬è¦æ‰§è¡Œçš„æŒ‡ä»¤ä¸ºï¼š
+
+out 0x1F3, 0x00
+
+out 0x1F4, 0x00
+
+out 0x1F5, 0x03
+
+out 0x1F6, 0xE8
+
+out 0x1F2, 0x08
+
+out 0x1F7, 0x20
+? åœ°å€ç©ºé—´ä¸éš”ç¦» æ‰€æœ‰ç¨‹åºéƒ½ç›´æ¥è®¿é—®ç‰©ç†åœ°å€ï¼Œç¨‹åºæ‰€ä½¿ç”¨çš„å†…å­˜ç©ºé—´ä¸æ˜¯ç›¸äº’éš”ç¦»çš„ã€‚æ¶æ„çš„ç¨‹åºå¯ä»¥å¾ˆå®¹æ˜“æ”¹å†™å…¶ä»–ç¨‹åºçš„å†…å­˜æ•°æ®ï¼Œä»¥è¾¾åˆ°ç ´åçš„ç›®çš„ï¼›æœ‰äº›éæ¶æ„çš„ã€ä½†æ˜¯æœ‰è‡­è™«çš„ç¨‹åºå¯èƒ½ä¸å°å¿ƒä¿®æ”¹äº†å…¶ä»–ç¨‹åºçš„æ•°æ®ï¼Œå°±ä¼šä½¿å…¶ä»–ç¨‹åºä¹Ÿå´©æºƒï¼Œè¿™å¯¹äºéœ€è¦å®‰å…¨ç¨³å®šçš„è®¡ç®—ç¯å¢ƒçš„ç”¨æˆ·æ¥è¯´æ˜¯ä¸èƒ½å®¹å¿çš„ã€‚ç”¨æˆ·å¸Œæœ›ä»–åœ¨ä½¿ç”¨è®¡ç®—æœºçš„æ—¶å€™ï¼Œå…¶ä¸­ä¸€ä¸ªä»»åŠ¡å¤±è´¥äº†ï¼Œè‡³å°‘ä¸ä¼šå½±å“å…¶ä»–ä»»åŠ¡ã€‚
+
+? å†…å­˜ä½¿ç”¨æ•ˆç‡ä½ ç”±äºæ²¡æœ‰æœ‰æ•ˆçš„å†…å­˜ç®¡ç†æœºåˆ¶ï¼Œé€šå¸¸éœ€è¦ä¸€ä¸ªç¨‹åºæ‰§è¡Œæ—¶ï¼Œç›‘æ§ç¨‹åºå°±å°†æ•´ä¸ªç¨‹åºè£…å…¥å†…å­˜ä¸­ç„¶åå¼€å§‹æ‰§è¡Œã€‚å¦‚æœæˆ‘ä»¬å¿½ç„¶éœ€è¦è¿è¡Œç¨‹åºCï¼Œé‚£ä¹ˆè¿™æ—¶å†…å­˜ç©ºé—´å…¶å®å·²ç»ä¸å¤Ÿäº†ï¼Œè¿™æ—¶å€™æˆ‘ä»¬å¯ä»¥ç”¨çš„ä¸€ä¸ªåŠæ³•æ˜¯å°†å…¶ä»–ç¨‹åºçš„æ•°æ®æš‚æ—¶å†™åˆ°ç£ç›˜é‡Œé¢ï¼Œç­‰åˆ°éœ€è¦ç”¨åˆ°çš„æ—¶å€™å†è¯»å›æ¥ã€‚ç”±äºç¨‹åºæ‰€éœ€è¦çš„ç©ºé—´æ˜¯è¿ç»­çš„ï¼Œé‚£ä¹ˆè¿™ä¸ªä¾‹å­é‡Œé¢ï¼Œå¦‚æœæˆ‘ä»¬å°†ç¨‹åºAæ¢å‡ºåˆ°ç£ç›˜æ‰€é‡Šæ”¾çš„å†…å­˜ç©ºé—´æ˜¯ä¸å¤Ÿçš„ï¼Œæ‰€ä»¥åªèƒ½å°†Bæ¢å‡ºåˆ°ç£ç›˜ï¼Œç„¶åå°†Cè¯»å…¥åˆ°å†…å­˜å¼€å§‹è¿è¡Œã€‚å¯ä»¥çœ‹åˆ°æ•´ä¸ªè¿‡ç¨‹ä¸­æœ‰å¤§é‡çš„æ•°æ®åœ¨æ¢å…¥æ¢å‡ºï¼Œå¯¼è‡´æ•ˆç‡ååˆ†ä½ä¸‹ã€‚
+
+? ç¨‹åºè¿è¡Œçš„åœ°å€ä¸ç¡®å®š å› ä¸ºç¨‹åºæ¯æ¬¡éœ€è¦è£…å…¥è¿è¡Œæ—¶ï¼Œæˆ‘ä»¬éƒ½éœ€è¦ç»™å®ƒä»å†…å­˜ä¸­åˆ†é…ä¸€å—è¶³å¤Ÿå¤§çš„ç©ºé—²åŒºåŸŸï¼Œè¿™ä¸ªç©ºé—²åŒºåŸŸçš„ä½ç½®æ˜¯ä¸ç¡®å®šçš„ã€‚è¿™ç»™ç¨‹åºçš„ç¼–å†™é€ æˆäº†ä¸€å®šçš„éº»çƒ¦ï¼Œå› ä¸ºç¨‹åºåœ¨ç¼–å†™æ—¶ï¼Œå®ƒè®¿é—®æ•°æ®å’ŒæŒ‡ä»¤è·³è½¬æ—¶çš„ç›®æ ‡åœ°å€å¾ˆå¤šéƒ½æ˜¯å›ºå®šçš„ï¼Œè¿™æ¶‰åŠç¨‹åºçš„é‡å®šä½é—®é¢˜ï¼Œæˆ‘ä»¬åœ¨ç¬¬2éƒ¨åˆ†å’Œç¬¬3éƒ¨åˆ†è¿˜ä¼šè¯¦ç»†æ¢è®¨é‡å®šä½çš„é—®é¢˜ã€‚
+
+è§£å†³è¿™å‡ ä¸ªé—®é¢˜çš„æ€è·¯å°±æ˜¯ä½¿ç”¨æˆ‘ä»¬å‰æ–‡æåˆ°è¿‡çš„æ³•å®ï¼šå¢åŠ ä¸­é—´å±‚ï¼Œå³ä½¿ç”¨ä¸€ç§é—´æ¥çš„åœ°å€è®¿é—®æ–¹æ³•ã€‚æ•´ä¸ªæƒ³æ³•æ˜¯è¿™æ ·çš„ï¼Œæˆ‘ä»¬æŠŠç¨‹åºç»™å‡ºçš„åœ°å€çœ‹ä½œæ˜¯ä¸€ç§è™šæ‹Ÿåœ°å€ï¼ˆVirtual Addressï¼‰ï¼Œç„¶åé€šè¿‡æŸäº›æ˜ å°„çš„æ–¹æ³•ï¼Œå°†è¿™ä¸ªè™šæ‹Ÿåœ°å€è½¬æ¢æˆå®é™…çš„ç‰©ç†åœ°å€ã€‚è¿™æ ·ï¼Œåªè¦æˆ‘ä»¬èƒ½å¤Ÿå¦¥å–„åœ°æ§åˆ¶è¿™ä¸ªè™šæ‹Ÿåœ°å€åˆ°ç‰©ç†åœ°å€çš„æ˜ å°„è¿‡ç¨‹ï¼Œå°±å¯ä»¥ä¿è¯ä»»æ„ä¸€ä¸ªç¨‹åºæ‰€èƒ½å¤Ÿè®¿é—®çš„ç‰©ç†å†…å­˜åŒºåŸŸè·Ÿå¦å¤–ä¸€ä¸ªç¨‹åºç›¸äº’ä¸é‡å ï¼Œä»¥è¾¾åˆ°åœ°å€ç©ºé—´éš”ç¦»çš„æ•ˆæœã€‚
+
+write a stm32f103 example to explain 
+
+å‡è®¾æˆ‘ä»¬çš„è®¡ç®—æœºæœ‰128 MBå†…å­˜ï¼Œç¨‹åºAè¿è¡Œéœ€è¦10 MBï¼Œç¨‹åºBéœ€è¦100 MBï¼Œç¨‹åºCéœ€è¦20 MBã€‚å¦‚æœæˆ‘ä»¬éœ€è¦åŒæ—¶è¿è¡Œç¨‹åºAå’ŒBï¼Œé‚£ä¹ˆæ¯”è¾ƒç›´æ¥çš„åšæ³•æ˜¯å°†å†…å­˜çš„å‰10 MBåˆ†é…ç»™ç¨‹åºAï¼Œ10 MBï½110 MBåˆ†é…ç»™Bã€‚è¿™æ ·å°±èƒ½å¤Ÿå®ç°Aå’ŒBä¸¤ä¸ªç¨‹åºåŒæ—¶è¿è¡Œï¼Œä½†æ˜¯è¿™ç§ç®€å•çš„å†…å­˜åˆ†é…ç­–ç•¥é—®é¢˜å¾ˆå¤šã€‚
+
+? åœ°å€ç©ºé—´ä¸éš”ç¦» æ‰€æœ‰ç¨‹åºéƒ½ç›´æ¥è®¿é—®ç‰©ç†åœ°å€ï¼Œç¨‹åºæ‰€ä½¿ç”¨çš„å†…å­˜ç©ºé—´ä¸æ˜¯ç›¸äº’éš”ç¦»çš„ã€‚æ¶æ„çš„ç¨‹åºå¯ä»¥å¾ˆå®¹æ˜“æ”¹å†™å…¶ä»–ç¨‹åºçš„å†…å­˜æ•°æ®ï¼Œä»¥è¾¾åˆ°ç ´åçš„ç›®çš„ï¼›æœ‰äº›éæ¶æ„çš„ã€ä½†æ˜¯æœ‰è‡­è™«çš„ç¨‹åºå¯èƒ½ä¸å°å¿ƒä¿®æ”¹äº†å…¶ä»–ç¨‹åºçš„æ•°æ®ï¼Œå°±ä¼šä½¿å…¶ä»–ç¨‹åºä¹Ÿå´©æºƒï¼Œè¿™å¯¹äºéœ€è¦å®‰å…¨ç¨³å®šçš„è®¡ç®—ç¯å¢ƒçš„ç”¨æˆ·æ¥è¯´æ˜¯ä¸èƒ½å®¹å¿çš„ã€‚ç”¨æˆ·å¸Œæœ›ä»–åœ¨ä½¿ç”¨è®¡ç®—æœºçš„æ—¶å€™ï¼Œå…¶ä¸­ä¸€ä¸ªä»»åŠ¡å¤±è´¥äº†ï¼Œè‡³å°‘ä¸ä¼šå½±å“å…¶ä»–ä»»åŠ¡ã€‚
+
+æœ€å¼€å§‹äººä»¬ä½¿ç”¨çš„æ˜¯ä¸€ç§å«åšåˆ†æ®µï¼ˆSegmentationï¼‰çš„æ–¹æ³•ï¼ŒåŸºæœ¬æ€è·¯æ˜¯æŠŠä¸€æ®µä¸ç¨‹åºæ‰€éœ€è¦çš„å†…å­˜ç©ºé—´å¤§å°çš„è™šæ‹Ÿç©ºé—´æ˜ å°„åˆ°æŸä¸ªåœ°å€ç©ºé—´ã€‚æ¯”å¦‚ç¨‹åºAéœ€è¦10 MBå†…å­˜ï¼Œé‚£ä¹ˆæˆ‘ä»¬å‡è®¾æœ‰ä¸€ä¸ªåœ°å€ä»0x00000000åˆ°0x00A00000çš„10MBå¤§å°çš„ä¸€ä¸ªå‡è±¡çš„ç©ºé—´ï¼Œä¹Ÿå°±æ˜¯è™šæ‹Ÿç©ºé—´ï¼Œç„¶åæˆ‘ä»¬ä»å®é™…çš„ç‰©ç†å†…å­˜ä¸­åˆ†é…ä¸€ä¸ªç›¸åŒå¤§å°çš„ç‰©ç†åœ°å€ï¼Œå‡è®¾æ˜¯ç‰©ç†åœ°å€0x00100000å¼€å§‹åˆ°0x00B00000ç»“æŸçš„ä¸€å—ç©ºé—´ã€‚ç„¶åæˆ‘ä»¬æŠŠè¿™ä¸¤å—ç›¸åŒå¤§å°çš„åœ°å€ç©ºé—´ä¸€ä¸€æ˜ å°„ï¼Œå³è™šæ‹Ÿç©ºé—´ä¸­çš„æ¯ä¸ªå­—èŠ‚ç›¸å¯¹åº”äºç‰©ç†ç©ºé—´ä¸­çš„æ¯ä¸ªå­—èŠ‚ã€‚è¿™ä¸ªæ˜ å°„è¿‡ç¨‹ç”±è½¯ä»¶æ¥è®¾ç½®ï¼Œæ¯”å¦‚æ“ä½œç³»ç»Ÿæ¥è®¾ç½®è¿™ä¸ªæ˜ å°„å‡½æ•°ï¼Œå®é™…çš„åœ°å€è½¬æ¢ç”±ç¡¬ä»¶å®Œæˆã€‚æ¯”å¦‚å½“ç¨‹åºAä¸­è®¿é—®åœ°å€0x00001000æ—¶ï¼ŒCPUä¼šå°†è¿™ä¸ªåœ°å€è½¬æ¢æˆå®é™…çš„ç‰©ç†åœ°å€0x00101000ã€‚é‚£ä¹ˆæ¯”å¦‚ç¨‹åºAå’Œç¨‹åºBåœ¨è¿è¡Œæ—¶ï¼Œå®ƒä»¬çš„è™šæ‹Ÿç©ºé—´å’Œç‰©ç†ç©ºé—´æ˜ å°„å…³ç³»å¯èƒ½å¦‚å›¾1-5æ‰€ç¤ºã€‚
+åˆ†é¡µçš„åŸºæœ¬æ–¹æ³•æ˜¯æŠŠåœ°å€ç©ºé—´äººä¸ºåœ°ç­‰åˆ†æˆå›ºå®šå¤§å°çš„é¡µï¼Œæ¯ä¸€é¡µçš„å¤§å°ç”±ç¡¬ä»¶å†³å®šï¼Œæˆ–ç¡¬ä»¶æ”¯æŒå¤šç§å¤§å°çš„é¡µï¼Œç”±æ“ä½œç³»ç»Ÿé€‰æ‹©å†³å®šé¡µçš„å¤§å°ã€‚æ¯”å¦‚Intel Pentiumç³»åˆ—å¤„ç†å™¨æ”¯æŒ4KBæˆ–4MBçš„é¡µå¤§å°ï¼Œé‚£ä¹ˆæ“ä½œç³»ç»Ÿå¯ä»¥é€‰æ‹©æ¯é¡µå¤§å°ä¸º4KBï¼Œä¹Ÿå¯ä»¥é€‰æ‹©æ¯é¡µå¤§å°ä¸º4MBï¼Œä½†æ˜¯åœ¨åŒä¸€æ—¶åˆ»åªèƒ½é€‰æ‹©ä¸€ç§å¤§å°ï¼Œæ‰€ä»¥å¯¹æ•´ä¸ªç³»ç»Ÿæ¥è¯´ï¼Œé¡µå°±æ˜¯å›ºå®šå¤§å°çš„ã€‚ç›®å‰å‡ ä¹æ‰€æœ‰çš„PCä¸Šçš„æ“ä½œç³»ç»Ÿéƒ½ä½¿ç”¨4KBå¤§å°çš„é¡µã€‚æˆ‘ä»¬ä½¿ç”¨çš„PCæœºæ˜¯32ä½çš„è™šæ‹Ÿåœ°å€ç©ºé—´ï¼Œä¹Ÿå°±æ˜¯4GBï¼Œé‚£ä¹ˆæŒ‰4KBæ¯é¡µåˆ†çš„è¯ï¼Œæ€»å…±æœ‰1 048 576ä¸ªé¡µã€‚ç‰©ç†ç©ºé—´ä¹Ÿæ˜¯åŒæ ·çš„åˆ†æ³•ã€‚
+çº¿ç¨‹ï¼ˆThreadï¼‰ï¼Œæœ‰æ—¶è¢«ç§°ä¸ºè½»é‡çº§è¿›ç¨‹ï¼ˆLightweight Process, LWPï¼‰ï¼Œæ˜¯ç¨‹åºæ‰§è¡Œæµçš„æœ€å°å•å…ƒã€‚ä¸€ä¸ªæ ‡å‡†çš„çº¿ç¨‹ç”±çº¿ç¨‹IDã€å½“å‰æŒ‡ä»¤æŒ‡é’ˆï¼ˆPCï¼‰ã€å¯„å­˜å™¨é›†åˆå’Œå †æ ˆç»„æˆã€‚é€šå¸¸æ„ä¹‰ä¸Šï¼Œä¸€ä¸ªè¿›ç¨‹ç”±ä¸€ä¸ªåˆ°å¤šä¸ªçº¿ç¨‹ç»„æˆï¼Œå„ä¸ªçº¿ç¨‹ä¹‹é—´å…±äº«ç¨‹åºçš„å†…å­˜ç©ºé—´ï¼ˆåŒ…æ‹¬ä»£ç æ®µã€æ•°æ®æ®µã€å †ç­‰ï¼‰åŠä¸€äº›è¿›ç¨‹çº§çš„èµ„æºï¼ˆå¦‚æ‰“å¼€æ–‡ä»¶å’Œä¿¡å·ï¼‰ã€‚ä¸€ä¸ªç»å…¸çš„çº¿ç¨‹ä¸è¿›ç¨‹çš„å…³ç³»å¦‚å›¾1-8æ‰€ç¤ºã€‚
+æŸä¸ªæ“ä½œå¯èƒ½ä¼šé™·å…¥é•¿æ—¶é—´ç­‰å¾…ï¼Œç­‰å¾…çš„çº¿ç¨‹ä¼šè¿›å…¥ç¡çœ çŠ¶æ€ï¼Œæ— æ³•ç»§ç»­æ‰§è¡Œã€‚å¤šçº¿ç¨‹æ‰§è¡Œå¯ä»¥æœ‰æ•ˆåˆ©ç”¨ç­‰å¾…çš„æ—¶é—´ã€‚å…¸å‹çš„ä¾‹å­æ˜¯ç­‰å¾…ç½‘ç»œå“åº”ï¼Œè¿™å¯èƒ½è¦èŠ±è´¹æ•°ç§’ç”šè‡³æ•°åç§’ã€‚
+
+æŸä¸ªæ“ä½œï¼ˆå¸¸å¸¸æ˜¯è®¡ç®—ï¼‰ä¼šæ¶ˆè€—å¤§é‡çš„æ—¶é—´ï¼Œå¦‚æœåªæœ‰ä¸€ä¸ªçº¿ç¨‹ï¼Œç¨‹åºå’Œç”¨æˆ·ä¹‹é—´çš„äº¤äº’ä¼šä¸­æ–­ã€‚å¤šçº¿ç¨‹å¯ä»¥è®©ä¸€ä¸ªçº¿ç¨‹è´Ÿè´£äº¤äº’ï¼Œå¦ä¸€ä¸ªçº¿ç¨‹è´Ÿè´£è®¡ç®—ã€‚
+
+ç¨‹åºé€»è¾‘æœ¬èº«å°±è¦æ±‚å¹¶å‘æ“ä½œï¼Œä¾‹å¦‚ä¸€ä¸ªå¤šç«¯ä¸‹è½½è½¯ä»¶ï¼ˆä¾‹å¦‚Bittorrentï¼‰ã€‚
+
+å¤šCPUæˆ–å¤šæ ¸è®¡ç®—æœºï¼ˆåŸºæœ¬å°±æ˜¯æœªæ¥çš„ä¸»æµè®¡ç®—æœºï¼‰ï¼Œæœ¬èº«å…·å¤‡åŒæ—¶æ‰§è¡Œå¤šä¸ªçº¿ç¨‹çš„èƒ½åŠ›ï¼Œå› æ­¤å•çº¿ç¨‹ç¨‹åºæ— æ³•å…¨é¢åœ°å‘æŒ¥è®¡ç®—æœºçš„å…¨éƒ¨è®¡ç®—èƒ½åŠ›ã€‚
+
+ç›¸å¯¹äºå¤šè¿›ç¨‹åº”ç”¨ï¼Œå¤šçº¿ç¨‹åœ¨æ•°æ®å…±äº«æ–¹é¢æ•ˆç‡è¦é«˜å¾ˆå¤šã€‚
+çº¿ç¨‹è°ƒåº¦ä¸ä¼˜å…ˆçº§
+
+ä¸è®ºæ˜¯åœ¨å¤šå¤„ç†å™¨çš„è®¡ç®—æœºä¸Šè¿˜æ˜¯åœ¨å•å¤„ç†å™¨çš„è®¡ç®—æœºä¸Šï¼Œçº¿ç¨‹æ€»æ˜¯â€œå¹¶å‘â€æ‰§è¡Œçš„ã€‚å½“çº¿ç¨‹æ•°é‡å°äºç­‰äºå¤„ç†å™¨æ•°é‡æ—¶ï¼ˆå¹¶ä¸”æ“ä½œç³»ç»Ÿæ”¯æŒå¤šå¤„ç†å™¨ï¼‰ï¼Œçº¿ç¨‹çš„å¹¶å‘æ˜¯çœŸæ­£çš„å¹¶å‘ï¼Œä¸åŒçš„çº¿ç¨‹è¿è¡Œåœ¨ä¸åŒçš„å¤„ç†å™¨ä¸Šï¼Œå½¼æ­¤ä¹‹é—´äº’ä¸ç›¸å¹²ã€‚ä½†å¯¹äºçº¿ç¨‹æ•°é‡å¤§äºå¤„ç†å™¨æ•°é‡çš„æƒ…å†µï¼Œçº¿ç¨‹çš„å¹¶å‘ä¼šå—åˆ°ä¸€äº›é˜»ç¢ï¼Œå› ä¸ºæ­¤æ—¶è‡³å°‘æœ‰ä¸€ä¸ªå¤„ç†å™¨ä¼šè¿è¡Œå¤šä¸ªçº¿ç¨‹ã€‚
+
+åœ¨å•å¤„ç†å™¨å¯¹åº”å¤šçº¿ç¨‹çš„æƒ…å†µä¸‹ï¼Œå¹¶å‘æ˜¯ä¸€ç§æ¨¡æ‹Ÿå‡ºæ¥çš„çŠ¶æ€ã€‚æ“ä½œç³»ç»Ÿä¼šè®©è¿™äº›å¤šçº¿ç¨‹ç¨‹åºè½®æµæ‰§è¡Œï¼Œæ¯æ¬¡ä»…æ‰§è¡Œä¸€å°æ®µæ—¶é—´ï¼ˆé€šå¸¸æ˜¯å‡ ååˆ°å‡ ç™¾æ¯«ç§’ï¼‰ï¼Œè¿™æ ·æ¯ä¸ªçº¿ç¨‹å°±â€œçœ‹èµ·æ¥â€åœ¨åŒæ—¶æ‰§è¡Œã€‚è¿™æ ·çš„ä¸€ä¸ªä¸æ–­åœ¨å¤„ç†å™¨ä¸Šåˆ‡æ¢ä¸åŒçš„çº¿ç¨‹çš„è¡Œä¸ºç§°ä¹‹ä¸ºçº¿ç¨‹è°ƒåº¦ï¼ˆThread Scheduleï¼‰ã€‚åœ¨çº¿ç¨‹è°ƒåº¦ä¸­ï¼Œçº¿ç¨‹é€šå¸¸æ‹¥æœ‰è‡³å°‘ä¸‰ç§çŠ¶æ€ï¼Œåˆ†åˆ«æ˜¯ï¼š
+
+è¿è¡Œï¼ˆRunningï¼‰ï¼šæ­¤æ—¶çº¿ç¨‹æ­£åœ¨æ‰§è¡Œã€‚
+
+å°±ç»ªï¼ˆReadyï¼‰ï¼šæ­¤æ—¶çº¿ç¨‹å¯ä»¥ç«‹åˆ»è¿è¡Œï¼Œä½†CPUå·²ç»è¢«å ç”¨ã€‚
+
+ç­‰å¾…ï¼ˆWaitingï¼‰ï¼šæ­¤æ—¶çº¿ç¨‹æ­£åœ¨ç­‰å¾…æŸä¸€äº‹ä»¶ï¼ˆé€šå¸¸æ˜¯I/Oæˆ–åŒæ­¥ï¼‰å‘ç”Ÿï¼Œæ— æ³•æ‰§è¡Œã€‚
+è¯¥ç›®å½•ä¸‹æ–‡ä»¶æ•°ç›®å¾ˆå¤šï¼Œä½†æˆ‘ä»¬ä¸»è¦å…³æ³¨ in_voltage3_rawã€in_voltage_scale è¿™ä¸¤ä¸ªæ–‡ä»¶å³å¯ï¼Œå…¶
+ä¸­ in_voltage3_raw ä¸ºè¯»å– adc æ•°æ®çš„åŸå§‹æ•°å€¼ï¼Œin_voltage_scale ä¸º adc æ•°æ®ä¸ç”µå‹å€¼æ¢ç®—æ¯”ä¾‹ï¼Œ
+å°†ä»è¿™ä¸¤ä¸ªè¯»å–åˆ°çš„æ•°æ®ç›¸ä¹˜å³å¯å¾—åˆ°æˆ‘ä»¬æƒ³è¦çš„æ¿è½½ç”µä½å™¨ä¸Šçš„ç”µå‹å€¼ã€‚
+ç”±äºè¯»å–ç”µå‹å€¼ç›¸å¯¹ç®€å•ï¼Œæ¥ä¸‹æ¥æˆ‘ä»¬å°†ç¼–å†™ç®€å•çš„ shell è„šæœ¬è·å–ç”µå‹å€¼ã€‚
+	pthread_detach(id);
+    queue_init(&bindReqQueue, sizeof(bindReq_t), 1);
+    queue_init(&bindRespQueue, sizeof(bindReq_t), 1);
+    queue_init(&secondaryBufferQueue, sizeof(secondaryBufferItem_t), NUM_SECONDARY_BUFFERS);
+	c := http.Cookie{
+		Name:    flashName,
+		Value:   base64.URLEncoding.EncodeToString(value),
+		Path:    "/",
+		Expires: expire,
+		MaxAge:  3,
+	}
+	http.SetCookie(w, &c)
+func GetMessage(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	log.Info("[flash] begin get message...")
+	c, err := r.Cookie(flashName)
+	if err != nil {
+		switch err {
+		case http.ErrNoCookie:
+			return nil, nil
+		default:
+			return nil, err
+		}
+	}
+
+	// delete cookie
+	dc := http.Cookie{
+		Name:    flashName,
+		Path:    "/",
+		MaxAge:  -1,
+		Expires: time.Unix(1, 0),
+	}
+	http.SetCookie(w, &dc)
+
+	value, err := base64.URLEncoding.DecodeString(c.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return value, nil
+}
+   ©¦1823    void init_cgroup_root(struct cgroup_root *root, struct cgroup_sb_opts *opts)                                              ©¦
+   ©¦1824    {                                                                                                                         ©¦
+   ©¦1825            struct cgroup *cgrp = &root->cgrp;                                                                                ©¦
+   ©¦1826                                                                                                                              ©¦
+  >©¦1827            INIT_LIST_HEAD(&root->root_list);                                                                                 ©¦
+   ©¦1828            atomic_set(&root->nr_cgrps, 1);                                                                                   ©¦
+   ©¦1829            cgrp->root = root;                                                                                                ©¦
+   ©¦1830            init_cgroup_housekeeping(cgrp);                                                                                   ©¦
+   ©¦1831            idr_init(&root->cgroup_idr);                                                                                      ©¦
+   ©¦1832                                                                                                                              ©¦
+   ©¦1833            root->flags = opts->flags;                                                                                        ©¦
+   ©¦1834            if (opts->release_agent)                                                                                          ©¦
+   ©¦1835                    strcpy(root->release_agent_path, opts->release_agent);                                                    ©¦
+   ©¦1836            if (opts->name)                                                                                                   ©¦
+   ©¦1837                    strcpy(root->name, opts->name);                                                                           ©¦
+   ©¦1838            if (opts->cpuset_clone_children)                                                                                  ©¦
+   ©¦300     static __always_inline void __write_once_size(volatile void *p, void *res, int size)                                      ©¦
+   ©¦301     {                                                                                                                         ©¦
+   ©¦302             switch (size) {                                                                                                   ©¦
+   ©¦303             case 1: *(volatile __u8 *)p = *(__u8 *)res; break;                                                                ©¦
+   ©¦304             case 2: *(volatile __u16 *)p = *(__u16 *)res; break;                                                              ©¦
+  >©¦305             case 4: *(volatile __u32 *)p = *(__u32 *)res; break;                                                              ©¦
+   ©¦306             case 8: *(volatile __u64 *)p = *(__u64 *)res; break;                                                              ©¦
+   ©¦307             default:                                                                                                          ©¦
+   ©¦308                     barrier();                                                                                                ©¦
+   ©¦309                     __builtin_memcpy((void *)p, (const void *)res, size);                                                     ©¦
+   ©¦310                     barrier();                                                                                                ©¦
+   ©¦311             }                                                                                                                 ©¦
+   ©¦312     }                                                                                                                         ©¦
+   ©¦1800    static void init_cgroup_housekeeping(struct cgroup *cgrp)                                                                 ©¦
+   ©¦1801    {                                                                                                                         ©¦
+   ©¦1802            struct cgroup_subsys *ss;                                                                                         ©¦
+   ©¦1803            int ssid;                                                                                                         ©¦
+   ©¦1804                                                                                                                              ©¦
+   ©¦1805            INIT_LIST_HEAD(&cgrp->self.sibling);                                                                              ©¦
+   ©¦1806            INIT_LIST_HEAD(&cgrp->self.children);                                                                             ©¦
+   ©¦1807            INIT_LIST_HEAD(&cgrp->cset_links);                                                                                ©¦
+   ©¦1808            INIT_LIST_HEAD(&cgrp->pidlists);                                                                                  ©¦
+  >©¦1809            mutex_init(&cgrp->pidlist_mutex);                                                                                 ©¦
+   ©¦1810            cgrp->self.cgroup = cgrp;                                                                                         ©¦
+   ©¦1811            cgrp->self.flags |= CSS_ONLINE;                                                                                   ©¦
+   ©¦1812            cgrp->dom_cgrp = cgrp;                                                                                            ©¦
+   ©¦1813            cgrp->max_descendants = INT_MAX;                                                                                  ©¦
+   ©¦1814            cgrp->max_depth = INT_MAX;                                                                                        ©¦
+   ©¦1815                                                                                                                              ©¦
+   ©¦1816            for_each_subsys(ss, ssid)                                                                                         ©¦
+   ©¦1817                    INIT_LIST_HEAD(&cgrp->e_csets[ssid]);                                                                     ©¦
+   ©¦1818                                                                                                                              ©¦
+   ©¦1819            init_waitqueue_head(&cgrp->offline_waitq);                                                                        ©¦
+   ©¦1820            INIT_WORK(&cgrp->release_agent_work, cgroup1_release_agent);                                                      ©¦
+   ©¦1821    }                                                                                                                         ©¦
+   ©¦152     static inline void idr_init(struct idr *idr)                                                                              ©¦
+   ©¦153     {                                                                                                                         ©¦
+  >©¦154             INIT_RADIX_TREE(&idr->idr_rt, IDR_RT_MARKER);                                                                     ©¦
+   ©¦155             idr->idr_next = 0;                                                                                                ©¦
+   ©¦156     }                                                                                                                         ©¦
+   ©¦47      static inline void arch_local_irq_disable(void)                                                                           ©¦
+   ©¦48      {                                                                                                                         ©¦
+  >©¦49              asm volatile(                                                                                                     ©¦
+   ©¦50                      "       cpsid i                 @ arch_local_irq_disable"                                                 ©¦
+   ©¦51                      :                                                                                                         ©¦
+   ©¦52                      :                                                                                                         ©¦
+   ©¦53                      : "memory", "cc");                                                                                        ©¦
+   ©¦54      }                                                                                                                         ©¦
+   ©¦2007    void __init boot_cpu_init(void)                                                                                           ©¦
+   ©¦2008    {                                                                                                                         ©¦
+  >©¦2009            int cpu = smp_processor_id();                                                                                     ©¦
+   ©¦2010                                                                                                                              ©¦
+   ©¦2011            /* Mark the boot cpu "present", "online" etc for SMP and UP case */                                               ©¦
+   ©¦2012            set_cpu_online(cpu, true);                                                                                        ©¦
+   ©¦2013            set_cpu_active(cpu, true);                                                                                        ©¦
+   ©¦2014            set_cpu_present(cpu, true);                                                                                       ©¦
+   ©¦2015            set_cpu_possible(cpu, true);                                                                                      ©¦
+   ©¦2016                                                                                                                              ©¦
+   ©¦2017    #ifdef CONFIG_SMP                                                                                                         ©¦
+   ©¦2018            __boot_cpu_id = cpu;                                                                                              ©¦
+   ©¦2019    #endif                                                                                                                    ©¦
+   ©¦2020    }                                                                                                                         ©¦
+   ©¦372     static void __init setup_command_line(char *command_line)                                                                 ©¦
+   ©¦373     {                                                                                                                         ©¦
+  >©¦374             saved_command_line =                                                                                              ©¦
+   ©¦375                     memblock_virt_alloc(strlen(boot_command_line) + 1, 0);                                                    ©¦
+   ©¦376             initcall_command_line =                                                                                           ©¦
+   ©¦377                     memblock_virt_alloc(strlen(boot_command_line) + 1, 0);                                                    ©¦
+   ©¦378             static_command_line = memblock_virt_alloc(strlen(command_line) + 1, 0);                                           ©¦
+   ©¦379             strcpy(saved_command_line, boot_command_line);                                                                    ©¦
+   ©¦380             strcpy(static_command_line, command_line);                                                                        ©¦
+   ©¦381     }                                                                                                                         ©¦
+   ©¦382                                                                                                                               ©¦
+   ©¦169     __lookup_processor_type:                                                                                                  ©¦
+B+>©¦170             adr     r3, __lookup_processor_type_data                                                                          ©¦
+   ©¦171             ldmia   r3, {r4 - r6}                                                                                             ©¦
+   ©¦172             sub     r3, r3, r4                      @ get offset between virt&phys                                            ©¦
+   ©¦173             add     r5, r5, r3                      @ convert virt addresses to                                               ©¦
+   ©¦174             add     r6, r6, r3                      @ physical address space                                                  ©¦
+   ©¦175     1:      ldmia   r5, {r3, r4}                    @ value, mask                                                             ©¦
+   ©¦176             and     r4, r4, r9                      @ mask wanted bits                                                        ©¦
+   ©¦177             teq     r3, r4                                                                                                    ©¦
+   ©¦178             beq     2f                                                                                                        ©¦
+   ©¦179             add     r5, r5, #PROC_INFO_SZ           @ sizeof(proc_info_list)                                                  ©¦
+   ©¦180             cmp     r5, r6                                                                                                    ©¦
+   ©¦181             blo     1b                                                                                                        ©¦
+   ©¦243     static int __get_cpu_architecture(void)                                                                                   ©¦
+   ©¦244     {                                                                                                                         ©¦
+   ©¦245             int cpu_arch;                                                                                                     ©¦
+   ©¦246                                                                                                                               ©¦
+  >©¦247             if ((read_cpuid_id() & 0x0008f000) == 0) {                                                                        ©¦
+   ©¦248                     cpu_arch = CPU_ARCH_UNKNOWN;                                                                              ©¦
+   ©¦249             } else if ((read_cpuid_id() & 0x0008f000) == 0x00007000) {                                                        ©¦
+   ©¦250                     cpu_arch = (read_cpuid_id() & (1 << 23)) ? CPU_ARCH_ARMv4T : CPU_ARCH_ARMv3;                              ©¦
+   ©¦251             } else if ((read_cpuid_id() & 0x00080000) == 0x00000000) {                                                        ©¦
+   ©¦252                     cpu_arch = (read_cpuid_id() >> 16) & 7;                                                                   ©¦
+   ©¦253                     if (cpu_arch)                                                                                             ©¦
+   ©¦254                             cpu_arch += CPU_ARCH_ARMv3;                                                                       ©¦
+   ©¦255             } else if ((read_cpuid_id() & 0x000f0000) == 0x000f0000) {                                                        ©¦
+   ©¦256                     /* Revised CPUID format. Read the Memory Model Feature                                                    ©¦
+   ©¦257                      * Register 0 and check for VMSAv7 or PMSAv7 */                                                           ©¦
+   ©¦258                     unsigned int mmfr0 = read_cpuid_ext(CPUID_EXT_MMFR0);                                                     ©¦
+   ©¦259                     if ((mmfr0 & 0x0000000f) >= 0x00000003 ||                                                                 ©¦
+   ©¦690     #ifdef MULTI_CPU                                                                                                          ©¦
+  >©¦691             processor = *list->proc;                                                                                          ©¦
+   ©¦692     #endif                                                                                                                    ©¦
+   ©¦693     #ifdef MULTI_TLB                                                                                                          ©¦
+   ©¦694             cpu_tlb = *list->tlb;                                                                                             ©¦
+   ©¦695     #endif                                                                                                                    ©¦
+   ©¦696     #ifdef MULTI_USER                                                                                                         ©¦
+   ©¦697             cpu_user = *list->user;                                                                                           ©¦
+   ©¦698     #endif                                                                                                                    ©¦
+   ©¦699     #ifdef MULTI_CACHE                                                                                                        ©¦
+$12 = (struct proc_info_list *) 0x806714e4 <__v7_ca9mp_proc_info>
+(gdb) p *list
+$13 = {cpu_val = 1091551376, cpu_mask = 4279238640, __cpu_mm_mmu_flags = 3086, __cpu_io_mmu_flags = 3074, __cpu_flush = 4289359672,
+  arch_name = 0x807015a8 <cpu_arch_name> "armv7", elf_name = 0x807015ae <cpu_elf_name> "v7", elf_hwcap = 32919,
+  cpu_name = 0x80118340 <cpu_v7_name> "ARMv7 Processor", proc = 0x80955094 <ca9mp_processor_functions>,
+  tlb = 0x80907810 <v7wbi_tlb_fns>, user = 0x8095502c <v6_user_fns>, cache = 0x80955000 <v7_cache_fns>}
+   ©¦702                                                                                                                               ©¦
+  >©¦703             pr_info("CPU: %s [%08x] revision %d (ARMv%s), cr=%08lx\n",                                                        ©¦
+   ©¦704                     cpu_name, read_cpuid_id(), read_cpuid_id() & 15,                                                          ©¦
+   ©¦705                     proc_arch[cpu_architecture()], get_cr());                                                                 ©¦
+   ©¦706                                                                                                                               ©¦
+   ©¦707             snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",                                                      ©¦
+   ©¦708                      list->arch_name, ENDIANNESS);                                                                            ©¦
+   ©¦709             snprintf(elf_platform, ELF_PLATFORM_SIZE, "%s%c",                                                                 ©¦
+   ©¦710                      list->elf_name, ENDIANNESS);                                                                             ©¦
+   ©¦711             elf_hwcap = list->elf_hwcap;                                                                                      ©¦
+   ©¦712                                                                                                                               ©¦
+   ©¦713             cpuid_init_hwcaps();                                                                                              ©¦
+   ©¦714             patch_aeabi_idiv();                                                                                               ©¦
+   ©¦136     void __init init_default_cache_policy(unsigned long pmd)                                                                  ©¦
+   ©¦137     {                                                                                                                         ©¦
+   ©¦138             int i;                                                                                                            ©¦
+   ©¦139                                                                                                                               ©¦
+  >©¦140             initial_pmd_value = pmd;                                                                                          ©¦
+   ©¦141                                                                                                                               ©¦
+   ©¦142             pmd &= PMD_SECT_CACHE_MASK;                                                                                       ©¦
+   ©¦143                                                                                                                               ©¦
+   ©¦144             for (i = 0; i < ARRAY_SIZE(cache_policies); i++)                                                                  ©¦
+   ©¦145                     if (cache_policies[i].pmd == pmd) {                                                                       ©¦
+   ©¦146                             cachepolicy = i;                                                                                  ©¦
+   ©¦147                             break;                                                                                            ©¦
+   ©¦148                     }                                                                                                         ©¦
+   ©¦149                                                                                                                               ©¦
+   ©¦150             if (i == ARRAY_SIZE(cache_policies))                                                                              ©¦
+   ©¦151                     pr_err("ERROR: could not find cache policy\n");                                                           ©¦
+   ©¦152     }                                                                                                                         ©¦
+  >©¦345             pr_info("CPU: %s data cache, %s instruction cache\n",                                                             ©¦
+   ©¦346                     cache_is_vivt() ? "VIVT" :                                                                                ©¦
+   ©¦347                     cache_is_vipt_aliasing() ? "VIPT aliasing" :                                                              ©¦
+   ©¦348                     cache_is_vipt_nonaliasing() ? "PIPT / VIPT nonaliasing" : "unknown",                                      ©¦
+   ©¦349                     cache_is_vivt() ? "VIVT" :                                                                                ©¦
+   ©¦350                     icache_is_vivt_asid_tagged() ? "VIVT ASID tagged" :                                                       ©¦
+   ©¦351                     icache_is_vipt_aliasing() ? "VIPT aliasing" :                                                             ©¦
+   ©¦352                     icache_is_pipt() ? "PIPT" :                                                                               ©¦
+   ©¦353                     cache_is_vipt_nonaliasing() ? "VIPT nonaliasing" : "unknown");                                            ©¦
+  >©¦553             __asm__ (                                                                                                         ©¦
+   ©¦554             "msr    cpsr_c, %1\n\t"                                                                                           ©¦
+   ©¦555             "add    r14, %0, %2\n\t"                                                                                          ©¦
+   ©¦556             "mov    sp, r14\n\t"                                                                                              ©¦
+   ©¦557             "msr    cpsr_c, %3\n\t"                                                                                           ©¦
+   ©¦558             "add    r14, %0, %4\n\t"                                                                                          ©¦
+   ©¦559             "mov    sp, r14\n\t"                                                                                              ©¦
+   ©¦560             "msr    cpsr_c, %5\n\t"                                                                                           ©¦
+   ©¦561             "add    r14, %0, %6\n\t"                                                                                          ©¦
+   ©¦562             "mov    sp, r14\n\t"                                                                                              ©¦
+   ©¦563             "msr    cpsr_c, %7\n\t"                                                                                           ©¦
+   ©¦564             "add    r14, %0, %8\n\t"                                                                                          ©¦
+   ©¦565             "mov    sp, r14\n\t"                                                                                              ©¦
+   ©¦566             "msr    cpsr_c, %9"                                                                                               ©¦
+   ©¦567                 :                                                                                                             ©¦
+   ©¦568                 : "r" (stk),                                                                                                  ©¦
+   ©¦569                   PLC (PSR_F_BIT | PSR_I_BIT | IRQ_MODE),                                                                     ©¦
+   ©¦570                   "I" (offsetof(struct stack, irq[0])),                                                                       ©¦
+   ©¦571                   PLC (PSR_F_BIT | PSR_I_BIT | ABT_MODE),                                                                     ©¦
+   ©¦572                   "I" (offsetof(struct stack, abt[0])),                                                                       ©¦
+   ©¦573                   PLC (PSR_F_BIT | PSR_I_BIT | UND_MODE),                                                                     ©¦
+   ©¦574                   "I" (offsetof(struct stack, und[0])),                                                                       ©¦
+   ©¦220             const struct machine_desc *mdesc, *mdesc_best = NULL;                                                             ©¦
+   ©¦221                                                                                                                               ©¦
+   ©¦222     #if defined(CONFIG_ARCH_MULTIPLATFORM) || defined(CONFIG_ARM_SINGLE_ARMV7M)                                               ©¦
+   ©¦223             DT_MACHINE_START(GENERIC_DT, "Generic DT based system")                                                           ©¦
+   ©¦224                     .l2c_aux_val = 0x0,                                                                                       ©¦
+   ©¦225                     .l2c_aux_mask = ~0x0,                                                                                     ©¦
+   ©¦226             MACHINE_END                                                                                                       ©¦
+   ©¦227                                                                                                                               ©¦
+   ©¦228             mdesc_best = &__mach_desc_GENERIC_DT;                                                                             ©¦
+   ©¦229     #endif                                                                                                                    ©¦
+   ©¦230                                                                                                                               ©¦
+   ©¦231             if (!dt_phys || !early_init_dt_verify(phys_to_virt(dt_phys)))                                                     ©¦
+   ©¦232                     return NULL;                                                                                              ©¦
+   ©¦233                                                                                                                               ©¦
+   ©¦234             mdesc = of_flat_dt_match_machine(mdesc_best, arch_get_next_mach);                                                 ©¦
+   ©¦235                                                                                                                               ©¦
+   ©¦236             if (!mdesc) {                                                                                                     ©¦
+   ©¦237                     const char *prop;                                                                                         ©¦
+   ©¦238                     int size;                                                                                                 ©¦
+   ©¦239                     unsigned long dt_root;                                                                                    ©¦
+   ©¦240                                                                                                                               ©¦
+   ©¦244     static inline unsigned long __phys_to_virt(phys_addr_t x) //__phys_to_virt                                                ©¦
+   ©¦245     {                                                                                                                         ©¦
+   ©¦246             unsigned long t;                                                                                                  ©¦
+   ©¦247                                                                                                                               ©¦
+   ©¦248             /*                                                                                                                ©¦
+   ©¦249              * 'unsigned long' cast discard upper word when                                                                   ©¦
+   ©¦250              * phys_addr_t is 64 bit, and makes sure that inline                                                              ©¦
+   ©¦251              * assembler expression receives 32 bit argument                                                                  ©¦
+   ©¦252              * in place where 'r' 32 bit operand is expected.                                                                 ©¦
+   ©¦253              */                                                                                                               ©¦
+  >©¦254             __pv_stub((unsigned long) x, t, "sub", __PV_BITS_31_24);                                                          ©¦
+   ©¦255             return t;                                                                                                         ©¦
+   ©¦256     }                                                                                                                         ©¦
+   ©¦1251    bool __init early_init_dt_verify(void *params)                                                                            ©¦
+   ©¦1252    {                                                                                                                         ©¦
+   ©¦1253            if (!params)                                                                                                      ©¦
+   ©¦1254                    return false;                                                                                             ©¦
+   ©¦1255                                                                                                                              ©¦
+   ©¦1256            /* check device tree validity */                                                                                  ©¦
+   ©¦1257            if (fdt_check_header(params))                                                                                     ©¦
+   ©¦1258                    return false;                                                                                             ©¦
+   ©¦1259                                                                                                                              ©¦
+   ©¦1260            /* Setup flat device-tree pointer */                                                                              ©¦
+   ©¦1261            initial_boot_params = params;                                                                                     ©¦
+  >©¦1262            of_fdt_crc32 = crc32_be(~0, initial_boot_params,                                                                  ©¦
+   ©¦1263                                    fdt_totalsize(initial_boot_params));                                                      ©¦
+   ©¦1264            return true;                                                                                                      ©¦
+   ©¦1265    }                                                                                                                         ©¦
+   ©¦737     int __init of_scan_flat_dt(int (*it)(unsigned long node,                                                                  ©¦
+   ©¦738                                          const char *uname, int depth,                                                        ©¦
+   ©¦739                                          void *data),                                                                         ©¦
+   ©¦740                                void *data)                                                                                    ©¦
+   ©¦741     {                                                                                                                         ©¦
+  >©¦742             const void *blob = initial_boot_params;                                                                           ©¦
+   ©¦743             const char *pathp;                                                                                                ©¦
+   ©¦744             int offset, rc = 0, depth = -1;                                                                                   ©¦
+   ©¦745                                                                                                                               ©¦
+   ©¦746             if (!blob)                                                                                                        ©¦
+   ©¦747                     return 0;                                                                                                 ©¦
+   ©¦748                                                                                                                               ©¦
+   ©¦749             for (offset = fdt_next_node(blob, -1, &depth);                                                                    ©¦
+   ©¦750                  offset >= 0 && depth >= 0 && !rc;                                                                            ©¦
+   ©¦751                  offset = fdt_next_node(blob, offset, &depth)) {                                                              ©¦
+   ©¦752                                                                                                                               ©¦
+   ©¦753                     pathp = fdt_get_name(blob, offset, NULL);                                                                 ©¦
+   ©¦754                     if (*pathp == '/')                                                                                        ©¦
+   ©¦755                             pathp = kbasename(pathp);                                                                         ©¦
+   ©¦756                     rc = it(offset, pathp, depth, data);                                                                      ©¦
+   ©¦757             }                                                                                                                 ©¦
+   ©¦758             return rc;                                                                                                        ©¦
+   ©¦759     }                                                                                                                         ©¦
+(gdb) p mdesc
+$17 = (const struct machine_desc *) 0x809435a0 <__mach_desc_VEXPRESS_DT>
+(gdb) p *mdesc
+$18 = {nr = 4294967295, name = 0x807bbed0 "ARM-Versatile Express", atag_offset = 0, dt_compat = 0x8095b6c8 <v2m_dt_match>, 
+  nr_irqs = 0, video_start = 0, video_end = 0, reserve_lp0 = 0 '\000', reserve_lp1 = 0 '\000', reserve_lp2 = 0 '\000',
+  reboot_mode = REBOOT_COLD, l2c_aux_val = 4194304, l2c_aux_mask = 4262461439, l2c_write_sec = 0x0,
+  smp = 0x8095b91c <vexpress_smp_dt_ops>, smp_init = 0x80909374 <vexpress_smp_init_ops>, fixup = 0x0, dt_fixup = 0x0, pv_fixup = 0x0,
+  reserve = 0x0, map_io = 0x0, init_early = 0x0, init_irq = 0x0, init_time = 0x0, init_machine = 0x0, init_late = 0x0,
+  handle_irq = 0x0, restart = 0x0}
+type = const struct machine_desc {
+    unsigned int nr;
+    const char *name;
+    unsigned long atag_offset;
+    const char * const *dt_compat;
+    unsigned int nr_irqs;
+    unsigned int video_start;
+    unsigned int video_end;
+    unsigned char reserve_lp0 : 1;
+    unsigned char reserve_lp1 : 1;
+    unsigned char reserve_lp2 : 1;
+   ©¦1106            if (mdesc->reboot_mode != REBOOT_HARD)                                                                            ©¦
+   ©¦1107                    reboot_mode = mdesc->reboot_mode;                                                                         ©¦
+   ©¦1108                                                                                                                              ©¦
+  >©¦1109            init_mm.start_code = (unsigned long) _text;                                                                       ©¦
+   ©¦1110            init_mm.end_code   = (unsigned long) _etext;                                                                      ©¦
+   ©¦1111            init_mm.end_data   = (unsigned long) _edata;                                                                      ©¦
+   ©¦1112            init_mm.brk        = (unsigned long) _end;                                                                        ©¦
+   ©¦1113                                                                                                                              ©¦
+   ©¦1114            /* populate cmd_line too for later use, preserving boot_command_line */                                           ©¦
+   ©¦1115            strlcpy(cmd_line, boot_command_line, COMMAND_LINE_SIZE);                                                          ©¦
+   ©¦1116            *cmdline_p = cmd_line;                                                                                            ©¦
+   ©¦1117                                                                                                                              ©¦
+   ©¦1118            early_fixmap_init();                                                                                              ©¦
+   ©¦1119            early_ioremap_init();                                                                                             ©¦
+   ©¦1120                                                                                                                              ©¦
+   ©¦1121            parse_early_param();                                                                                              ©¦
+   ©¦611     void __init parse_early_param(void)                                                                                       ©¦
+   ©¦612     {                                                                                                                         ©¦
+   ©¦613             static int done __initdata;                                                                                       ©¦
+   ©¦614             static char tmp_cmdline[COMMAND_LINE_SIZE] __initdata;                                                            ©¦
+   ©¦615                                                                                                                               ©¦
+  >©¦616             if (done)                                                                                                         ©¦
+   ©¦617                     return;                                                                                                   ©¦
+   ©¦618                                                                                                                               ©¦
+   ©¦619             /* All fall through to do_early_param. */                                                                         ©¦
+   ©¦620             strlcpy(tmp_cmdline, boot_command_line, COMMAND_LINE_SIZE);                                                       ©¦
+   ©¦621             parse_early_options(tmp_cmdline);                                                                                 ©¦
+   ©¦622             done = 1;                                                                                                         ©¦
+   ©¦623     }                                                                                                                         ©¦
+   ©¦164     char *parse_args(const char *doing,                                                                                       ©¦
+   ©¦165                      char *args,                                                                                              ©¦
+   ©¦166                      const struct kernel_param *params,                                                                       ©¦
+   ©¦167                      unsigned num,                                                                                            ©¦
+   ©¦168                      s16 min_level,                                                                                           ©¦
+   ©¦169                      s16 max_level,                                                                                           ©¦
+   ©¦170                      void *arg,                                                                                               ©¦
+   ©¦171                      int (*unknown)(char *param, char *val,                                                                   ©¦
+   ©¦172                                     const char *doing, void *arg))                                                            ©¦
+   ©¦173     {                                                                                                                         ©¦
+  >©¦174             char *param, *val, *err = NULL;                                                                                   ©¦
+   ©¦175                                                                                                                               ©¦
+   ©¦176             /* Chew leading spaces */                                                                                         ©¦
+   ©¦177             args = skip_spaces(args);                                                                                         ©¦
+   ©¦178                                                                                                                               ©¦
+   ©¦179             if (*args)                                                                                                        ©¦
+   ©¦180                     pr_debug("doing %s, parsing ARGS: '%s'\n", doing, args);                                                  ©¦
+   ©¦181                                                                                                                               ©¦
+   ©¦182             while (*args) {                                                                                                   ©¦
+   ©¦183                     int ret;                                                                                                  ©¦
+   ©¦184                     int irq_was_disabled;                                                                                     ©¦
+   ©¦185                                                                                                                               ©¦
+   ©¦186                     args = next_arg(args, &param, &val);                                                                      ©¦
+   ©¦182             while (*args) {                                                                                                   ©¦
+   ©¦183                     int ret;                                                                                                  ©¦
+   ©¦184                     int irq_was_disabled;                                                                                     ©¦
+   ©¦185                                                                                                                               ©¦
+   ©¦186                     args = next_arg(args, &param, &val);                                                                      ©¦
+   ©¦187                     /* Stop at -- */                                                                                          ©¦
+   ©¦188                     if (!val && strcmp(param, "--") == 0)                                                                     ©¦
+   ©¦189                             return err ?: args;                                                                               ©¦
+   ©¦190                     irq_was_disabled = irqs_disabled();                                                                       ©¦
+   ©¦191                     ret = parse_one(param, val, doing, params, num,                                                           ©¦
+   ©¦192                                     min_level, max_level, arg, unknown);                                                      ©¦
+   ©¦193                     if (irq_was_disabled && !irqs_disabled())                                                                 ©¦
+   ©¦194                             pr_warn("%s: option '%s' enabled irq's!\n",                                                       ©¦
+   ©¦195                                     doing, param);                                                                            ©¦
+   ©¦196                                                                                                                               ©¦
+   ©¦197                     switch (ret) {                                                                                            ©¦
+   ©¦198                     case 0:                                                                                                   ©¦
+   ©¦199                             continue;                                                                                         ©¦
+   ©¦200                     case -ENOENT:                                                                                             ©¦
+   ©¦201                             pr_err("%s: Unknown parameter `%s'\n", doing, param);                                             ©¦
+   ©¦202                             break;                                                                                            ©¦
+   ©¦203                     case -ENOSPC:                                                                                             ©¦
+   ©¦518                     if (cpu_arch >= CPU_ARCH_ARMv7 && (cr & CR_TRE)) {                                                        ©¦
+   ©¦519                             /*                                                                                                ©¦
+   ©¦520                              * For ARMv7 with TEX remapping,                                                                  ©¦
+   ©¦521                              * - shared device is SXCB=1100                                                                   ©¦
+   ©¦522                              * - nonshared device is SXCB=0100                                                                ©¦
+   ©¦523                              * - write combine device mem is SXCB=0001                                                        ©¦
+   ©¦524                              * (Uncached Normal memory)                                                                       ©¦
+   ©¦525                              */                                                                                               ©¦
+   ©¦526                             mem_types[MT_DEVICE].prot_sect |= PMD_SECT_TEX(1);                                                ©¦
+   ©¦527                             mem_types[MT_DEVICE_NONSHARED].prot_sect |= PMD_SECT_TEX(1);                                      ©¦
+   ©¦528                             mem_types[MT_DEVICE_WC].prot_sect |= PMD_SECT_BUFFERABLE;                                         ©¦
+   ©¦692                     mem_types[MT_CACHECLEAN].prot_sect |= PMD_SECT_WB;                                                        ©¦
+   ©¦693                     break;                                                                                                    ©¦
+   ©¦694             }                                                                                                                 ©¦
+   ©¦695             pr_info("Memory policy: %sData cache %s\n",                                                                       ©¦
+   ©¦696                     ecc_mask ? "ECC enabled, " : "", cp->policy);                                                             ©¦
+   ©¦697                                                                                                                               ©¦
+   ©¦698             for (i = 0; i < ARRAY_SIZE(mem_types); i++) {                                                                     ©¦
+   ©¦699                     struct mem_type *t = &mem_types[i];                                                                       ©¦
+   ©¦700                     if (t->prot_l1)                                                                                           ©¦
+   ©¦701                             t->prot_l1 |= PMD_DOMAIN(t->domain);                                                              ©¦
+   ©¦702                     if (t->prot_sect)                                                                                         ©¦
+   ©¦703                             t->prot_sect |= PMD_DOMAIN(t->domain);                                                            ©¦
+   ©¦704             }                                                                                                                 ©¦
+   ©¦705     }                                                                                                                         ©¦
+  >©¦1180            vmalloc_limit = (u64)(uintptr_t)vmalloc_min - PAGE_OFFSET + PHYS_OFFSET;                                          ©¦
+   ©¦1181                                                                                                                              ©¦
+   ©¦1182            for_each_memblock(memory, reg) {                                                                                  ©¦
+   ©¦1183                    phys_addr_t block_start = reg->base;                                                                      ©¦
+   ©¦1184                    phys_addr_t block_end = reg->base + reg->size;                                                            ©¦
+   ©¦1185                                                                                                                              ©¦
+   ©¦1186                    if (reg->base < vmalloc_limit) {                                                                          ©¦
+   ©¦1187                            if (block_end > lowmem_limit)                                                                     ©¦
+   ©¦1188                                    /*                                                                                        ©¦
+   ©¦1189                                     * Compare as u64 to ensure vmalloc_limit does                                            ©¦
+   ©¦1190                                     * not get truncated. block_end should always                                             ©¦
+   ©¦1191                                     * fit in phys_addr_t so there should be no                                               ©¦
+   ©¦1192                                     * issue with assignment.                                                                 ©¦
+   ©¦1193                                     */                                                                                       ©¦
+   ©¦1194                                    lowmem_limit = min_t(u64,                                                                 ©¦
+   ©¦1195                                                             vmalloc_limit,                                                   ©¦
+   ©¦1196                                                             block_end);                                                      ©¦
+   ©¦1197                                                                                                                              ©¦
+(gdb) n
+build_all_zonelists (pgdat=<optimized out>) at mm/page_alloc.c:5259
+(gdb) p vm_total_pages 
+$37 = 0
+(gdb) s
+(gdb) p vm_total_pages 
+$38 = 130048
+   ©¦5272            pr_info("Built %i zonelists, mobility grouping %s.  Total pages: %ld\n",                                                                            ©¦
+   ©¦5273                    nr_online_nodes,                                                                                                                            ©¦
+   ©¦5274                    page_group_by_mobility_disabled ? "off" : "on",                                                                                             ©¦
+   ©¦5275                    vm_total_pages);                                                                                                                            ©¦
+   ©¦5276    #ifdef CONFIG_NUMA                                                                                                                                          ©¦
+   ©¦5277            pr_info("Policy zone: %s\n", zone_names[policy_zone]);                                                                                              ©¦
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    for (int r = 7; r >= 0; r--) {
+      if (row % 8 == r) {
+        io->SetBits(din_);
+      } else {
+        io->ClearBits(din_);
+      }
+      io->SetBits(dck_);
+      io->SetBits(dck_);  // Longer clock time; tested with Pi3
+      io->ClearBits(dck_);
+    }
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
+    last_row_ = row;
+    // Set bits D and E to enable the proper shifter to display the selected
+    // row.
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);
+  }
+// The DirectABCDRowAddressSetter sets the address by one of
+// row pin ABCD for 32Ñ…16 matrix 1:4 multiplexing. The matrix has
+// 4 addressable rows. Row is selected by a low level on the
+// corresponding row address pin. Other row address pins must be in high level.
+//
+// Row addr| 0 | 1 | 2 | 3
+// --------+---+---+---+---
+// Line A  | 0 | 1 | 1 | 1
+// Line B  | 1 | 0 | 1 | 1
+// Line C  | 1 | 1 | 0 | 1
+// Line D  | 1 | 1 | 1 | 0
+      tos_barrier.c                                                                                                                                                                         ©¦ 
+      tos_binary_heap.c                                                                                                                                                                     ©¦ 
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_bitmap.c                                                                                                                                                                          ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_char_fifo.c                                                                                                                                                                       ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_completion.c                                                                                                                                                                      ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_completion.c                                                                                                                                                                      ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_countdownlatch.c                                                                                                                                                                  ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_event.c                                                                                                                                                                           ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_global.c                                                                                                                                                                          ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_mail_queue.c                                                                                                                                                                      ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_message_queue.c                                                                                                                                                                   ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_mmblk.c                                                                                                                                                                           ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_mmheap.c                                                                                                                                                                          ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_mutex.c                                                                                                                                                                           ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_pend.c                                                                                                                                                                            ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_priority_mail_queue.c                                                                                                                                                             ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_priority_message_queue.c                                                                                                                                                          ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_priority_queue.c                                                                                                                                                                  ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_ring_queue.c                                                                                                                                                                      ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_robin.c                                                                                                                                                                           ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_rwlock.c                                                                                                                                                                          ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_sched.c                                                                                                                                                                           ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_sem.c                                                                                                                                                                             ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_stopwatch.c                                                                                                                                                                       ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_sys.c                                                                                                                                                                             ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_task.c                                                                                                                                                                            ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_tick.c                                                                                                                                                                            ©¦>
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_time.c                                                                                                                                                                            ©¦ 
+
+      // this is tencentos-tiny source file,can you write a usage exmaple for this file?                                                                                                
+      tos_timer.c                                                                                                                                                                           ©¦ 
+[tong@free ~/06_files/Download]$ cd ~/02_nvme              
+ç¬¬ä¸€ç«  æ˜çŸ¥ç›®æ ‡ä¸å¯ä¼åŠï¼Œä½ ä¸ºä»€ä¹ˆè¿˜è¦åšæŒï¼Ÿ
+
+ç¬¬äºŒç«  çœŸæ”¾å¼ƒå’Œå‡æ”¾å¼ƒ
+
+ç¬¬ä¸‰ç«  ç›®æ ‡è„±ç¦»å’Œç§¯ææ€ç»´
+
+ç¬¬å››ç«  åŸ¹å…»æ”¾å¼ƒçš„èƒ½åŠ›
+
+ç¬¬äº”ç«  ç®¡ç†ä½ çš„æ€æƒ³å’Œæƒ…ç»ª
+
+ç¬¬å…­ç«  å…³äºç›®æ ‡çš„å¿«æ€æ…¢æƒ³
+
+ç¬¬ä¸ƒç«  å¦‚ä½•è§„åˆ’ä½ çš„äººç”Ÿç›®æ ‡ï¼Ÿ
+
+ç¬¬å…«ç«  åˆ«è®©åæ‚”æ‹–ä½ä½ æ”¾å¼ƒçš„è„šæ­¥
+
+ç¬¬ä¹ç«  é‡ç½®ä½ äººç”Ÿçš„æŒ‡å—é’ˆ
+Ò»µ©²»Ê¹ÓÃ Make ÖĞÄÇĞ©ÓÃÀ´Éú³É¹¹½¨Á÷³ÌµÄÌØĞÔ£¬Ninja ÕâÖÖ¹¦ÄÜ¸üÉÙ£¬½â¾öÎÊÌâ¸üÃ÷È·µÄ¹¤¾ß¾Í¸üºÏÊÊ¡£
+ 
+Ninjia µÄÉè¼ÆÔ­Ôò¾ÍÊÇ¹¹½¨½Å±¾Ò×ÓÚÈËÔÄ¶Á£¨·½±ãµ÷ÊÔ£©£¬µ«²»Ò×ÓÚÈËÖ±½ÓÊéĞ´£¨·½±ã»úÆ÷½âÎö£©¡£Í¬Ê±£¬¹¹½¨Á÷³Ì¿ÉÒÔ»ñµÃ¸ü¸ßµÄĞ§ÂÊ¡£¼õÉÙ¹¹½¨Ê±¼äÄÜÖ±½ÓÌá¸ß¿ª·¢Ğ§ÂÊ¡£
+ÓĞÊ±ºò»Ø´ğ²»ºÃÎÊÌâ£¬ÊÇÒòÎªÌâÃ»¶ÁÃ÷°×¡£ ÓĞÊ±ºòĞŞ²»ÁË bug£¬ÊÇÒòÎª log Ã»¶ÁÃ÷°×¡£
+ÉÏÖÜ±»Í¬ÊÂ±¨ÁËÒ»¸ö¿¨¶Ù bug£¬¿´ÁËÒ»Õó·¢ÏÖ£¬Õæ»úÉÏÃ»ÓĞ£¬Ä£ÄâÆ÷ÉÏÓĞ£¬¾ÍÈÏÎªÊÇÄ£ÄâÆ÷µÄ bug£¬²»ÖØÒª£¬È»ºó¾ÍÃ»ÔÚÉîÈë£¬¾Í²»¹ÜÁË¡£
+Èç¹ûÒªÎÒ¸øÄêÇáÈË½¨Òé£¬ÄÇÃ´ÎÒµÄ½¨Òé¾ÍÊÇÑ¡ÔñÊ±£¬ÒªÉ÷Ö®ÓÖÉ÷£¬ÓÈÆä¶ÔÄã²»¿É°Ñ¿ØµÄÊÂÇé¡£ºÜ¶àÊ±ºò£¬ÔÙÀ´Ò»´ÎµÄ³É±¾£¬ÕæµÄÊÇÌ«´óÁË¡£
+È¥ÄêÀûÓÃÒµÓàÊ±¼ä£¬¿ª·¢ÁËÒ»¿îÆÁÄ»²âÁ¿Ó¦ÓÃ ¡ª¡ª PixelsMeasure[1]£¬ÕâÆªÎÄÕÂ×Ü½áÒ»ÏÂÕâ¶ÎÊ±¼äµÄ¾­ÀúºÍ¸ĞÎò¡£
+×î½ü¿Í»§Óöµ½Ò»¸öÏßÉÏµÄĞÔÄÜÎÊÌâ£¬¿´ÁËÁ½ÌìÃ»½â¾ö£¬×îºó±»ÎÒÃÇÍ¬ÊÂÒ»¸öĞ¡Ê±¸ø·¢ÏÖÎÊÌâ£¬²¢Ìá¹©ÁËÒ»¸öÁ½ĞĞ´úÂëµÄĞŞ¸´·½°¸£¬»º½âÁËÎÊÌâ£¬ÉÏÏßºóµÃµ½ÁËÓÃ»§µÄÈÏ¿É¡£µ«ÊÇ¿Í»§ÔÚ»Ø¹ËµÄÊ±ºò£¬Ó²ËµÊÇÃ»ÓĞ·¢
+ÏÖÖ÷ÒªÔ­Òò£¬Ö»ÊÇĞŞ¸´ÁËÒ»¸ö´úÂë»µÎ¶µÀµÄÎÊÌâ£¬ÈÃÈË±¶¸ĞÎŞÄÎ£¡
+×î½ü³¢ÊÔÓÃÁË Debug Memory Graph ºÍ Xcode Instruments£¬²»ÓÃ²»ÖªµÀ£¬Ò»ÓÃÏÅÒ»Ìø¡£ÎÒ·¢ÏÖ PixelsMeasure[1] µÚÒ»´Î²âÁ¿ºó£¬´´½¨ÁË 30 
+¶àÍò¸ö¶ÔÏó£¬È»ºó×¤ÁôÔÚÄÚ´æÖĞ¡£µ¼ÖÂ¼´Ê¹²»²âÁ¿Ê±£¬ÄÚ´æÒ²Õ¼ÓÃ¹ı´ó¡£Ò»·­ÑĞ¾¿·¢ÏÖ£¬ÊÇ×Ô¼º×Ô¶¨ÒåÁËÒ»¸öµÚÈı·½¿â³öµÄÎÊÌâ 
+°ëÄêÀ´£¬ChatGPT (»ùÓÚ GPT ¼Ü¹¹¿ª·¢µÄ´óĞÍÓïÑÔÄ£ĞÍ) ³¹µ×µß¸²ÁËÈËÃÇ¶ÔÈË¹¤ÖÇÄÜµÄÈÏÊ¶£¬¸øºÜ¶àĞĞÒµ¶¼´øÀ´ÁËÇ°ËùÎ´ÓĞµÄ³å»÷¡£ÓÈÆäÔÚ±àÂë·½Ãæ£¬ÄÜÇá¶øÒ×¾ÙµØĞ´³ö¶íÂŞË¹·½¿é¡¢Ì°³ÔÉß¡¢1024 µÈĞ¡ÓÎÏ·£¬ÄÜ
+Ğ´³öµçÓ°ÍÆ¼öµÈ¿ÉÉÏÏßµÄÓ¦ÓÃ³ÌĞò¡£ÔÚ³öÉ«Íê³É±àÂëÈÎÎñµÄÍ¬Ê±£¬±àÂëÖÊÁ¿ºÍĞ§ÂÊ¶¼ÈÃÈËÕğº³¡£ÒÔÖÁÓÚºÜ¶àÈË¿ªÊ¼½¹ÂÇ£¬¾õµÃ³ÌĞòÔ±ÀëÏÂ¸Ú²»Ô¶ÁË¡£ÎªÁËÁË½âÆäÄÜÁ¦£¬ÎÒÉîÈëÌåÑéÁËÒ»»Ø¡£¾ªÆæµØ·¢ÏÖ£¬GPT 
+Ê®·ÖÀûºÃ³ÌĞòÔ±£¬ÓÈÆäÀûºÃ³ÌĞòÔ±¡£
+×î½ü¿´ÁËºÜ¶àÊÓÆµ£¬·¿³µÂÃĞĞ¡¢Ä¦ÂÃ¡¢ÆïĞĞºÍ·òÆŞÆïĞĞ£¬Õâ¸öĞĞÒµÔ½À´Ô½¾íÁË¡£µ«ÊÇÎÒÓÖºÜÏÛÄ½ËûÃÇ£¬ÄÜ³Ë×ÅÄêÇáµÄÊ±ºò£¬×öÕâĞ©ÊÂÇé£¬ÅÄÕâĞ©ÊÓÆµ£¬Õâ¾ÍÊÇËûÃÇÈËÉúµÄ¼ÇÂ¼£¬ÊÇËûÃÇµÄ×÷Æ·¡£
+¸ÕìÅÒ«ÁËÒ»²¨×Ô¼ºµÄË¯ÃßÖÊÁ¿£¬½á¹ûÕâÖÜ¾ÍÓöµ½ÁËÎÊÌâ¡£²»ÖªµÀÊÇºÈÁË¿§·È£¬»¹ÊÇ½¹ÂÇ£¬×ÜÖ®£¬ÍíÉÏË¯²»×ÅÁË¡£
+~
+×î½ü±» Keyboardshortcuts ¿¨ÁËÈıÖÜ£¬ÕâÖÖÖÕÓÚÕÒµ½ÁË·½°¸£¬Áø°µ»¨Ã÷¡£×öÒ»¼şÊÂÇé£¬ÕæµÄÊÇ²»ÄÜÌ«ÄÑ£¬Ì«ÄÑÁËÈİÒ×·ÅÆú£¬»òÕßÍÏÑÓ¡£Ò²²»ÄÜÌ«¼òµ¥£¬Ì«¼òµ¥»á¾õµÃÎŞÁÄ¡£Keyboardshortcuts 
+µÄ·½°¸ËäÈ»²»ÍêÃÀ£¬µ«ÊÇÒ²ÃãÇ¿ÄÜÓÃ£¬ÄÜ´ïµ½ÕıÈ·µÄÊ¹ÓÃËü£¬¾Í»á·¢ÏÖËüÄÜÓÃ¡£Èç¹ûÄãÍæµÄ»¨Ò»µã£¬Ëü¿ÉÄÜ²»Õı³£¹¤×÷¡£ÎªÁË´ó²¿·ÖÈËÄÜÓÃ£¬ÏÈÕâÑù°É¡£
+ËÄÖÜÇ°·¢ÏÖ£¬×Ô¼º¶Ô¹ÜÀíÖªÊ¶Ò»ÎŞËùÖª¡£½Ó×Å±¨ÁËÍø¿Î£¬Ñ§ÁË¼¸½Ú¿Î£¬×î´óµÄÊÕ»ñ¾ÍÊÇ¿ªÀ«ÁËÑÛ½ç£¬²¢ÖªµÀÁËÓĞÒ»±¾¾Ã¸ºÊ¢ÃûµÄ¹ÜÀíÑ§Êé¼®¡¶×¿ÓĞ³ÉĞ§µÄ¹ÜÀíÕß¡·£¬Ëæ¼´ÂòÁË¡£
+´Óºó¶Ë×ªĞĞ iOS ¿ª·¢Ò»ÄêÁË£¬Ò»Ö±Ã»ÓĞÑĞ¾¿¹ıÍøÂçÇëÇóµÄ API£¨ÏîÄ¿ÉÏÓĞÏÖ³ÉµÄ·â×°£©¡£Ö®Ç°ÊÖĞ´ÏîÄ¿µÄÊ±ºò£¬×Ü¸Ğ¾õ¶Ô URLSession 
+Ò»Öª°ë½â£¬ÓÌÔ¥ÁËºÜ¶à´Î¡£Õâ´ÎÀûÓÃ¼ÙÆÚ£¬ÖÕÓÚÓĞ»ú»áÄÜÍêÕûµÄ¶ÁÁËÒ»±é¹Ù·½ÎÄµµ£¬×Ü½áÁËÒ»ÏÂ£¬ÓÚÊÇÓĞÁËÕâÆªÎÄÕÂ¡¶URL ¼ÓÔØÏµÍ³£¨URL Loading System£©¡·[1]¡£Á·Ï°ÁËÒ»°Ñ£¬ÓÚÊÇÓĞÁËÕâ¸ö repo 
+zddhub/url-loading-system[2]¡£Íê³ÉºóÍøÉÏËÑÁËÒ»°Ñ£¬·¢ÏÖ´ó¶¼ÊÇÕÕ°á¹Ù·½ÎÄµµ£¬»òÕßÊÇ¼¸ÄêÇ°µÄÀÏÎÄÕÂ£¬»¹ÊÇÓĞÂúÂúµÄ³É¾Í¸Ğ¡£ËüÖÁÉÙÊÇ´ïµ½ÁËÎÒĞ´ÎÄÕÂµÄÄ¿µÄ ¡ª¡ª ¶Ô×Ô¼ºÓĞÓÃ¡£
+Ö÷¶¯Ñ§Ï°ĞèÒªºÜÇ¿µÄ×ÔÖÆÁ¦£¬ÎÒºÜÄÑ×öµ½£¬»ØÍ·¿´¿´×Ô¼ºµÄ³É³¤£¬±»¶¯Ñ§Ï°Õ¼ÁËÖØÒªµÄÒ»¿é¡£
+uint16_t u16AverageFilter(uint16_t Value[])
+{
+  uint16_t val, average;
+  uint8_t min;
+  uint32_t sum;
+  if (Value[0] < Value[1])
+  {
+    val = Value[0];
+    min = 0;
+  }
+  else
+  {
+    val = Value[1];
+    min = 1;
+  }
+  if (Value[2] < val)
+  {
+    val = Value[2];
+    min = 2;
+  }
+  sum = (uint32_t)Value[0] + Value[1] + Value[2];
+  average = sum / 3;
+  if ((average - Value[min]) > 10)
+  {
+    average = (sum - Value[min]) / 2;
+  }
+  return average;
+}
+/* æŠŠåˆ·æ–°ç¼“å­˜å†™å…¥ 6ä¸ª CGRAMä¸­ */
+void Write6CGRAM(unsigned char x)
+{
+	unsigned char i,j;
+
+    j = x + 40;
+	gpio_set_level(PIN_NUM_CS,0);//CSæ‹‰ä½
+	usleep(1);
+	VFDWriteData(0x40 + 0);//åœ°å€å¯„å­˜å™¨èµ·å§‹ä½ç½®	
+	for (i = x; i < j; i++)
+	{
+		VFDWriteData(refreshData[i]);
+	}
+	gpio_set_level(PIN_NUM_CS,1);//CSæ‹‰é«˜
+    usleep(2);
+}
+void BootAnimation()
+{
+	unsigned char cnt,i;
+	unsigned char G1Temp[5][5] = {
+   {0x03, 0x0b, 0x0b, 0x03, 0x03},// 
+   {0x03, 0x07, 0x0b, 0x01, 0x05},//
+   {0x03, 0x03, 0x0f, 0x07, 0x01},//
+   {0x0f, 0x03, 0x0b, 0x01, 0x01},//
+   {0x00, 0x00, 0x00, 0x00, 0x00},//
+};
+
+	i = 0;
+	memset(ADbuff,0xff,13);
+	//ä¸æ˜¾ç¤ºç‚¹
+	ADbuff[6] &= 0xfe;
+	ADbuff[7] &= 0xfe;
+	ADbuff[8] &= 0xfe;
+	ADbuff[9] &= 0xfe;
+	ADbuff[10] &= 0xfe;
+	ADbuff[11] &= 0xfe;
+	VFDWriteAllADRAMAndShow(ADbuff);
+	//BootSound();
+	for (cnt = 1; cnt < 13; cnt++)
+	{
+		VFDWriteStrAndShow(cnt, ">");
+		WriteCGRAM(6,&G1Temp[0][0],i);
+		VFDWriteOneDIYCharAndShow(0,6);//æŠŠCGRAM 6çš„ç¼“å­˜æ˜¾ç¤ºåˆ°G1ä¸Š
+		i++;
+		if(i >= 4) i = 0;
+		vTaskDelay(50 / portTICK_PERIOD_MS);
+	}
+	//DDiDi();
+
+	vTaskDelay(200 / portTICK_PERIOD_MS);
+	DisappearingAnimation();//æ˜¾ç¤ºæ¶ˆå¤±åŠ¨ç”»
+
+	/*
+	VFDWriteStrAndShow(0, " ");
+	//WriteCGRAM(6,&G1AnimationTemp[0][0],4);//å…³é—­G1æ˜¾ç¤º
+	//VFDWriteOneDIYCharAndShow(0,6);//æŠŠCGRAM 6çš„ç¼“å­˜æ˜¾ç¤ºåˆ°G1ä¸Š
+	vTaskDelay(20 / portTICK_PERIOD_MS);
+
+	//å…³é—­ADæ˜¾ç¤º
+	memset(ADbuff,0x00,13);
+	for (cnt = 0; cnt < 13; cnt++)
+	{
+		VFDWriteOneADRAMAndShow(cnt,ADbuff[cnt]);
+		vTaskDelay(20 / portTICK_PERIOD_MS);
+	}
+	*/
+}
