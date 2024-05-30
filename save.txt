@@ -3305,3 +3305,50 @@ void BootAnimation()
 	}
 	*/
 }
+A
+
+The Application profile defines an architecture aimed at high performance
+processors, supporting a virtual memory system using a Memory Management
+Unit (MMU) and therefore capable of running fully featured operating systems.
+Support for the ARM and Thumb instruction sets is provided.
+ARMv7-A, the Application profile, is implemented by all Cortex-A series
+processors, and by processors developed by companies who have licensed the
+ARM architecture. At the beginning of 2014, just under three billion Cortex-A
+Series chips had been shipped.
+The ARMv8-A architecture, which is not described in this book, supports the
+AArch32 state, a 32-bit implementation of the architecture that is backwards
+compatible with ARMv7-A.
+
+ARM DEN0013D
+ID012214
+
+R
+
+The Real-time profile defines an architecture aimed at systems that require
+deterministic timing and low interrupt latency. There is no support for a virtual
+memory system, but memory regions can be protected using a simple Memory
+Protection Unit (MPU).
+
+M
+
+The Microcontroller profile defines an architecture aimed at low cost systems,
+where low-latency interrupt processing is vital. It uses a different exception
+handling model to the other profiles and supports only a variant of the Thumb
+instruction set.
+
+Copyright © 2011 – 2013 ARM. All rights reserved.
+Non-Confidential
+The Cortex-A8 processor
+The ARM Cortex-A8 processor, has the ability to scale in speed from 600MHz to greater than
+1GHz. The Cortex-A8 processor can meet the requirements for power-optimized mobile
+devices needing operation in less than 300mW; and performance-optimized consumer
+applications requiring 2000 Dhrystone MIPS. It is available in a number of different devices,
+including the S5PC100 from Samsung, the OMAP3530 from Texas Instruments and the
+The Cortex-A9 processor
+The ARM Cortex-A9 processor is a power-efficient and popular high performance choice in low
+power or thermally constrained cost-sensitive devices.
+It is currently shipping in large volumes for smartphones, digital TV, consumer and enterprise
+applications. The Cortex-A9 processor provides an increase in performance of greater than 50%
+compared to the Cortex-A8 processor. The Cortex-A9 processor can be configured with up to
+four cores delivering peak performance when required. Configurability and flexibility makes
+the Cortex-A9 processor suitable for wide variety of markets and applications.
