@@ -1,0 +1,100 @@
+content a
+==========
+content b==========
+content c==========
+```
+
+Running the script will output:
+
+```
+content a
+content b
+content c
+```
+
+This script makes extracting the content straightforward and ensures only the relevant portions are captured.
+
+==========
+question: can I use grep to filter the every part
+
+
+Yes, you can use a combination of `grep` and other command-line utilities like `awk` or `sed` to extract parts between the delimiter `==========`. Below is an example of how you can achieve this using a Bash script. 
+
+### Using `awk`:
+
+Here's a Bash script using `awk` that will extract and print parts between the delimiter `==========`.
+
+```bash
+#!/bin/bash
+
+# File name passed as an argument to the script
+file="$1"
+
+# Check if file exists
+if [[ ! -f "$file" ]]; then
+  echo "File not found!"
+  exit 1
+fi
+
+# Using awk to extract the content between delimiters
+awk 'BEGIN { RS = "=========="; FS="\n" }
+     NR > 1 { print $0 }
+    ' "$file" | sed '/^\s*$/d'
+```
+
+Save this script to a file, for example, `extract_parts.sh`, and make it executable with:
+
+```bash
+chmod +x extract_parts.sh
+```
+
+Then you can run it with:
+
+```bash
+./extract_parts.sh yourfile.txt
+```
+
+### Using `grep` and `awk`:
+
+If you want to stick with `grep`, you can use a combination of `grep` and `awk`:
+
+```bash
+#!/bin/bash
+
+file="$1"
+
+# Check if file exists
+if [[ ! -f "$file" ]]; then
+  echo "File not found!"
+  exit 1
+fi
+
+# Extract content between delimiters
+grep -vE '^\s*==========' "$file"
+```
+
+Save the above code in a file, say `extract_grep.sh`, make it executable:
+
+```bash
+chmod +x extract_grep.sh
+```
+
+And run it with:
+
+```bash
+./extract_grep.sh yourfile.txt
+```
+
+### Explanation:
+
+- The `awk` script sets the record separator `RS` to `==========`, which means each section between `==========` is treated as a record.
+- `NR` is the number of records. We skip the first record (which is empty in this case since it starts with `==========`), and print the rest.
+- `sed '/^\s*$/d'` is used to remove empty lines that might be introduced.
+
+In the `grep` approach:
+- `grep -vE '^\s*=========='` filters out lines consisting only of `==========` with possible leading/trailing whitespaces.
+
+==========
+question: 下面是一个嵌入式项目所用到的数据结构和技术栈的例子,使用的开发环境是stm32h750,请为我实现具体的项目代码1. **智能家居控制器**   - 数据结构：JSON, XML   - 技术栈： ZigBee, Wi-Fi, MQTT
+
+
