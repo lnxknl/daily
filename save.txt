@@ -7402,3 +7402,6459 @@ void norflash_ex_read(uint8_t *pbuf, uint32_t addr, uint16_t datalen); // 从QSP
 这段代码是一个针对STM32微控制器的DCMI（数字相机接口）驱动程序，用于初始化和控制DCMI接口，以便与数字相机进行通信。下面是对代码的概括、关键点分析以及注释建议：
 这段代码提供了一套SCCB通信协议的驱动函数，用于初始化SCCB接口，控制SCCB的信号线，以及发送和接收数据。
 这段代码是一个STM32微控制器项目中用于SCCB（一种串行通信总线）的驱动实现。SCCB常用于I2C设备之间的通信，但具有不同的信号线定义和协议。以下是对这段代码的概括和关键点分析，以及对每一行代码的注释：
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 判断序列是否是二叉树的有效路径的函数
+int isValidSequence(TreeNode* root, int* arr, int arrSize) {
+    // 如果数组为空，但根节点不为空，说明路径不合法
+    if (arrSize == 0 && root != NULL) return 0;
+    // 如果当前节点为空，且数组还有元素，说明路径不合法
+    if (root == NULL && arrSize > 0) return 0;
+    // 如果当前节点不为空，且当前节点的值与数组第一个元素不相等，返回0
+    if (root != NULL && root->val != arr[0]) return 0;
+
+    // 如果当前节点为空，且数组也为空，说明路径合法
+    if (root == NULL && arrSize == 0) return 1;
+
+    // 递归检查左子树和右子树
+    return isValidSequence(root->left, arr + 1, arrSize - 1) || 
+           isValidSequence(root->right, arr + 1, arrSize - 1);
+}
+
+// 测试用例
+int main() {
+    // 创建一个示例二叉树 [0,1,0,0,1,null,null,1,0,0] 并检查序列 [0,1,0,1]
+    TreeNode* root = (TreeNode*)malloc(sizeof(TreeNode));
+    root->val = 0;
+    root->left = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->val = 1;
+    root->left->left = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->left->val = 0;
+    root->left->left->left = NULL;
+    root->left->left->right = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->left->right->val = 1;
+    root->left->left->right->left = NULL;
+    root->left->left->right->right = NULL;
+    root->right = (TreeNode*)malloc(sizeof(TreeNode));
+    root->right->val = 0;
+    root->right->left = NULL;
+    root->right->right = NULL;
+
+    int sequence[] = {0, 1, 0, 1};
+    int result = isValidSequence(root, sequence, sizeof(sequence) / sizeof(sequence[0]));
+    printf("The sequence is %s a valid path in the binary tree.\n", result ? "valid" : "invalid");
+
+    // 释放二叉树的内存
+    // ...
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义一个结构体来存储活动和其参与者
+typedef struct {
+    char *activity;
+    int *participants;
+    int size;
+} Activity;
+
+// 比较函数，用于 qsort
+int compare(const void *a, const void *b) {
+    return (*(int *)a - *(int *)b);
+}
+
+// 找出活动参与者的函数
+void findParticipants(Activity *activities, int activitySize) {
+    for (int i = 0; i < activitySize; i++) {
+        // 对每个活动的参与者进行排序
+        qsort(activities[i].participants, activities[i].size, sizeof(int), compare);
+        // 打印活动名称和参与者
+        printf("Activity: %s\n", activities[i].activity);
+        for (int j = 0; j < activities[i].size; j++) {
+            printf("%d ", activities[i].participants[j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    // 示例输入
+    Activity activities[3] = {
+        {"Eating", (int[]){1, 3, 4, 5}, 4},
+        {"Singing", (int[]){2, 3}, 2},
+        {"Horse Riding", (int[]){6}, 1}
+    };
+    int activitySize = sizeof(activities) / sizeof(activities[0]);
+
+    // 调用函数求解
+    findParticipants(activities, activitySize);
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int cmp(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int countTriplets(int* nums, int numsSize) {
+    qsort(nums, numsSize, sizeof(int), cmp); // 对数组进行排序
+    int count = 0;
+    for (int i = 0; i < numsSize; ++i) {
+        if (nums[i] < 0) continue; // 跳过负数，因为平方后不可能是单因数
+        for (int j = i + 1; j < numsSize; ++j) {
+            int target = (long long)nums[i] * nums[i] + (long long)nums[j] * nums[j]; // 计算目标值
+            int k = j + 1;
+            int l = numsSize - 1;
+            while (k < l) {
+                if ((long long)nums[k] * nums[k] + (long long)nums[l] * nums[l] == target) {
+                    count++; // 找到满足条件的三元组
+                    k++;
+                    l--;
+                } else if ((long long)nums[k] * nums[k] + (long long)nums[l] * nums[l] < target) {
+                    k++;
+                } else {
+                    l--;
+                }
+            }
+        }
+    }
+    return count;
+}
+
+int main() {
+    int nums[] = {4, 6, 7, 3, 2};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    printf("Number of Single Divisor Triplets: %d\n", countTriplets(nums, numsSize));
+    return 0;
+}
+#include <stdio.h>
+
+// 函数原型声明
+int maxFontValue(char *text, int w, int h, int *fonts, int fontsSize);
+
+int main() {
+    // 示例输入
+    char text[] = "helloworld";
+    int w = 80;
+    int h = 20;
+    int fonts[] = {6, 8, 10, 12, 14, 16, 18, 24, 36};
+    int fontsSize = sizeof(fonts) / sizeof(fonts[0]);
+
+    // 调用函数并打印结果
+    int result = maxFontValue(text, w, h, fonts, fontsSize);
+    printf("最大字号为: %d\n", result);
+
+    return 0;
+}
+
+// 函数定义
+int maxFontValue(char *text, int w, int h, int *fonts, int fontsSize) {
+    // 从最大字号开始二分查找
+    int left = 0, right = fontsSize - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (isValidFontSize(text, w, h, fonts[mid])) {
+            // 如果当前字号可行，尝试寻找更大的字号
+            left = mid + 1;
+        } else {
+            // 如果当前字号不可行，寻找更小的字号
+            right = mid - 1;
+        }
+    }
+    // 返回找到的最大可行字号
+    return fonts[right];
+}
+
+// 检查给定的字号是否可行
+int isValidFontSize(char *text, int w, int h, int fontSize) {
+    int lineLength = 0;
+    for (int i = 0; text[i] != '\0'; ++i) {
+        lineLength += fontSize; // 每个字符宽度为fontSize
+        if (lineLength > w) {
+            lineLength = fontSize; // 新行的开始
+            if (++h > (int)(1.0 * text[i - 1] == '\n' ? 1 : 0) + (text[i] == '\n' ? 1 : 0)) {
+                return 0; // 超出屏幕高度
+            }
+        }
+    }
+    return 1; // 字号可行
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义链表节点结构体
+typedef struct ListNode {
+    int val;
+    struct ListNode *next;
+} ListNode;
+
+// 逆序打印不可变链表
+void reversePrint(ListNode* head) {
+    if (!head) return;
+
+    // 使用栈存储节点
+    stack<ListNode*> s;
+    while (head) {
+        s.push(head);
+        head = head->next;
+    }
+
+    // 打印栈中的节点，实现逆序打印
+    while (!s.empty()) {
+        ListNode* node = s.top();
+        printf("%d ", node->val);
+        s.pop();
+    }
+    printf("\n");
+}
+
+// 测试
+int main() {
+    ListNode* head = (ListNode*)malloc(sizeof(ListNode));
+    head->val = 1;
+    head->next = NULL;
+
+    // 构建链表 1->2->3
+    ListNode* node2 = (ListNode*)malloc(sizeof(ListNode));
+    node2->val = 2;
+    node2->next = head;
+
+    ListNode* node3 = (ListNode*)malloc(sizeof(ListNode));
+    node3->val = 3;
+    node3->next = node2;
+
+    reversePrint(node3); // 输出 3 2 1
+
+    // 释放链表占用的内存
+    free(node3);
+    free(node2);
+    free(head);
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 计算逆序对的数量
+int countInversions(int* nums, int size) {
+    int count = 0;
+    for (int i = 0; i < size - 1; ++i) {
+        for (int j = i + 1; j < size; ++j) {
+            if (nums[i] > nums[j]) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+// 计算顺序对的数量（即数组排序后多余的逆序对数量）
+int countNoninversions(int* nums, int size) {
+    int count = 0;
+    for (int i = 0; i < size - 1; ++i) {
+        for (int j = i + 1; j < size; ++j) {
+            if (nums[i] < nums[j]) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+// 找到最小的操作次数
+int minOperations(int* nums, int numsSize) {
+    // 计算逆序对和顺序对的数量
+    int inversions = countInversions(nums, numsSize);
+    int noninversions = countNoninversions(nums, numsSize);
+    // 返回较小的数量，即为所求的最小操作次数
+    return (inversions < noninversions) ? inversions : noninversions;
+}
+
+int main() {
+    int nums[] = {3, 1, 3, 2, 4, 0};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    printf("Minimum operations: %d\n", minOperations(nums, numsSize));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 判断序列是否是二叉树的有效路径的函数
+int isValidSequence(TreeNode* root, int* arr, int arrSize) {
+    // 如果数组为空，但根节点不为空，说明路径不合法
+    if (arrSize == 0 && root != NULL) return 0;
+    // 如果当前节点为空，且数组还有元素，说明路径不合法
+    if (root == NULL && arrSize > 0) return 0;
+    // 如果当前节点不为空，且当前节点的值与数组第一个元素不相等，返回0
+    if (root != NULL && root->val != arr[0]) return 0;
+
+    // 如果当前节点为空，且数组也为空，说明路径合法
+    if (root == NULL && arrSize == 0) return 1;
+
+    // 递归检查左子树和右子树
+    return isValidSequence(root->left, arr + 1, arrSize - 1) || 
+           isValidSequence(root->right, arr + 1, arrSize - 1);
+}
+
+// 测试用例
+int main() {
+    // 创建一个示例二叉树 [0,1,0,0,1,null,null,1,0,0] 并检查序列 [0,1,0,1]
+    TreeNode* root = (TreeNode*)malloc(sizeof(TreeNode));
+    root->val = 0;
+    root->left = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->val = 1;
+    root->left->left = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->left->val = 0;
+    root->left->left->left = NULL;
+    root->left->left->right = (TreeNode*)malloc(sizeof(TreeNode));
+    root->left->left->right->val = 1;
+    root->left->left->right->left = NULL;
+    root->left->left->right->right = NULL;
+    root->right = (TreeNode*)malloc(sizeof(TreeNode));
+    root->right->val = 0;
+    root->right->left = NULL;
+    root->right->right = NULL;
+
+    int sequence[] = {0, 1, 0, 1};
+    int result = isValidSequence(root, sequence, sizeof(sequence) / sizeof(sequence[0]));
+    printf("The sequence is %s a valid path in the binary tree.\n", result ? "valid" : "invalid");
+
+    // 释放二叉树的内存
+    // ...
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 函数用于判断两个数是否互质
+int is_coprime(int a, int b) {
+    while (b != 0) {
+        int temp = a % b;
+        a = b;
+        b = temp;
+    }
+    return a == 1;
+}
+
+// 函数用于找出所有最简分数
+char **simplified_fractions(int n, int *returnSize) {
+    // 动态分配内存存储结果
+    char **result = (char **)malloc(sizeof(char *) * (n * (n - 1) / 2));
+    int count = 0;
+    
+    for (int i = 1; i < n; ++i) {
+        for (int j = i + 1; j <= n; ++j) {
+            // 检查是否是最简分数
+            if (is_coprime(i, j)) {
+                // 计算结果字符串的长度
+                int len = snprintf(NULL, 0, "%d/%d", i, j) + 1;
+                // 分配内存并生成分数字符串
+                char *fraction = (char *)malloc(sizeof(char) * len);
+                snprintf(fraction, len, "%d/%d", i, j);
+                // 存储结果
+                result[count++] = fraction;
+            }
+        }
+    }
+    
+    *returnSize = count;
+    return result;
+}
+
+int main() {
+    int n = 4;
+    int returnSize;
+    char **result = simplified_fractions(n, &returnSize);
+    
+    for (int i = 0; i < returnSize; ++i) {
+        printf("%s\n", result[i]);
+        free(result[i]);  // 释放每个字符串的内存
+    }
+    
+    free(result);  // 释放结果数组的内存
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 假设我们有一个结构体来存储学生和考试成绩
+typedef struct {
+    int student_id;
+    int score;
+} StudentScore;
+
+// 函数来计算总成绩
+int calculateTotalScore(StudentScore* studentScores, int length) {
+    int totalScore = 0;
+    for (int i = 0; i < length; ++i) {
+        totalScore += studentScores[i].score;
+    }
+    return totalScore;
+}
+
+// 函数来找出中位数
+double findMedian(int* scores, int length) {
+    // 这里需要一个排序算法来对成绩进行排序，然后找到中位数
+    // 由于C语言标准库中没有内置的排序函数，我们可以使用简单的冒泡排序或快速排序算法
+    // 这里省略了排序的实现细节
+    // ...
+    // 返回排序后数组的中位数
+    return median;
+}
+
+// 函数来找出成绩处于中游的学生ID
+void findMiddleStudents(StudentScore* studentScores, int* studentIDs, int length, int* result, int* returnSize) {
+    // 1. 计算每个学生的总成绩
+    // 2. 找到所有学生成绩的中位数
+    double median = findMedian(...);
+    // 3. 根据中位数找出成绩处于中游的学生ID
+    for (int i = 0; i < length; ++i) {
+        if (studentScores[i].score < median || studentScores[i].score > (2 * median)) {
+            result[(*returnSize)++] = studentScores[i].student_id;
+        }
+    }
+}
+
+int main() {
+    // 示例数据
+    StudentScore studentScores[] = {
+        {1, 70},
+        {2, 80},
+        // ... 更多学生和成绩数据
+    };
+    int length = sizeof(studentScores) / sizeof(studentScores[0]);
+    int studentIDs[length]; // 存储结果的数组
+    int returnSize = 0; // 结果数组的大小
+
+    // 调用函数
+    findMiddleStudents(studentScores, studentIDs, length, &returnSize);
+
+    // 输出结果
+    for (int i = 0; i < returnSize; ++i) {
+        printf("%d ", studentIDs[i]);
+    }
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int sum;
+    int* indices;
+    int count;
+} Node;
+
+int compare(const void* a, const void* b) {
+    Node* nodeA = (Node*)a;
+    Node* nodeB = (Node*)b;
+    return nodeA->sum - nodeB->sum;
+}
+
+int kthSmallest(int** matrix, int matrixSize, int* matrixColSize, int k) {
+    int m = matrixSize, n = *matrixColSize;
+    Node* minHeap = (Node*)malloc(sizeof(Node) * m * n);
+    int heapSize = 0;
+
+    // 初始化最小堆
+    for (int i = 0; i < m; ++i) {
+        minHeap[heapSize].sum = matrix[i][0];
+        minHeap[heapSize].indices = (int*)malloc(sizeof(int) * 2);
+        minHeap[heapSize].indices[0] = i;
+        minHeap[heapSize].indices[1] = 0;
+        minHeap[heapSize].count = 1;
+        heapSize++;
+    }
+
+    qsort(minHeap, heapSize, sizeof(Node), compare);
+
+    int result = 0;
+    for (int i = 0; i < k - 1; ++i) {
+        Node current = minHeap[i];
+        result += current.sum;
+
+        // 将下一行的相同列元素或当前行的下一列元素加入堆
+        if (current.indices[1] + 1 < n) {
+            Node next;
+            next.sum = current.sum + matrix[current.indices[0]][current.indices[1] + 1];
+            next.indices = (int*)malloc(sizeof(int) * 2);
+            next.indices[0] = current.indices[0];
+            next.indices[1] = current.indices[1] + 1;
+            next.count = current.count + 1;
+
+            minHeap[heapSize] = next;
+            heapSize++;
+            qsort(minHeap + i, heapSize - i, sizeof(Node), compare);
+        }
+    }
+    result += minHeap[k - 1].sum;
+    free(minHeap);
+    return result;
+}
+#include <string.h>
+#include <stdlib.h>
+
+char **buildArray(const int *target, int targetSize, int n, int *returnSize) {
+    // 初始化操作序列数组
+    char **ops = (char **)malloc(sizeof(char *) * (n * 2));
+    int opIndex = 0;
+    
+    // 当前遍历的数字
+    int currentNum = 1;
+    // 遍历数字直到达到或超过目标数组的最后一个元素
+    while (currentNum <= n) {
+        // 如果当前数字是目标数组的第一个元素
+        if (targetSize > 0 && currentNum == target[0]) {
+            ops[opIndex++] = strdup("Push");
+            // 将目标数组的第一个元素移除，准备处理下一个元素
+            memmove(target, target + 1, (targetSize - 1) * sizeof(int));
+            targetSize--;
+        } else {
+            ops[opIndex++] = strdup("Pop");
+        }
+        // 移动到下一个数字
+        currentNum++;
+    }
+    
+    // 设置返回的操作序列大小
+    *returnSize = opIndex;
+    return ops;
+}
+#include <stdio.h>
+#include <stdbool.h>
+
+// 定义树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode* left;
+    struct TreeNode* right;
+} TreeNode;
+
+// 辅助函数，用于构建树
+TreeNode* createTreeNode(int val) {
+    TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
+    node->val = val;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+// 深度优先搜索，计算收集苹果的最少时间
+int dfs(TreeNode* node, bool* hasApple, int* time) {
+    if (!node) return 0;
+    int timeSpent = 0;
+    bool hasAppleInSubtree = hasApple[node->val] || dfs(node->left, hasApple, time) || dfs(node->right, hasApple, time);
+    if (hasAppleInSubtree) {
+        *time += 2; // 来回经过的边
+        timeSpent = 2; // 当前节点的花费
+    }
+    return timeSpent;
+}
+
+// 收集所有苹果的最少时间
+int minTime(int n, int* edges, int* hasApple) {
+    if (n == 0) return 0;
+    TreeNode* root = createTreeNode(0);
+    // 构建树结构，这里省略了树的构建过程，假设树已经构建完成
+    // ...
+
+    int time = 0;
+    dfs(root, hasApple, &time);
+    return time;
+}
+
+int main() {
+    int n = 7;
+    int edges[] = {0, 1, 0, 2, 1, 4, 1, 5, 2, 3, 2, 6};
+    int hasApple[] = {0, 0, 1, 0, 0, 1, 0};
+    printf("Minimum time to collect all apples: %d\n", minTime(n, edges, hasApple));
+    return 0;
+}
+#include <string.h>
+#include <stdlib.h>
+
+#define MOD 1000000007
+
+int ways(int rows, int cols, char** pizza, int k) {
+    // 初始化动态规划数组
+    int dp[51][51][11] = {0};
+    int appleCount[51][51] = {0};
+    
+    // 计算初始状态下苹果的数量
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (pizza[i][j] == 'A') {
+                appleCount[i][j] = 1;
+            }
+        }
+    }
+    
+    // 填充dp数组
+    for (int c = 0; c < k - 1; c++) {
+        memcpy(dp[c + 1], dp[c], sizeof(dp[c]));
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (appleCount[i][j]) {
+                    // 进行水平切割
+                    for (int x = i; x > 0; x--) {
+                        if (appleCount[x - 1][j]) {
+                            dp[c + 1][j][c] = (dp[c + 1][j][c] + dp[c][x - 1][j][c]) % MOD;
+                        }
+                    }
+                    // 进行垂直切割
+                    for (int y = j; y > 0; y--) {
+                        if (appleCount[i][y - 1]) {
+                            dp[c + 1][i][c] = (dp[c + 1][i][c] + dp[c][i][y - 1][c]) % MOD;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 计算最终结果
+    int result = 0;
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            result = (result + dp[k - 1][i][j]) % MOD;
+        }
+    }
+    return result;
+}
+#include <stdbool.h>
+
+bool canBeEqual(int* target, int targetSize, int* arr, int arrSize) {
+    // 如果数组长度不一致，直接返回false
+    if (targetSize != arrSize) return false;
+    
+    // 检查arr是否包含target的所有元素
+    for (int i = 0; i < targetSize; i++) {
+        if (!contains(arr, arrSize, target[i])) {
+            return false;
+        }
+    }
+    
+    // 对两个数组进行排序
+    int sortedTarget[targetSize], sortedArr[arrSize];
+    memcpy(sortedTarget, target, sizeof(int) * targetSize);
+    memcpy(sortedArr, arr, sizeof(int) * arrSize);
+    sort(sortedTarget, sortedTarget + targetSize);
+    sort(sortedArr, sortedArr + arrSize);
+    
+    // 比较排序后的数组是否相同
+    for (int i = 0; i < targetSize; i++) {
+        if (sortedTarget[i] != sortedArr[i]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+bool contains(int* arr, int size, int value) {
+    for (int i = 0; i < size; i++) {
+        if (arr[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void sort(int* arr, int* end) {
+    // 简单的冒泡排序实现
+    for (int* i = arr; i < end - 1; i++) {
+        for (int* j = i + 1; j < end; j++) {
+            if (*i > *j) {
+                int temp = *i;
+                *i = *j;
+                *j = temp;
+            }
+        }
+    }
+}
+#include <stdbool.h>
+#include <string.h>
+
+bool hasAllCodes(char *s, int k) {
+    if (k > strlen(s) || k == 0) return false;
+    bool seen[1 << k] = {false}; // 初始化所有子串为未见
+    for (int i = 0; i <= strlen(s) - k; ++i) {
+        int code = 0;
+        for (int j = i; j < i + k; ++j) {
+            code = (code << 1) | (s[j] - '0');
+        }
+        if (!seen[code]) {
+            seen[code] = true;
+        }
+        if (allSeen(seen, 1 << k)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool allSeen(bool *seen, int size) {
+    for (int i = 0; i < size; ++i) {
+        if (!seen[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+#include <stdbool.h>
+#include <stdlib.h>
+
+// 定义邻接表存储图
+typedef struct {
+    int *prerequisites;
+    int numCourses;
+    int *adjList[100]; // 假设课程数量不超过100
+} Graph;
+
+// 初始化图
+void initGraph(Graph *graph, int numCourses, int *prerequisites, int preSize) {
+    graph->numCourses = numCourses;
+    graph->prerequisites = prerequisites;
+    for (int i = 0; i < numCourses; i++) {
+        graph->adjList[i] = malloc(sizeof(int) * preSize);
+        graph->adjList[i][0] = preSize; // 存储每个课程的先修课程数量
+        for (int j = 0; j < preSize; j++) {
+            if (prerequisites[j] == i) {
+                graph->adjList[i][++graph->adjList[i][0]] = prerequisites[j + 1];
+            }
+        }
+    }
+}
+
+// 深度优先搜索，检查是否从课程start可以到达课程end
+bool dfs(Graph *graph, int start, int end, bool *visited) {
+    if (start == end) return true;
+    visited[start] = true;
+    for (int i = 1; i <= graph->adjList[start][0]; i++) {
+        int nextCourse = graph->adjList[start][i];
+        if (!visited[nextCourse] && dfs(graph, nextCourse, end, visited)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// 处理查询
+int* checkIfPrerequisite(int numCourses, int *prerequisites, int preSize, int *queries, int querySize, int* returnSize) {
+    // 初始化图
+    Graph graph;
+    initGraph(&graph, numCourses, prerequisites, preSize);
+
+    // 初始化答案数组和访问数组
+    bool *visited = malloc(sizeof(bool) * numCourses);
+    int *answer = malloc(sizeof(int) * querySize);
+    *returnSize = querySize;
+
+    for (int i = 0; i < querySize; i++) {
+        visited[queries[2 * i]] = false; // 假设queries是按uj, vj的格式排列的
+        answer[i] = dfs(&graph, queries[2 * i], queries[2 * i + 1], visited);
+    }
+
+    free(visited);
+    return answer;
+}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// 定义结构体以保存单词和其原始索引
+typedef struct {
+    char *word;
+    int index;
+} WordWithIndex;
+
+// 比较函数，用于qsort
+int compare(const void *a, const void *b) {
+    WordWithIndex *word1 = (WordWithIndex *)a;
+    WordWithIndex *word2 = (WordWithIndex *)b;
+    int len1 = strlen(word1->word);
+    int len2 = strlen(word2->word);
+    if (len1 == len2) {
+        return word1->index - word2->index; // 保留原顺序
+    }
+    return len1 - len2; // 按长度排序
+}
+
+// 重新排列句子中的单词
+char *rearrangeWords(char *text) {
+    // 将句子分割成单词并存储
+    WordWithIndex words[100]; // 假设句子最多有100个单词
+    int count = 0;
+    char *temp = strdup(text); // 使用strdup来复制文本，以便我们可以使用strtok
+    char *word = strtok(temp, " ");
+    while (word != NULL) {
+        words[count].word = word;
+        words[count].index = count;
+        count++;
+        word = strtok(NULL, " ");
+    }
+
+    // 使用qsort对单词进行排序
+    qsort(words, count, sizeof(WordWithIndex), compare);
+
+    // 构造新的句子
+    int textLength = strlen(text);
+    char *newText = (char *)malloc(textLength + 1);
+    newText[0] = '\0'; // 初始化为空字符串
+
+    // 添加第一个单词并大写首字母
+    strcpy(newText, words[0].word);
+    newText[strlen(words[0].word)] = ' '; // 添加空格
+
+    // 添加剩余的单词
+    for (int i = 1; i < count; i++) {
+        strcat(newText, words[i].word);
+        if (i < count - 1) {
+            newText[strlen(newText)] = ' '; // 添加空格
+        }
+    }
+
+    // 返回新的句子
+    free(temp);
+    return newText;
+}
+
+int main() {
+    char text[] = "Leetcode is cool";
+    char *sortedText = rearrangeWords(text);
+    printf("%s\n", sortedText);
+    free(sortedText);
+    return 0;
+}
+#include <stdbool.h>
+#include <string.h>
+
+int* peopleIndexes(int** favoriteCompanies, int favoriteCompaniesSize, int* favoriteCompaniesLens, int* returnSize) {
+    int* result = malloc(sizeof(int) * favoriteCompaniesSize);
+    *returnSize = 0;
+    bool isSubset[favoriteCompaniesSize] = {false};
+
+    // 检查每个公司清单是否为其他清单的子集
+    for (int i = 0; i < favoriteCompaniesSize; ++i) {
+        for (int j = 0; j < favoriteCompaniesSize; ++j) {
+            if (i != j && isSubset(j, favoriteCompanies[i], favoriteCompaniesLens[i], favoriteCompanies[j], favoriteCompaniesLens[j])) {
+                isSubset[i] = true;
+                break;
+            }
+        }
+    }
+
+    // 收集不是子集的索引
+    for (int i = 0; i < favoriteCompaniesSize; ++i) {
+        if (!isSubset[i]) {
+            result[(*returnSize)++] = i;
+        }
+    }
+
+    return result;
+}
+
+bool isSubset(int index, int* list1, int len1, int* list2, int len2) {
+    int count = 0;
+    for (int i = 0; i < len1; ++i) {
+        for (int j = 0; j < len2; ++j) {
+            if (list1[i] == list2[j]) {
+                ++count;
+                break;
+            }
+        }
+    }
+    return count == len1;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+int numPoints(int **points, int pointsSize, int *pointsColSize, int r) {
+    int count = 0;
+    int maxCount = 0;
+    for (int i = 0; i < pointsSize; ++i) {
+        count = 0;
+        for (int j = 0; j < pointsSize; ++j) {
+            if (pow(points[i][0] - points[j][0], 2) + pow(points[i][1] - points[j][1], 2) <= pow(r, 2)) {
+                count++;
+            }
+        }
+        maxCount = count > maxCount ? count : maxCount;
+    }
+    return maxCount;
+}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// 函数用于检查searchWord是否是sentence中某个单词的前缀
+int isPrefixOfWord(char* sentence, char* searchWord) {
+    int index = 0; // 用于记录匹配单词的索引
+    char* word; // 用于分割sentence中的单词
+    char* token = strtok(sentence, " "); // 使用strtok分割sentence，以空格为分隔符
+
+    while (token != NULL) {
+        if (strncmp(token, searchWord, strlen(searchWord)) == 0) {
+            // 如果当前单词以searchWord开头，则返回当前索引+1（因为题目要求从1开始计数）
+            return index + 1;
+        }
+        token = strtok(NULL, " "); // 继续获取下一个单词
+        index++; // 索引递增
+    }
+
+    return -1; // 如果没有找到匹配的前缀，返回-1
+}
+
+int main() {
+    char sentence[] = "i love eating burger";
+    char searchWord[] = "burg";
+    int result = isPrefixOfWord(sentence, searchWord);
+    printf("The index is: %d\n", result); // 应该输出4
+    return 0;
+}
+#include <string.h>
+#include <stdio.h>
+
+int maxVowels(char *s, int k) {
+    int maxCount = 0;
+    int count = 0; // 当前窗口中元音字母的个数
+    char vowels[] = "aeiou"; // 元音字母集合
+
+    // 初始化窗口中的第一个k个字符的元音数量
+    for (int i = 0; i < k; ++i) {
+        if (strchr(vowels, s[i]) != NULL) {
+            count++;
+        }
+    }
+    maxCount = count;
+
+    // 滑动窗口，每次向右移动一位
+    for (int i = k; i < strlen(s); ++i) {
+        // 如果当前字符是元音，增加计数
+        if (strchr(vowels, s[i]) != NULL) {
+            count++;
+        }
+        // 如果离开窗口的字符是元音，减少计数
+        if (strchr(vowels, s[i - k]) != NULL) {
+            count--;
+        }
+        // 更新最大元音数
+        maxCount = (count > maxCount) ? count : maxCount;
+    }
+
+    return maxCount;
+}
+
+int main() {
+    char s[] = "abciiidef";
+    int k = 3;
+    printf("Maximum number of vowels in a substring of length %d is %d\n", k, maxVowels(s, k));
+    return 0;
+}
+#include <stdbool.h>
+#include <stdio.h>
+
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+bool isPseudoPalindromic(int* path, int pathSize) {
+    int oddCount = 0;
+    for (int i = 0; i < pathSize; ++i) {
+        int num = path[i];
+        for (int j = i + 1; j < pathSize; ++j) {
+            if (path[i] == path[j]) {
+                path[j] = 0;
+                break;
+            }
+        }
+        if (num && path[i]) {
+            oddCount++;
+            if (oddCount > 1) return false;
+        }
+    }
+    return true;
+}
+
+int pseudoPalindromicPaths (TreeNode* root) {
+    if (!root) return 0;
+    int count = 0;
+    int path[1000]; // 假设路径不会超过1000
+    dfs(root, &count, path, 0);
+    return count;
+}
+
+void dfs(TreeNode* node, int* count, int path[], int pathSize) {
+    if (!node) return;
+    path[pathSize] = node->val;
+    if (!node->left && !node->right) {
+        if (isPseudoPalindromic(path, pathSize + 1)) {
+            (*count)++;
+        }
+    } else {
+        dfs(node->left, count, path, pathSize + 1);
+        dfs(node->right, count, path, pathSize + 1);
+    }
+}
+
+// 测试代码
+int main() {
+    TreeNode root[5];
+    root[0].val = 2;
+    root[1].val = 3;
+    root[2].val = 1;
+    root[3].val = 3;
+    root[4].val = 1;
+    root[0].left = &root[1];
+    root[0].right = &root[2];
+    root[1].left = &root[3];
+    root[1].right = &root[4];
+    printf("Pseudo-palindromic paths: %d\n", pseudoPalindromicPaths(&root[0]));
+    return 0;
+}
+#include <limits.h>
+
+int maxDotProduct(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+    int dp[nums1Size][nums2Size];
+    int i, j;
+    
+    // 初始化第一行和第一列
+    for (i = 0; i < nums1Size; i++) {
+        dp[i][0] = nums1[i] * nums2[0];
+    }
+    for (j = 0; j < nums2Size; j++) {
+        dp[0][j] = nums1[0] * nums2[j];
+    }
+    
+    // 动态规划填表
+    for (i = 1; i < nums1Size; i++) {
+        for (j = 1; j < nums2Size; j++) {
+            dp[i][j] = INT_MIN;
+            dp[i][j] = max(dp[i][j], dp[i-1][j]);
+            dp[i][j] = max(dp[i][j], dp[i][j-1]);
+            dp[i][j] = max(dp[i][j], dp[i-1][j-1] + nums1[i] * nums2[j]);
+        }
+    }
+    
+    // 寻找最大值
+    int maxProduct = INT_MIN;
+    for (i = 0; i < nums1Size; i++) {
+        maxProduct = max(maxProduct, dp[i][nums2Size - 1]);
+    }
+    
+    return maxProduct;
+}
+
+int main() {
+    int nums1[] = {2, 1, -2, 5};
+    int nums2[] = {3, 0, -6};
+    printf("%d\n", maxDotProduct(nums1, sizeof(nums1)/sizeof(nums1[0]), nums2, sizeof(nums2)/sizeof(nums2[0])));
+    return 0;
+}
+```
+
+### 算法复杂度
+- 时间复杂度：O(n*m)，其中n和m分别是`nums1`和`nums2`的长度。
+- 空间复杂度：O(n*m)，用于存储动态规划表。
+
+这个问题主要考察了动态规划的应用，通过定义合适的状态和状态转移方程来解决问题。希望这个解答和讲解对您有所帮助。如果您有任何疑问或需要进一步的讨论，请随时告诉我。['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！作为一名LeetCode讲师，我将为您提供针对LeetCode问题的详细解答和解题思路。现在，让我们来分析您提出的问题：
+
+## 问题描述
+给定一棵二叉树，每个节点的值为1到9。我们称二叉树中的一条路径为“伪回文”的，当它满足：路径经过的所有节点值的排列中，存在一个回文序列。您的任务是返回从根到叶子节点的所有路径中伪回文路径的数目。
+
+## 示例
+1. 输入：root = [2,3,1,3,1,null,1] 输出：2
+   解释：有3条从根到叶子的路径：[2,3,3]，[2,1,1]和[2,3,1]。其中[2,3,3]和[2,1,1]是伪回文路径。
+
+2. 输入：root = [2,1,1,1,3,null,null,null,null,null,1] 输出：1
+   解释：有3条从根到叶子的路径，只有[2,1,1]是伪回文路径。
+
+3. 输入：root = [9] 输出：1
+
+## 提示
+- 给定二叉树的节点数目在范围 [1, 10^5] 内
+- 1 <= Node.val <= 9
+
+## 解题思路
+这个问题可以通过深度优先搜索（DFS）解决。我们从根节点开始遍历二叉树的每条路径，并检查路径上的值是否能够形成伪回文序列。
+
+### 算法步骤
+1. 定义一个辅助函数`isPseudoPalindromic`，该函数接收当前路径上的值，并检查是否存在至多一个数出现奇数次。
+2. 定义一个递归函数`dfs`，用于遍历二叉树的每条路径，并使用辅助函数检查路径是否为伪回文。
+3. 在`dfs`函数中，对于每个节点，将其值添加到当前路径上，然后递归遍历其左右子节点。
+4. 如果到达叶子节点，使用`isPseudoPalindromic`检查当前路径。
+5. 统计并返回所有伪回文路径的数目。
+
+## C语言实现
+```c
+#include <stdbool.h>
+#include <stdio.h>
+
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+bool isPseudoPalindromic(int* path, int pathSize) {
+    int oddCount = 0;
+    for (int i = 0; i < pathSize; ++i) {
+        int num = path[i];
+        for (int j = i + 1; j < pathSize; ++j) {
+            if (path[i] == path[j]) {
+                path[j] = 0;
+                break;
+            }
+        }
+        if (num && path[i]) {
+            oddCount++;
+            if (oddCount > 1) return false;
+        }
+    }
+    return true;
+}
+
+int pseudoPalindromicPaths (TreeNode* root) {
+    if (!root) return 0;
+    int count = 0;
+    int path[1000]; // 假设路径不会超过1000
+    dfs(root, &count, path, 0);
+    return count;
+}
+
+void dfs(TreeNode* node, int* count, int path[], int pathSize) {
+    if (!node) return;
+    path[pathSize] = node->val;
+    if (!node->left && !node->right) {
+        if (isPseudoPalindromic(path, pathSize + 1)) {
+            (*count)++;
+        }
+    } else {
+        dfs(node->left, count, path, pathSize + 1);
+        dfs(node->right, count, path, pathSize + 1);
+    }
+}
+
+// 测试代码
+int main() {
+    TreeNode root[5];
+    root[0].val = 2;
+    root[1].val = 3;
+    root[2].val = 1;
+    root[3].val = 3;
+    root[4].val = 1;
+    root[0].left = &root[1];
+    root[0].right = &root[2];
+    root[1].left = &root[3];
+    root[1].right = &root[4];
+    printf("Pseudo-palindromic paths: %d\n", pseudoPalindromicPaths(&root[0]));
+    return 0;
+}
+#include <stdio.h>
+
+int* finalPrices(int* prices, int pricesSize, int* returnSize) {
+    int* finalPrice = (int*)malloc(pricesSize * sizeof(int));
+    *returnSize = pricesSize;
+    for (int i = 0; i < pricesSize; ++i) {
+        finalPrice[i] = prices[i];
+        for (int j = i + 1; j < pricesSize; ++j) {
+            if (prices[j] <= prices[i]) {
+                finalPrice[i] -= prices[j];
+                break;
+            }
+        }
+    }
+    return finalPrice;
+}
+
+int main() {
+    int prices[] = {8, 4, 6, 2, 3};
+    int returnSize;
+    int* result = finalPrices(prices, sizeof(prices)/sizeof(prices[0]), &returnSize);
+    
+    for (int i = 0; i < returnSize; ++i) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+    
+    free(result);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minDistance(int houses[], int housesSize, int k) {
+    // 对房屋位置进行排序
+    int i;
+    for (i = 0; i < housesSize - 1; i++) {
+        for (int j = 0; j < housesSize - i - 1; j++) {
+            if (houses[j] > houses[j + 1]) {
+                int temp = houses[j];
+                houses[j] = houses[j + 1];
+                houses[j + 1] = temp;
+            }
+        }
+    }
+    
+    // 初始化邮筒数量数组
+    int dp[housesSize + 1];
+    int maxDistance = 0;
+    for (i = 0; i < housesSize; i++) {
+        maxDistance = (maxDistance > houses[i] ? maxDistance : houses[i]);
+        dp[i] = maxDistance; // 初始情况下，每个房子都需要一个邮筒
+    }
+    dp[0] = 0;
+
+    // 动态规划求解
+    for (int m = 1; m < k; m++) {
+        for (i = m; i < housesSize; i++) {
+            int minDist = INT_MAX;
+            for (int j = i - 1; j >= m - 1; j--) {
+                minDist = (minDist < (houses[i] - houses[j]) ? minDist : (houses[i] - houses[j]));
+            }
+            dp[i] = (dp[i] < dp[i - 1] + minDist ? dp[i] : dp[i - 1] + minDist);
+        }
+    }
+
+    // 返回最小总距离
+    return dp[housesSize - 1];
+}
+
+int main() {
+    int houses[] = {1, 4, 8, 10, 20};
+    int k = 3;
+    printf("Minimum total distance is %d\n", minDistance(houses, sizeof(houses) / sizeof(houses[0]), k));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int row1, col1, row2, col2, newValue;
+} Update;
+
+typedef struct {
+    int **data;
+    int rows, cols;
+    Update *updates;
+    int updatesSize;
+} SubrectangleQueries;
+
+SubrectangleQueries* subrectangleQueriesCreate(int** rectangle, int rows, int cols) {
+    SubrectangleQueries* obj = (SubrectangleQueries*)malloc(sizeof(SubrectangleQueries));
+    obj->rows = rows;
+    obj->cols = cols;
+    obj->updates = (Update*)malloc(sizeof(Update) * 500); // 假设最多500次更新
+    obj->updatesSize = 0;
+    
+    obj->data = (int**)malloc(sizeof(int*) * rows);
+    for (int i = 0; i < rows; i++) {
+        obj->data[i] = (int*)malloc(sizeof(int) * cols);
+        for (int j = 0; j < cols; j++) {
+            obj->data[i][j] = rectangle[i][j];
+        }
+    }
+    
+    return obj;
+}
+
+void subrectangleQueriesUpdate(SubrectangleQueries* obj, int row1, int col1, int row2, int col2, int newValue) {
+    Update update;
+    update.row1 = row1;
+    update.col1 = col1;
+    update.row2 = row2;
+    update.col2 = col2;
+    update.newValue = newValue;
+    obj->updates[obj->updatesSize++] = update;
+}
+
+int subrectangleQueriesGetValue(SubrectangleQueries* obj, int row, int col) {
+    int value = obj->data[row][col];
+    for (int i = obj->updatesSize - 1; i >= 0; i--) {
+        Update update = obj->updates[i];
+        if (row >= update.row1 && row <= update.row2 && col >= update.col1 && col <= update.col2) {
+            value = update.newValue;
+            break;
+        }
+    }
+    return value;
+}
+
+void subrectangleQueriesFree(SubrectangleQueries* obj) {
+    for (int i = 0; i < obj->rows; i++) {
+        free(obj->data[i]);
+    }
+    free(obj->data);
+    free(obj->updates);
+    free(obj);
+}
+
+// 示例使用
+int main() {
+    int rectangle[4][3] = {{1,2,1},{4,3,4},{3,2,1},{1,1,1}};
+    int** rectPtr = (int**)malloc(sizeof(int*) * 4);
+    for (int i = 0; i < 4; i++) {
+        rectPtr[i] = rectangle[i];
+    }
+    
+    SubrectangleQueries* obj = subrectangleQueriesCreate(rectPtr, 4, 3);
+    subrectangleQueriesUpdate(obj, 0, 0, 3, 2, 5);
+    printf("Value at (0, 2): %d\n", subrectangleQueriesGetValue(obj, 0, 2)); // 输出 5
+    subrectangleQueriesFree(obj);
+    
+    return 0;
+}
+int minSumOfLengths(int* arr, int arrSize, int target) {
+    int prefix[arrSize + 1] = {0};
+    int suffix[arrSize + 1] = {INT_MAX};
+    int sum = 0, ans = INT_MAX;
+    
+    // 计算prefix数组
+    for (int i = 0; i < arrSize; ++i) {
+        sum += arr[i];
+        prefix[i + 1] = sum >= target ? i + 1 : prefix[i];
+    }
+    
+    sum = 0; // 重置求和变量
+    // 计算suffix数组
+    for (int i = arrSize - 1; i >= 0; --i) {
+        sum += arr[i];
+        suffix[i] = sum >= target ? arrSize - i : suffix[i + 1];
+    }
+    
+    // 寻找最小长度和
+    for (int i = 0; i < arrSize; ++i) {
+        ans = min(ans, prefix[i] + suffix[i + 1]);
+    }
+    
+    return ans == INT_MAX ? -1 : ans;
+}
+double getProbability(int balls[], int ballsSize) {
+    int n = ballsSize;
+    double totalWays = pow(2, n);
+    double sameCountWays = 0;
+    int sum = 0;
+    
+    // 计算总的分配方式
+    for (int i = 0; i < n; ++i) {
+        sum += balls[i];
+    }
+    
+    // 初始化dp数组
+    double dp[n + 1][n + 1];
+    for (int i = 0; i <= n; ++i) {
+        for (int j = 0; j <= n; ++j) {
+            dp[i][j] = 0;
+        }
+    }
+    
+    // 特殊情况处理
+    dp[0][0] = 1;
+    
+    // 动态规划填表
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 0; j <= n; ++j) {
+            for (int k = 0; k <= i && k <= j; ++k) {
+                if (i == k || balls[i - 1] > 1) {
+                    dp[i][j] += dp[i - 1][j - k] * (balls[i - 1] - k + 1) / totalWays;
+                }
+            }
+        }
+    }
+    
+    // 计算结果
+    for (int i = 0; i <= n / 2; ++i) {
+        sameCountWays += dp[n][i] * dp[n][i];
+    }
+    
+    return sameCountWays / pow(2, sum);
+}
+#include <stdio.h>
+
+void shuffleTheArray(int* nums, int numsSize, int n) {
+    int i = 0, j = n;
+    while (i < j) {
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+        i++;
+        j++;
+    }
+}
+
+int main() {
+    int nums[] = {2, 5, 1, 3, 4, 7};
+    int n = 3;
+    shuffleTheArray(nums, sizeof(nums)/sizeof(nums[0]), n);
+    for (int i = 0; i < sizeof(nums)/sizeof(nums[0]); i++) {
+        printf("%d ", nums[i]);
+    }
+    return 0;
+}
+#include <stdio.h>
+
+double averageSalary(int salary[], int length) {
+    // 对数组进行排序
+    for (int i = 0; i < length - 1; i++) {
+        for (int j = 0; j < length - i - 1; j++) {
+            if (salary[j] > salary[j + 1]) {
+                int temp = salary[j];
+                salary[j] = salary[j + 1];
+                salary[j + 1] = temp;
+            }
+        }
+    }
+    
+    // 计算除去最小和最大值后的总和
+    int sum = 0;
+    for (int i = 1; i < length - 1; i++) {
+        sum += salary[i];
+    }
+    
+    // 计算平均值
+    return (double)sum / (length - 2);
+}
+
+int main() {
+    int salary[] = {4000, 3000, 1000, 2000};
+    int length = sizeof(salary) / sizeof(salary[0]);
+    printf("The average salary excluding the minimum and maximum is: %.5f\n", averageSalary(salary, length));
+    return 0;
+}
+#include <stdio.h>
+
+// 函数用于找出删除一个元素后的最长全1子数组
+int longestSubarray(int* nums, int numsSize) {
+    int maxLength = 0, countOnes = 0, start = 0;
+    for (int end = 0; end < numsSize; end++) {
+        if (nums[end] == 1) {
+            countOnes++;
+        } else {
+            // 如果当前元素不是1，需要调整窗口
+            // 移动start指针到当前0的左侧，直到窗口内再次只有1
+            while (start < end && nums[start] == 1) {
+                countOnes--;
+                start++;
+            }
+            // 如果窗口内没有0，则移动start到当前0的位置
+            if (start <= end) {
+                start++;
+            }
+        }
+        // 更新最大长度
+        maxLength = (countOnes > 0) ? (end - start + 1) : maxLength;
+    }
+    return maxLength;
+}
+
+int main() {
+    int nums[] = {1, 1, 0, 1}; // 示例数组
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    printf("最长全1子数组的长度是: %d\n", longestSubarray(nums, numsSize));
+    return 0;
+}
+#include <stdio.h>
+
+// 定义课程的结构体，包含课程编号和先修课程的数量
+typedef struct Course {
+    int id;
+    int degree; // 先修课程的数量
+} Course;
+
+// 拓扑排序函数
+int findOrder(int numCourses, int** prerequisites, int prerequisitesSize, int* prerequisitesColSize, int k) {
+    // 初始化所有课程的先修课程数量
+    Course courses[numCourses];
+    for (int i = 0; i < numCourses; i++) {
+        courses[i].id = i;
+        courses[i].degree = 0;
+    }
+    
+    // 构建图，并计算每个课程的入度
+    for (int i = 0; i < prerequisitesSize; i++) {
+        int next = prerequisites[i][1] - 1; // 转换为从0开始的索引
+        courses[next].degree++; // 增加先修课程的入度
+    }
+    
+    // 用队列存储入度为0的课程
+    int queue[numCourses], front = 0, rear = 0;
+    for (int i = 0; i < numCourses; i++) {
+        if (courses[i].degree == 0) {
+            queue[rear++] = i;
+        }
+    }
+    
+    // 拓扑排序结果数组
+    int result = 0;
+    while (front < rear) {
+        int size = rear - front; // 当前学期可以上的课程数量
+        if (size == 0) return -1; // 如果没有课程可以上，说明有环存在
+        result++; // 学期数增加
+        for (int i = 0; i < size; i++) {
+            int current = queue[front++]; // 取出一个课程
+            for (int j = 0; j < prerequisitesSize; j++) {
+                if (prerequisites[j][0] - 1 == current) { // 如果当前课程是先修课
+                    int next = prerequisites[j][1] - 1; // 目标课程
+                    courses[next].degree--; // 减少目标课程的入度
+                    if (courses[next].degree == 0) {
+                        queue[rear++] = next; // 如果入度为0，则加入队列
+                    }
+                }
+            }
+        }
+    }
+    
+    // 如果所有课程都被安排了，返回学期数，否则返回-1
+    return result;
+}
+
+int main() {
+    int n = 4;
+    int k = 2;
+    int relations[][2] = {{2,1}, {3,1}, {1,4}};
+    int relationsSize = sizeof(relations) / sizeof(relations[0]);
+    printf("Minimum number of semesters: %d\n", findOrder(n, (int**)&relations, relationsSize, k));
+    return 0;
+}
+#include <stdio.h>
+
+// 计算一维数组的动态和
+int* runningSum(int* nums, int numsSize, int* returnSize) {
+    // 分配结果数组，其大小与输入数组相同
+    int* result = (int*)malloc(sizeof(int) * numsSize);
+    if (!result) return NULL;
+    
+    // 初始化结果数组的第一个元素为输入数组的第一个元素
+    result[0] = nums[0];
+    *returnSize = numsSize;
+    
+    // 计算动态和
+    for (int i = 1; i < numsSize; i++) {
+        result[i] = result[i - 1] + nums[i];
+    }
+    
+    return result;
+}
+
+int main() {
+    int nums[] = {1, 2, 3, 4};
+    int returnSize;
+    int* res = runningSum(nums, sizeof(nums) / sizeof(nums[0]), &returnSize);
+    
+    // 打印结果
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d ", res[i]);
+    }
+    
+    // 释放分配的内存
+    free(res);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int leastNumberOfUniqueInts(int* arr, int arrSize, int k) {
+    // 哈希表存储每个数字出现的次数
+    int* count = (int*)calloc(1000001, sizeof(int)); // 假设数组元素不会超过1000000
+    for (int i = 0; i < arrSize; ++i) {
+        count[arr[i]]++;
+    }
+
+    // 排序出现次数的数组
+    int* sortedCounts = (int*)malloc(sizeof(int) * 1000001);
+    for (int i = 0; i < 1000001; ++i) {
+        if (count[i] > 0) {
+            sortedCounts[--num] = count[i];
+        }
+    }
+
+    // 贪心算法，移除出现次数最少的数字
+    int removeCount = 0;
+    for (int i = 0; i < num; ++i) {
+        if (k >= sortedCounts[i]) {
+            k -= sortedCounts[i];
+            removeCount += sortedCounts[i];
+        } else {
+            // 如果剩余的k不足以移除当前最小出现次数的所有数字
+            removeCount += k;
+            break;
+        }
+    }
+
+    // 计算不同整数的最少数目
+    int uniqueInts = 1000001 - num + (k > 0); // 如果k还有剩余，说明还能移除一些重复的数字
+    free(count);
+    free(sortedCounts);
+    return uniqueInts;
+}
+
+int main() {
+    int arr[] = {4,3,1,1,3,3,2};
+    int k = 3;
+    printf("The least number of unique integers is: %d\n", leastNumberOfUniqueInts(arr, sizeof(arr)/sizeof(arr[0]), k));
+    return 0;
+}
+#include <limits.h>
+
+int minDays(int* bloomDay, int bloomDaySize, int m, int k) {
+    int left = 1, right = INT_MAX;
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (canMakeBouquets(bloomDay, bloomDaySize, m, k, mid)) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return left;
+}
+
+int canMakeBouquets(int* bloomDay, int bloomDaySize, int m, int k, int day) {
+    int bouquets = 0, flowers = 0;
+    for (int i = 0; i < bloomDaySize; ++i) {
+        if (bloomDay[i] <= day) {
+            flowers++;
+            if (flowers == k) {
+                bouquets++;
+                flowers = 0;
+            }
+        } else {
+            flowers = 0;
+        }
+    }
+    return bouquets >= m;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int countRectangles(int* points, int pointsSize, int target) {
+    int count = 0;
+    // 用于存储横纵坐标出现的次数
+    int x[101] = {0}, y[101] = {0};
+    
+    // 统计横纵坐标出现的次数
+    for (int i = 0; i < pointsSize; i += 3) {
+        x[points[i]]++;
+        y[points[i + 1]]++;
+    }
+    
+    // 使用嵌套循环遍历所有可能的矩形组合
+    for (int i = 0; i < 100; ++i) {
+        for (int j = 0; j < 100; ++j) {
+            if (x[i] > 0 && y[j] > 0 && (i > j)) {
+                int area = i * j;
+                if (area % target == 0 && area / target <= x[i] * y[j]) {
+                    count += (x[i] * y[j]) / (i * j / target);
+                }
+            }
+        }
+    }
+    
+    return count;
+}
+
+int main() {
+    int points[] = {1, 1, 3, 3, 1, 2};
+    int target = 6;
+    printf("Total rectangles: %d\n", countRectangles(points, sizeof(points) / sizeof(points[0]), target));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 假设我们使用一个结构体来表示员工的工资信息
+typedef struct {
+    int company_id;
+    int employee_id;
+    char employee_name[15];
+    int salary;
+} SalaryInfo;
+
+// 这个函数用来计算税后工资
+void calculateAfterTaxSalaries(SalaryInfo* salaries, int size) {
+    // 根据题目要求，税后工资的计算方式是：超过4000元的部分需要缴纳超过部分的20%
+    for (int i = 0; i < size; ++i) {
+        if (salaries[i].salary > 4000) {
+            salaries[i].salary = 4000 + (salaries[i].salary - 4000) * 0.8;
+        }
+    }
+}
+
+int main() {
+    // 假设我们已经有了一个员工工资数组
+    SalaryInfo salaries[] = {
+        {1, 1, "Tony", 5000},
+        {1, 2, "Pronub", 21300},
+        // ... 更多员工信息
+    };
+    int size = sizeof(salaries) / sizeof(salaries[0]);
+
+    calculateAfterTaxSalaries(salaries, size);
+
+    // 输出税后工资
+    for (int i = 0; i < size; ++i) {
+        printf("Employee ID: %d, Name: %s, After-Tax Salary: %d\n",
+               salaries[i].employee_id, salaries[i].employee_name, salaries[i].salary);
+    }
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 定义结构体用于存储文件夹名和对应的后缀
+typedef struct {
+    char *name;
+    int suffix;
+} Folder;
+
+// 函数用于添加文件夹名，返回实际分配的文件夹名
+char* getFolderNames(char **names, int namesSize) {
+    // 创建一个数组来存储所有文件夹的信息
+    Folder folders[namesSize];
+    // 创建一个数组来存储结果
+    char *result[namesSize];
+    // 存储已使用的名字集合
+    char *usedNames[namesSize];
+
+    // 初始化
+    for (int i = 0; i < namesSize; i++) {
+        folders[i].name = names[i];
+        folders[i].suffix = 0;
+        usedNames[i] = NULL;
+    }
+
+    // 排序names数组，使得相同名字的文件夹相邻
+    qsort(names, namesSize, sizeof(char*), (int (*)(const void *, const void *))strcmp);
+
+    // 遍历names数组
+    for (int i = 0; i < namesSize; i++) {
+        // 检查当前文件夹名是否已经被使用
+        int index = findUsedIndex(usedNames, namesSize, names[i]);
+        if (index == -1) {
+            // 如果没有被使用，添加到usedNames中
+            usedNames[index] = names[i];
+            result[i] = strdup(names[i]); // 复制名字到结果数组
+        } else {
+            // 如果已经被使用，找到下一个可用的后缀
+            for (int k = 1;; k++) {
+                char newName[21]; // 假设后缀数字不会超过20
+                sprintf(newName, "%s(%d)", names[i], k);
+                if (findUsedIndex(usedNames, namesSize, newName) == -1) {
+                    usedNames[index] = strdup(newName); // 更新usedNames数组
+                    result[i] = strdup(newName); // 复制新名字到结果数组
+                    folders[index].suffix = k; // 更新后缀
+                    break;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+// 辅助函数，用于在usedNames中查找已使用的名字
+int findUsedIndex(char **usedNames, int size, char *name) {
+    for (int i = 0; i < size; i++) {
+        if (usedNames[i] != NULL && strcmp(usedNames[i], name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 示例使用
+int main() {
+    char *names[] = {"kaido", "kaido(1)", "kaido", "kaido(1)"};
+    int namesSize = sizeof(names) / sizeof(names[0]);
+    char *result = getFolderNames(names, namesSize);
+    
+    // 打印结果
+    for (int i = 0; i < namesSize; i++) {
+        printf("%s\n", result[i]);
+        free(result[i]); // 释放结果字符串
+    }
+    free(result); // 释放结果数组
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minDifference(int* nums, int numsSize) {
+    // 对数组进行排序
+    qsort(nums, numsSize, sizeof(int), compare);
+    
+    // 贪心策略，选择最小的差值
+    int minDiff = nums[numsSize - 1] - nums[0];
+    for (int i = 0; i < numsSize - 2; i++) {
+        minDiff = fmin(minDiff, nums[i + 2] - nums[0]);
+    }
+    return minDiff;
+}
+
+// 用于qsort的比较函数
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int nums[] = {5, 3, 2, 4};
+    int size = sizeof(nums) / sizeof(nums[0]);
+    printf("%d\n", minDifference(nums, size));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义一个结构体用于存储关键信息
+typedef struct {
+    int first; // 第一个数的索引
+    int second; // 第二个数的索引
+} TwoSumResult;
+
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+    TwoSumResult result;
+    // 定义哈希表，使用数组模拟
+    int hashTable[101] = {0}; // 假设数组元素不会超过100
+    int i;
+
+    // 遍历数组
+    for (i = 0; i < numsSize; i++) {
+        int complement = target - nums[i]; // 计算补数
+        if (hashTable[complement] != -1) { // 如果补数在哈希表中
+            result.first = hashTable[complement];
+            result.second = i;
+            return result; // 返回结果
+        } else {
+            hashTable[nums[i]] = i; // 否则，将当前元素的索引存入哈希表
+        }
+    }
+
+    // 如果没有找到，返回-1表示失败
+    result.first = -1;
+    result.second = -1;
+    return result;
+}
+
+int main() {
+    int nums[] = {2, 7, 11, 15};
+    int target = 9;
+    TwoSumResult result = twoSum(nums, sizeof(nums) / sizeof(nums[0]), target);
+    if (result.first != -1 && result.second != -1) {
+        printf("Index 1: %d, Index 2: %d\n", result.first, result.second);
+    } else {
+        printf("No two sum solution found.\n");
+    }
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义一个结构体用于存储关键信息
+typedef struct {
+    int first; // 第一个数的索引
+    int second; // 第二个数的索引
+} TwoSumResult;
+
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+    TwoSumResult result;
+    // 定义哈希表，使用数组模拟
+    int hashTable[101] = {0}; // 假设数组元素不会超过100
+    int i;
+
+    // 遍历数组
+    for (i = 0; i < numsSize; i++) {
+        int complement = target - nums[i]; // 计算补数
+        if (hashTable[complement] != -1) { // 如果补数在哈希表中
+            result.first = hashTable[complement];
+            result.second = i;
+            return result; // 返回结果
+        } else {
+            hashTable[nums[i]] = i; // 否则，将当前元素的索引存入哈希表
+        }
+    }
+
+    // 如果没有找到，返回-1表示失败
+    result.first = -1;
+    result.second = -1;
+    return result;
+}
+
+int main() {
+    int nums[] = {2, 7, 11, 15};
+    int target = 9;
+    TwoSumResult result = twoSum(nums, sizeof(nums) / sizeof(nums[0]), target);
+    if (result.first != -1 && result.second != -1) {
+        printf("Index 1: %d, Index 2: %d\n", result.first, result.second);
+    } else {
+        printf("No two sum solution found.\n");
+    }
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义点的结构体
+typedef struct {
+    int y;
+    int x;
+} Point;
+
+// 比较函数，用于qsort
+int cmp(const void *a, const void *b) {
+    Point *pa = (Point *)a;
+    Point *pb = (Point *)b;
+    return (pa->y - pa->x) - (pb->y - pb->x);
+}
+
+// 找出最大值的函数
+int findMaxValueOfEquation(int **points, int pointsSize, int k) {
+    int max_value = -20000000000; // 初始化最大值为一个较小的数
+    Point heap[pointsSize]; // 存储转换后的点
+    for (int i = 0; i < pointsSize; ++i) {
+        heap[i].y = points[i][1];
+        heap[i].x = points[i][0];
+    }
+    qsort(heap, pointsSize, sizeof(Point), cmp); // 对点进行排序
+
+    for (int i = 0, j = 0; i < pointsSize; ++i) {
+        while (j < i && (points[i][0] - points[j][0]) > k) {
+            // 维护单调性，移除不满足条件的点
+            j++;
+        }
+        if (j < i) {
+            max_value = max_value > heap[i].y + heap[j].y + (points[i][0] - points[j][0]) ? max_value : heap[i].y + heap[j].y + (points[i][0] - points[j][0]);
+        }
+    }
+    return max_value;
+}
+
+int main() {
+    // 示例测试
+    int points1[2][2] = {{1, 3}, {2, 0}};
+    int points2[3][2] = {{5, 10}, {6, -10}, {0, 0}};
+    int k1 = 1, k2 = 3;
+    printf("Max value of equation for the first example is: %d\n", findMaxValueOfEquation(points1, 2, k1));
+    printf("Max value of equation for the second example is: %d\n", findMaxValueOfEquation(points2, 3, k2));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 假设我们有一个结构体来表示Activities表的一行
+typedef struct {
+    char sell_date[11];
+    char product[21];
+} Activity;
+
+// 这个函数用于比较两个活动日期，用于qsort
+int compareActivities(const void *a, const void *b) {
+    Activity *activityA = (Activity *)a;
+    Activity *activityB = (Activity *)b;
+    return strcmp(activityA->sell_date, activityB->sell_date);
+}
+
+// 这个函数用于输出每个日期销售的产品
+void printProductsPerDate(Activity *activities, int size) {
+    if (size == 0) return;
+
+    // 首先按日期对活动进行排序
+    qsort(activities, size, sizeof(Activity), compareActivities);
+
+    // 使用一个简单的哈希表（这里用数组模拟）来存储每个日期的产品集合
+    int productCounts[100] = {0}; // 假设产品数不超过100种
+    char products[100][21] = {{'\0'}}; // 存储产品名称
+    int productIndex = 0;
+
+    // 遍历活动并填充产品信息
+    for (int i = 0; i < size; i++) {
+        Activity current = activities[i];
+        int found = 0;
+
+        // 检查当前产品是否已经记录
+        for (int j = 0; j < productIndex; j++) {
+            if (strcmp(products[j], current.product) == 0) {
+                found = 1;
+                break;
+            }
+        }
+
+        // 如果没有记录，则添加到产品集合
+        if (!found) {
+            strcpy(products[productIndex], current.product);
+            productIndex++;
+        }
+
+        // 打印当前日期的所有产品
+        printf("%s: ", current.sell_date);
+        for (int j = 0; j < productIndex; j++) {
+            printf("%s, ", products[j]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    // 假设这是从数据库获取的数据
+    Activity activities[] = {
+        {"2020-05-30", "Headphone"},
+        {"2020-06-01", "Pencil"},
+        // ... 更多活动
+    };
+    int size = sizeof(activities) / sizeof(activities[0]);
+
+    printProductsPerDate(activities, size);
+
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+void swap(char *a, char *b) {
+    char temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+char* minInteger(char* num, int k) {
+    int n = strlen(num);
+    int count[10] = {0}; // 记录每个数字出现的次数
+    for (int i = 0; i < n; i++) {
+        count[num[i] - '0']++; // 统计每个数字出现的次数
+    }
+
+    int maxSwaps = 0; // 记录实际需要交换的次数
+    for (int i = 0; i < n; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (num[j] < num[minIdx]) {
+                minIdx = j;
+            }
+        }
+        if (minIdx != i) {
+            // 如果当前位不是最小的数字，则需要交换
+            swap(&num[i], &num[minIdx]);
+            maxSwaps++;
+            if (maxSwaps > k) {
+                // 如果剩余的交换次数不足以将所有更小的数字交换到前面，则停止
+                for (int j = 0; j < n; j++) {
+                    count[num[j] - '0']--;
+                }
+                break;
+            }
+        }
+        // 更新交换后的数字计数
+        count[num[i] - '0']--;
+    }
+
+    return num;
+}
+
+int main() {
+    char num[] = "4321";
+    int k = 4;
+    printf("Minimum integer after at most %d swaps: %s\n", k, minInteger(num, k));
+    return 0;
+}
+#include <string.h>
+#include <stdio.h>
+
+int numSplits(char *s) {
+    int len = strlen(s);
+    int count = 0, res = 0;
+    int leftUnique[len + 1], rightUnique[len + 1];
+
+    // 初始化数组，统计每个位置前不同字符的数量
+    memset(leftUnique, 0, sizeof(leftUnique));
+    for (int i = 0; i < len; ++i) {
+        leftUnique[i + 1] = leftUnique[i] + (s[i] == 'a' ? 1 : 0);
+    }
+    for (int i = len - 1; i >= 0; --i) {
+        rightUnique[i] = rightUnique[i + 1] + (s[i] == 'a' ? 1 : 0);
+    }
+
+    // 遍历所有可能的分割点，检查是否为好分割
+    for (int i = 1; i < len; ++i) {
+        if (leftUnique[i] == rightUnique[i + 1]) {
+            res++;
+        }
+    }
+
+    return res;
+}
+
+int main() {
+    char s[] = "aacaba";
+    printf("Number of good splits: %d\n", numSplits(s));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义哈希表结构
+typedef struct {
+    int *keys;
+    int *values;
+    int size;
+    int count;
+} HashTable;
+
+// 初始化哈希表
+void initHashTable(HashTable *hashTable, int size) {
+    hashTable->keys = (int *)malloc(sizeof(int) * size);
+    hashTable->values = (int *)malloc(sizeof(int) * size);
+    hashTable->size = size;
+    hashTable->count = 0;
+    for (int i = 0; i < size; ++i) {
+        hashTable->keys[i] = -1;
+    }
+}
+
+// 哈希函数
+int hash(int key, int size) {
+    return key % size;
+}
+
+// 插入元素到哈希表
+void insert(HashTable *hashTable, int key, int value) {
+    int index = hash(key, hashTable->size);
+    while (hashTable->keys[index] != -1 && hashTable->keys[index] != key) {
+        index = (index + 1) % hashTable->size; // 线性探测解决冲突
+    }
+    hashTable->keys[index] = key;
+    hashTable->values[index] = value;
+}
+
+// 查找元素在哈希表中的次数
+int find(HashTable *hashTable, int key) {
+    int index = hash(key, hashTable->size);
+    while (hashTable->keys[index] != -1) {
+        if (hashTable->keys[index] == key) {
+            return hashTable->values[index];
+        }
+        index = (index + 1) % hashTable->size; // 线性探测
+    }
+    return 0;
+}
+
+// 释放哈希表内存
+void freeHashTable(HashTable *hashTable) {
+    free(hashTable->keys);
+    free(hashTable->values);
+}
+
+int numIdenticalPairs(int* nums, int numsSize) {
+    HashTable hashTable;
+    initHashTable(&hashTable, 101); // 假设数组元素范围是0到100
+    int count = 0;
+    for (int i = 0; i < numsSize; ++i) {
+        int freq = find(&hashTable, nums[i]);
+        count += freq;
+        insert(&hashTable, nums[i], freq + 1);
+    }
+    freeHashTable(&hashTable);
+    return count;
+}
+
+int main() {
+    int nums[] = {1, 2, 3, 1, 1, 3};
+    int size = sizeof(nums) / sizeof(nums[0]);
+    printf("Number of good pairs: %d\n", numIdenticalPairs(nums, size));
+    return 0;
+}
+#include <stdio.h>
+#include <math.h>
+
+// 定义一个结构体来存储点的坐标
+typedef struct {
+    double x;
+    double y;
+} Point;
+
+// 计算两点之间的欧几里得距离的平方
+double distanceSquare(Point p1, Point p2) {
+    return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+}
+
+// 计算三个点的质心
+Point centroid(Point p1, Point p2, Point p3) {
+    Point c;
+    c.x = (p1.x + p2.x + p3.x) / 3.0;
+    c.y = (p1.y + p2.y + p3.y) / 3.0;
+    return c;
+}
+
+// 检查一个点是否在由三个点定义的圆内
+int isInsideCircle(Point center, double radiusSquare, Point p) {
+    return distanceSquare(center, p) <= radiusSquare;
+}
+
+// 寻找最佳位置的辅助函数
+double findMinDistSum(Point positions[], int n, double left, double right, double bottom, double top) {
+    // 如果搜索范围的宽度或高度小于一个很小的值，则返回当前最佳距离
+    if (right - left < 1e-5 || top - bottom < 1e-5) {
+        double minDist = 0;
+        for (int i = 0; i < n; i++) {
+            minDist += sqrt(distanceSquare(positions[i], (Point){left + right, bottom + top}));
+        }
+        return minDist;
+    }
+
+    double bestDist = 0;
+    Point bestCenter;
+
+    // 选择当前搜索范围的中心点作为初始猜测
+    Point center = (Point){(left + right) / 2, (bottom + top) / 2};
+    double currentDist = 0;
+    for (int i = 0; i < n; i++) {
+        currentDist += sqrt(distanceSquare(center, positions[i]));
+    }
+    bestDist = currentDist;
+    bestCenter = center;
+
+    // 检查当前搜索范围的四个角点
+    for (int i = 0; i < 4; i++) {
+        Point newCenter;
+        double newDist;
+        if (i == 0) {
+            newCenter = (Point){left, center.y};
+            newDist = findMinDistSum(positions, n, left, center.x, bottom, top);
+        } else if (i == 1) {
+            newCenter = (Point){right, center.y};
+            newDist = findMinDistSum(positions, n, center.x, right, bottom, top);
+        } else if (i == 2) {
+            newCenter = (Point){center.x, bottom};
+            newDist = findMinDistSum(positions, n, left, right, bottom, center.y);
+        } else {
+            newCenter = (Point){center.x, top};
+            newDist = findMinDistSum(positions, n, left, right, center.y, top);
+        }
+
+        // 如果新的距离更小，则更新最佳距离和中心点
+        if (newDist < bestDist) {
+            bestDist = newDist;
+            bestCenter = newCenter;
+        }
+    }
+
+    return bestDist;
+}
+
+// 服务中心的最佳位置
+double getMinDistSum(Point positions[], int n) {
+    double minDist = 0;
+    for (int i = 0; i < n; i++) {
+        minDist += sqrt(distanceSquare(positions[0], positions[i]));
+    }
+    // 从整个地图的边界开始搜索最佳位置
+    return findMinDistSum(positions, n, 0, 100, 0, 100);
+}
+
+int main() {
+    // 示例输入
+    Point positions[] = {{0, 1}, {1, 0}, {1, 2}, {2, 1}};
+    int n = sizeof(positions) / sizeof(positions[0]);
+    printf("Minimum Distance Sum: %.5f\n", getMinDistSum(positions, n));
+    return 0;
+}
+// 定义文件分享系统结构
+struct FileSharing {
+    // 用哈希表存储用户和他们拥有的文件块
+    hashmap users;
+
+    // 加入操作
+    void join(int userID, list<int> ownedChunks) {
+        lock.acquire(); // 获取锁
+        users[userID] = ownedChunks;
+        lock.release(); // 释放锁
+    }
+
+    // 离开操作
+    void leave(int userID) {
+        lock.acquire();
+        users.erase(userID);
+        lock.release();
+    }
+
+    // 请求操作
+    list<int> request(int userID) {
+        list<int> result;
+        lock.acquire();
+        if (users.count(userID)) {
+            result = users[userID];
+        }
+        lock.release();
+        return result;
+    }
+};
+#include <stdio.h>
+
+// 计算累积和
+void computePrefixSum(int arr[], int n, int prefixSum[]) {
+    prefixSum[0] = arr[0];
+    for (int i = 1; i < n; ++i) {
+        prefixSum[i] = prefixSum[i - 1] + arr[i];
+    }
+}
+
+// 二分查找最接近target的值
+int closestToTarget(int arr[], int target, int n) {
+    int prefixSum[n];
+    computePrefixSum(arr, n, prefixSum);
+    int minDiff = INT_MAX;
+    int result = 0;
+    
+    for (int l = 0; l < n; ++l) {
+        int r = n - 1;
+        int closestSum = prefixSum[l];
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            if (abs(prefixSum[mid] - target) < abs(closestSum - target)) {
+                closestSum = prefixSum[mid];
+                l = mid + 1;
+            } else {
+                r = mid - 1;
+            }
+        }
+        int diff = abs(closestSum - target);
+        if (diff < minDiff) {
+            minDiff = diff;
+            result = closestSum;
+        }
+    }
+    return result;
+}
+
+int main() {
+    int arr[] = {9, 12, 3, 7, 15};
+    int target = 5;
+    int n = sizeof(arr) / sizeof(arr[0]);
+    printf("The closest value to target is: %d\n", closestToTarget(arr, target, n));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义N叉树的节点结构
+typedef struct Node {
+    int val;
+    struct Node** children;
+    int childrenSize;
+} Node;
+
+// 找到N叉树的根节点
+Node* findRoot(Node* tree) {
+    if (tree == NULL) return NULL; // 如果树为空，返回NULL
+    for (int i = 0; i < tree->childrenSize; ++i) {
+        if (tree->children[i] != NULL) {
+            // 递归检查子节点
+            return findRoot(tree->children[i]);
+        }
+    }
+    return tree; // 如果所有子节点都为空，当前节点即为根节点
+}
+
+int main() {
+    // 构建一个示例N叉树
+    Node* root = (Node*)malloc(sizeof(Node));
+    root->val = 1;
+    root->childrenSize = 3;
+    root->children = (Node**)malloc(sizeof(Node*) * root->childrenSize);
+    root->children[0] = NULL; // 根节点没有父节点
+    root->children[1] = (Node*)malloc(sizeof(Node)); // 创建左子节点
+    root->children[1]->val = 3;
+    // ... 可以继续添加更多子节点和子树
+
+    // 找到并打印根节点的值
+    Node* rootNode = findRoot(root);
+    printf("Root node value: %d\n", rootNode->val);
+
+    // 释放内存
+    // ... 需要添加代码来释放所有分配的内存
+
+    return 0;
+}
+#include <stdio.h>
+
+// 函数用于找出数组游戏的赢家
+int getWinner(int arr[], int arrSize, int k) {
+    // 如果k大于或等于数组长度，最大值将会连续赢得整个数组
+    if (k >= arrSize) {
+        return arr[0];
+    }
+    
+    int maxIndex = 0; // 假设第一个元素是最大的
+    for (int i = 1; i < arrSize; i++) {
+        // 如果当前元素大于maxIndex对应的元素，则更新maxIndex
+        if (arr[i] > arr[maxIndex]) {
+            maxIndex = i;
+        }
+    }
+    
+    // 返回赢得比赛的整数
+    return arr[maxIndex];
+}
+
+int main() {
+    int arr[] = {2, 1, 3, 5, 4, 6, 7};
+    int k = 2;
+    int winner = getWinner(arr, sizeof(arr) / sizeof(arr[0]), k);
+    printf("The winner is: %d\n", winner);
+    return 0;
+}
+#include <stdio.h>
+
+int getIndex(int* nums, int numsSize) {
+    int maxIndex = 0; // 假设最大值的索引为0
+    int maxVal = nums[0]; // 假设第一个元素为最大值
+
+    for (int i = 1; i < numsSize; i++) {
+        if (nums[i] > maxVal) {
+            maxVal = nums[i]; // 发现新的最大值，更新最大值
+            maxIndex = i; // 更新最大值的索引
+        }
+    }
+    return maxIndex; // 返回最大值的索引
+}
+
+int main() {
+    int nums[] = {7, 7, 7, 7, 10, 7, 7, 7};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    printf("The index of the largest integer is: %d\n", getIndex(nums, numsSize));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义箱子结构体
+typedef struct {
+    int width;
+    int height;
+} Box;
+
+// 比较函数，用于排序
+int cmp(const void *a, const void *b) {
+    Box *boxA = (Box *)a;
+    Box *boxB = (Box *)b;
+    return (boxB->width * boxB->height) - (boxA->width * boxA->height);
+}
+
+int maxBoxesInWarehouse(Box boxes[], int boxesSize, int warehouse[2]) {
+    // 对箱子进行排序
+    qsort(boxes, boxesSize, sizeof(Box), cmp);
+
+    int count = 0; // 放入箱子的数量
+    for (int i = 0; i < boxesSize; i++) {
+        Box box = boxes[i];
+        // 尝试水平放置
+        if (warehouse[0] >= box.width && warehouse[1] >= box.height) {
+            warehouse[0] -= box.width;
+            count++;
+        } else if (warehouse[0] >= box.height && warehouse[1] >= box.width) { // 尝试垂直放置
+            warehouse[1] -= box.height;
+            count++;
+        } else {
+            // 如果都放不下，跳出循环
+            break;
+        }
+    }
+    return count;
+}
+
+int main() {
+    // 示例
+    Box boxes[] = {{4, 3}, {4, 1}};
+    int boxesSize = sizeof(boxes) / sizeof(boxes[0]);
+    int warehouse[] = {5, 3};
+    printf("%d\n", maxBoxesInWarehouse(boxes, boxesSize, warehouse));
+    return 0;
+}
+#include <stdio.h>
+
+// 定义结构体来存储稀疏向量
+typedef struct {
+    int index;
+    int val;
+} SparseVector;
+
+// 计算两个稀疏向量的点积
+int dotProduct(SparseVector* v1, int v1Size, SparseVector* v2, int v2Size) {
+    int i = 0, j = 0, result = 0; // 初始化指针和结果
+    while (i < v1Size && j < v2Size) {
+        if (v1[i].index < v2[j].index) {
+            // 如果v1的下标小，v1指针后移
+            i++;
+        } else if (v1[i].index > v2[j].index) {
+            // 如果v2的下标小，v2指针后移
+            j++;
+        } else {
+            // 下标相同，计算点积并累加
+            result += v1[i].val * v2[j].val;
+            i++;
+            j++;
+        }
+    }
+    return result;
+}
+
+int main() {
+    // 示例输入
+    SparseVector v1[] = {{1, 2}, {3, 4}};
+    int v1Size = sizeof(v1) / sizeof(v1[0]);
+    SparseVector v2[] = {{1, 5}, {3, 6}};
+    int v2Size = sizeof(v2) / sizeof(v2[0]);
+
+    // 计算点积
+    int product = dotProduct(v1, v1Size, v2, v2Size);
+    printf("Dot Product: %d\n", product);
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义二叉树节点结构
+typedef struct TreeNode {
+    char val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 辅助函数，用于比较操作符优先级
+int precedence(char op) {
+    switch (op) {
+        case '+': return 1;
+        case '-': return 1;
+        case '*': return 2;
+        case '/': return 2;
+        default: return -1;
+    }
+}
+
+// 构建二叉表达式树的递归函数
+TreeNode* buildTree(char *s, int *index) {
+    if (s[*index] == '\0') return NULL;
+
+    TreeNode *node = (TreeNode*)malloc(sizeof(TreeNode));
+    char ch = s[(*index)++];
+
+    if (ch >= '0' && ch <= '9') {
+        node->val = ch;
+        node->left = node->right = NULL;
+    } else {
+        node->val = ch;
+        node->left = buildTree(s, index);
+        node->right = buildTree(s, index);
+    }
+    return node;
+}
+
+// 主函数，用于初始化并调用构建树的函数
+int main() {
+    char expression[] = "3*4-2*5";
+    int index = 0;
+    TreeNode *root = buildTree(expression, &index);
+    // 打印或处理树...
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h> // for INT_MAX
+
+// Definition for a binary tree node.
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+};
+
+// Function to find the nearest right node.
+struct TreeNode* findNearestRightNode(struct TreeNode* root, int target) {
+    struct TreeNode* nearest = NULL;
+    int minDiff = INT_MAX;
+
+    // Helper function to perform in-order traversal and update nearest node.
+    void helper(struct TreeNode* node) {
+        if (!node) return;
+
+        // Traverse the right subtree first.
+        helper(node->right);
+
+        // Update the nearest node if the current node is closer to the target.
+        int diff = abs(node->val - target);
+        if (diff < minDiff) {
+            minDiff = diff;
+            nearest = node;
+        }
+
+        // Traverse the left subtree.
+        helper(node->left);
+    }
+
+    helper(root);
+    return nearest;
+}
+
+int main() {
+    // Example usage:
+    // Create a binary tree: [1,2,3,null,4,5,6]
+    struct TreeNode root;
+    root.val = 1;
+    root.left = malloc(sizeof(struct TreeNode));
+    root.left->val = 2;
+    root.right = malloc(sizeof(struct TreeNode));
+    root.right->val = 3;
+    root.right->left = malloc(sizeof(struct TreeNode));
+    root.right->left->val = 4;
+    root.right->right = malloc(sizeof(struct TreeNode));
+    root.right->right->val = 5;
+    root.right->right->right = malloc(sizeof(struct TreeNode));
+    root.right->right->right->val = 6;
+
+    int target = 4;
+    struct TreeNode* result = findNearestRightNode(&root, target);
+    printf("The nearest right node with value %d is: %d\n", target, result->val);
+
+    return 0;
+}
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 函数声明
+TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q);
+
+// 代码实现
+TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+    // 如果达到叶子节点或者找到任何一个目标节点，返回当前节点
+    if (!root || root == p || root == q) {
+        return root;
+    }
+
+    // 递归地在左右子树中寻找目标节点
+    TreeNode* left = lowestCommonAncestor(root->left, p, q);
+    TreeNode* right = lowestCommonAncestor(root->right, p, q);
+
+    // 如果左右子树都找到了目标节点，说明当前节点是最近公共祖先
+    if (left && right) {
+        return root;
+    }
+
+    // 如果只找到一个目标节点，返回那个目标节点
+    return left ? left : right;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    // 创建哈希表，存储数字及其索引
+    int* hashTable = (int*)malloc(sizeof(int) * numsSize * 2);
+    int* indices = (int*)malloc(sizeof(int) * 2);
+    *returnSize = 0;
+
+    for (int i = 0; i < numsSize; i++) {
+        int complement = target - nums[i];
+        if (complement == nums[i] && *returnSize < 1) {
+            // 特殊情况，两个相同的数相加
+            indices[(*returnSize)++] = i;
+        } else if (complement < nums[i]) {
+            // 如果差值小于当前数，则不可能找到符合条件的两个数
+            continue;
+        } else {
+            // 在哈希表中查找差值
+            int index = hashTable[complement] != -1 ? hashTable[complement] : -1;
+            if (index != -1) {
+                // 找到匹配的数
+                indices[*returnSize] = index;
+                indices[(*returnSize) + 1] = i;
+                break;
+            } else {
+                // 存储当前数的索引
+                hashTable[nums[i]] = i;
+            }
+        }
+    }
+
+    // 如果没有找到，返回NULL
+    if (*returnSize < 2) {
+        free(indices);
+        return NULL;
+    }
+
+    return indices;
+}
+
+int main() {
+    int nums[] = {2, 7, 11, 15};
+    int target = 9;
+    int returnSize = 0;
+    int* result = twoSum(nums, sizeof(nums)/sizeof(nums[0]), target, &returnSize);
+
+    if (result) {
+        printf("Index1: %d, Index2: %d\n", result[0], result[1]);
+        free(result);
+    } else {
+        printf("No two sum\n");
+    }
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h> // for INT_MAX
+
+// Definition for a binary tree node.
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+};
+
+// Function to find the nearest right node.
+struct TreeNode* findNearestRightNode(struct TreeNode* root, int target) {
+    struct TreeNode* nearest = NULL;
+    int minDiff = INT_MAX;
+
+    // Helper function to perform in-order traversal and update nearest node.
+    void helper(struct TreeNode* node) {
+        if (!node) return;
+
+        // Traverse the right subtree first.
+        helper(node->right);
+
+        // Update the nearest node if the current node is closer to the target.
+        int diff = abs(node->val - target);
+        if (diff < minDiff) {
+            minDiff = diff;
+            nearest = node;
+        }
+
+        // Traverse the left subtree.
+        helper(node->left);
+    }
+
+    helper(root);
+    return nearest;
+}
+
+int main() {
+    // Example usage:
+    // Create a binary tree: [1,2,3,null,4,5,6]
+    struct TreeNode root;
+    root.val = 1;
+    root.left = malloc(sizeof(struct TreeNode));
+    root.left->val = 2;
+    root.right = malloc(sizeof(struct TreeNode));
+    root.right->val = 3;
+    root.right->left = malloc(sizeof(struct TreeNode));
+    root.right->left->val = 4;
+    root.right->right = malloc(sizeof(struct TreeNode));
+    root.right->right->val = 5;
+    root.right->right->right = malloc(sizeof(struct TreeNode));
+    root.right->right->right->val = 6;
+
+    int target = 4;
+    struct TreeNode* result = findNearestRightNode(&root, target);
+    printf("The nearest right node with value %d is: %d\n", target, result->val);
+
+    return 0;
+}
+typedef struct TreeNode {
+    char val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+bool checkEquivalence(TreeNode* root1, TreeNode* root2) {
+    // 基本情况
+    if (!root1 && !root2) return true;
+    if (!root1 || !root2) return false;
+    
+    // 如果是叶子节点，比较数值
+    if (root1->left == NULL && root2->left == NULL) {
+        return root1->val == root2->val;
+    }
+    
+    // 检查操作符是否相同
+    if (root1->val != root2->val) return false;
+    
+    // 递归检查左右子树
+    return checkEquivalence(root1->left, root2->left) && 
+           checkEquivalence(root1->right, root2->right);
+}
+typedef struct TreeNode {
+    char val; // 存储操作数或运算符
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 构建树的函数
+TreeNode* buildTree(char **s, int *index) {
+    if (s[0][*index] == '#') {
+        (*index)++;
+        return NULL;
+    }
+    TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
+    node->val = s[0][(*index)++];
+    node->left = buildTree(s, index);
+    node->right = buildTree(s, index);
+    return node;
+}
+
+// 解析树并计算值的函数
+int evaluateTree(TreeNode* node) {
+    if (node == NULL) return 0;
+    int leftVal = evaluateTree(node->left);
+    int rightVal = evaluateTree(node->right);
+    switch (node->val) {
+        case '+': return leftVal + rightVal;
+        case '-': return leftVal - rightVal;
+        case '*': return leftVal * rightVal;
+        case '/': return leftVal / rightVal;
+        default: return node->val - '0'; // 将字符转换为整数
+    }
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 辅助函数，用于计算等差数列的和
+int sumOfArithmeticSequence(int a, int d, int n) {
+    return n * (2 * a + (n - 1) * d) / 2;
+}
+
+// 主函数，解决给定问题
+int* sumOfSpecialEvenlySpacedElements(int* nums, int numsSize, int** queries, int queriesSize[], int* returnSize) {
+    // 哈希表，存储前缀和
+    int *prefixSums = (int *)malloc(sizeof(int) * numsSize);
+    prefixSums[0] = nums[0];
+    for (int i = 1; i < numsSize; ++i) {
+        prefixSums[i] = prefixSums[i - 1] + nums[i];
+    }
+
+    // 存储结果
+    int *results = (int *)malloc(sizeof(int) * queriesSize[0]);
+    *returnSize = queriesSize[0];
+
+    for (int i = 0; i < queriesSize[0]; ++i) {
+        int l = queries[i][0], r = queries[i][1];
+        int d = 1;
+        while (l + d <= r) {
+            int j = l + d;
+            // 计算当前等差数列的和
+            int currentSum = 0;
+            if (l == 0) {
+                currentSum = prefixSums[j] - prefixSums[l];
+            } else {
+                currentSum = prefixSums[j] - prefixSums[l - 1];
+            }
+            // 检查是否符合等差数列的和
+            if (currentSum == sumOfArithmeticSequence(nums[l], nums[l] * d, (j - l) / d + 1)) {
+                results[i] = currentSum;
+                break;
+            }
+            d++;
+        }
+    }
+
+    return results;
+}
+
+int main() {
+    // 示例输入
+    int nums[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    int queries[][2] = {{0, 3}, {5, 1}, {4, 2}};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    int queriesSize = sizeof(queries) / sizeof(queries[0]);
+    int returnSize = 0;
+
+    // 调用函数
+    int *result = sumOfSpecialEvenlySpacedElements(nums, numsSize, (int **)queries, &queriesSize, &returnSize);
+
+    // 打印结果
+    for (int i = 0; i < returnSize; ++i) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    // 释放内存
+    free(result);
+    return 0;
+}
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 函数声明：改变二叉树的根节点
+TreeNode* changeRoot(TreeNode* root, int leaf) {
+    if (!root) return NULL;
+    
+    // 如果当前节点是目标节点，将其作为新根节点
+    if (root->val == leaf) return root;
+    
+    // 递归左子树和右子树
+    TreeNode* left = changeRoot(root->left, leaf);
+    TreeNode* right = changeRoot(root->right, leaf);
+    
+    // 如果左子树或右子树的返回值不为空，说明找到了目标节点
+    if (left) {
+        // 将当前节点的右子树链接到目标节点的左子树上
+        left->right = root->right;
+        // 更新当前节点的右子树为新根节点
+        root->right = left;
+        return root;
+    }
+    
+    if (right) {
+        // 类似地处理右子树
+        right->left = root->left;
+        root->left = right;
+        return right;
+    }
+    
+    return NULL;
+}
+#include <string.h>
+#include <limits.h>
+
+// 动态规划求最长回文子序列
+int longestPalindromeSubseq(char *s) {
+    int n = strlen(s);
+    // 初始化dp数组，所有元素设为0
+    int dp[n][n];
+    for (int i = 0; i < n; i++) {
+        dp[i][i] = 1; // 单个字符是长度为1的回文子序列
+        for (int j = i + 1; j < n; j++) {
+            if (s[i] == s[j]) {
+                // 如果字符相同，状态转移
+                dp[i][j] = dp[i + 1][j - 1] + 2;
+            } else {
+                // 否则取两个选择的最大值
+                dp[i][j] = max(dp[i + 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[0][n - 1]; // 返回最长回文子序列的长度
+}
+
+// 辅助函数，用于获取两个整数的最大值
+int max(int a, int b) {
+    return a > b ? a : b;
+}
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+typedef struct Edge {
+    int v; // 目标节点
+    int dis; // 边的长度
+    struct Edge* next; // 指向下一个边的指针
+} Edge;
+
+typedef struct {
+    int n; // 图的节点数
+    Edge** adj; // 邻接表
+} DistanceLimitedPathsExist;
+
+// 初始化图
+DistanceLimitedPathsExist* DistanceLimitedPathsExistConstructor(int n, int** edgeList, int edgeListSize) {
+    DistanceLimitedPathsExist* graph = (DistanceLimitedPathsExist*)malloc(sizeof(DistanceLimitedPathsExist));
+    graph->n = n;
+    graph->adj = (Edge**)malloc(n * sizeof(Edge*));
+    for (int i = 0; i < n; i++) {
+        graph->adj[i] = NULL;
+    }
+
+    for (int i = 0; i < edgeListSize; i++) {
+        int u = edgeList[i][0];
+        int v = edgeList[i][1];
+        int w = edgeList[i][2];
+        Edge* newEdge = (Edge*)malloc(sizeof(Edge));
+        newEdge->v = v;
+        newEdge->dis = w;
+        newEdge->next = graph->adj[u];
+        graph->adj[u] = newEdge;
+    }
+
+    return graph;
+}
+
+// 查询函数
+bool DistanceLimitedPathsExistQuery(DistanceLimitedPathsExist* obj, int p, int q, int limit) {
+    bool visited[obj->n] = {false};
+    int dist[obj->n];
+    for (int i = 0; i < obj->n; i++) {
+        dist[i] = INT_MAX;
+    }
+    dist[p] = 0;
+
+    Edge* queue[obj->n];
+    int front = 0, rear = 0;
+    queue[rear++] = obj->adj[p];
+
+    while (front < rear) {
+        Edge* edge = queue[front++];
+        while (edge) {
+            if (dist[edge->v] > dist[edge->dis] + p) {
+                dist[edge->v] = dist[p] + edge->dis;
+                queue[rear++] = obj->adj[edge->v];
+            }
+            edge = edge->next;
+        }
+    }
+
+    return dist[q] <= limit;
+}
+
+// 销毁图
+void DistanceLimitedPathsExistFree(DistanceLimitedPathsExist* obj) {
+    for (int i = 0; i < obj->n; i++) {
+        Edge* edge = obj->adj[i];
+        while (edge) {
+            Edge* temp = edge;
+            edge = edge->next;
+            free(temp);
+        }
+    }
+    free(obj->adj);
+    free(obj);
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 创建一个新节点
+TreeNode* createNode(int val) {
+    TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
+    node->val = val;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+// 找到两个节点的最小距离的函数
+int findMinDistance(TreeNode* root, int p, int q) {
+    if (!root) return -1; // 如果树为空，返回-1
+
+    // 队列用于BFS
+    TreeNode *queue[1000], *temp[1000];
+    int front = 0, rear = 0;
+    int step = 0, foundP = 0, foundQ = 0;
+
+    // 将根节点入队
+    queue[rear++] = root;
+
+    while (front < rear) {
+        while (front < rear) {
+            TreeNode *node = queue[front++];
+            if (node->val == p) foundP = 1;
+            if (node->val == q) foundQ = 1;
+
+            // 如果找到两个节点，计算距离
+            if (foundP && foundQ) return step;
+
+            // 访问左右子节点并入队
+            if (node->left) {
+                queue[rear++] = node->left;
+            }
+            if (node->right) {
+                queue[rear++] = node->right;
+            }
+        }
+        // 完成一层搜索，增加步数
+        front = 0;
+        rear = 0;
+        step++;
+    }
+    return -1; // 如果没有找到节点，返回-1
+}
+
+int main() {
+    // 构建示例二叉树
+    TreeNode *root = createNode(3);
+    root->left = createNode(5);
+    root->right = createNode(1);
+    root->left->left = createNode(6);
+    root->left->right = createNode(2);
+    root->right->left = createNode(0);
+    root->right->right = createNode(8);
+    root->left->right->left = createNode(7);
+    root->left->right->right = createNode(4);
+
+    // 调用函数并打印结果
+    int p = 5, q = 0;
+    printf("Minimum distance between %d and %d is %d\n", p, q, findMinDistance(root, p, q));
+
+    // 释放二叉树内存
+    // ...
+
+    return 0;
+}
+#include <string.h>
+#include <stdlib.h>
+
+// 定义账户结构体，包含账户ID和IP地址的集合
+typedef struct {
+    int account_id;
+    char ip_addresses[50][15];
+    int ip_count;
+} Account;
+
+// 检查账户是否应该被禁止
+int checkBan(Account *accounts, int account_id, int size) {
+    for (int i = 0; i < size; i++) {
+        if (accounts[i].account_id == account_id) {
+            return (accounts[i].ip_count == 1) ? 1 : 0;
+        }
+    }
+    return 0;
+}
+
+// 根据登录记录更新账户信息
+void updateAccounts(Account *accounts, int *account_size, char *account_id, char *ip_address) {
+    int id = atoi(account_id);
+    for (int i = 0; i < *account_size; i++) {
+        if (accounts[i].account_id == id) {
+            // 如果IP地址尚未记录，则添加
+            int found = 0;
+            for (int j = 0; j < accounts[i].ip_count; j++) {
+                if (strcmp(accounts[i].ip_addresses[j], ip_address) == 0) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) {
+                strcpy(accounts[i].ip_addresses[accounts[i].ip_count], ip_address);
+                accounts[i].ip_count++;
+            }
+            return;
+        }
+    }
+    // 如果账户尚未记录，则创建新记录
+    Account new_account;
+    new_account.account_id = id;
+    strcpy(new_account.ip_addresses[0], ip_address);
+    new_account.ip_count = 1;
+    accounts[*account_size] = new_account;
+    (*account_size)++;
+}
+
+// 核心函数，根据登录记录确定需要禁止的账户
+int[] leetflexBannedAccounts(char ***logs, int logsSize, int *returnSize) {
+    *returnSize = 0;
+    Account accounts[1000]; // 假设账户数量不超过1000
+    int account_size = 0;
+
+    // 更新账户信息
+    for (int i = 0; i < logsSize; i++) {
+        char *log = logs[i][0];
+        char *account_id = strtok(log, " ");
+        char *ip_address = strtok(NULL, " ");
+        updateAccounts(accounts, &account_size, account_id, ip_address);
+    }
+
+    // 分配输出数组
+    int *banned = (int *)malloc(account_size * sizeof(int));
+
+    // 检查并记录需要禁止的账户
+    for (int i = 0; i < account_size; i++) {
+        if (checkBan(accounts, accounts[i].account_id, account_size)) {
+            banned[(*returnSize)++] = accounts[i].account_id;
+        }
+    }
+
+    return banned;
+}
+#include <stdlib.h>
+
+// 定义一个结构体来存储结果
+typedef struct {
+    int *data;
+    int size;
+    int length;
+} MyArray;
+
+// 初始化数组
+void initMyArray(MyArray *a, int size) {
+    a->data = (int *)malloc(sizeof(int) * size);
+    a->size = size;
+    a->length = 0;
+}
+
+// 向数组中添加元素
+void pushMyArray(MyArray *a, int val) {
+    if (a->length < a->size) {
+        a->data[a->length++] = val;
+    }
+}
+
+// 释放数组
+void freeMyArray(MyArray *a) {
+    free(a->data);
+}
+
+// 能看到海景的建筑物
+int *findBuildingsWithOceanView(int *heights, int heightsSize, int *returnSize) {
+    int *res = (int *)malloc(sizeof(int) * heightsSize);
+    *returnSize = 0;
+
+    MyArray left, right;
+    initMyArray(&left, heightsSize);
+    initMyArray(&right, heightsSize);
+
+    // 从左到右遍历，记录能看到的最远建筑物的高度
+    for (int i = 0; i < heightsSize; i++) {
+        while (left.length > 0 && heights[left.data[left.length - 1]] <= heights[i]) {
+            popMyArray(&left);
+        }
+        left.length++;
+        if (left.length > 0) {
+            pushMyArray(&res, left.data[left.length - 1]);
+        }
+    }
+
+    // 从右到左遍历，更新最远能看到的建筑物
+    for (int i = heightsSize - 1; i >= 0; i--) {
+        while (right.length > 0 && heights[right.data[right.length - 1]] <= heights[i]) {
+            popMyArray(&right);
+        }
+        right.length++;
+        if (right.length > 0 && right.data[right.length - 1] == i) {
+            res[(*returnSize)++] = i;
+        }
+    }
+
+    freeMyArray(&left);
+    freeMyArray(&right);
+    return res;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 用于比较两个字符串的受欢迎程度的函数
+int compare(const void *a, const void *b) {
+    char **feature_a = (char **)a;
+    char **feature_b = (char **)b;
+    int count_a = feature_popularity[feature_hash[*feature_a]];
+    int count_b = feature_popularity[feature_hash[*feature_b]];
+    return count_b - count_a; // 降序排序
+}
+
+int main() {
+    char *features[] = {"cooler", "lock", "touch"};
+    char *responses[] = {"i like cooler cooler", "lock touch cool", "locker like touch"};
+    int features_size = sizeof(features) / sizeof(features[0]);
+    int responses_size = sizeof(responses) / sizeof(responses[0]);
+
+    // 初始化哈希表，用于存储每个功能的受欢迎程度
+    int feature_hash[100] = {0};
+    int feature_popularity[100] = {0};
+
+    // 填充哈希表
+    for (int i = 0; i < responses_size; i++) {
+        char *token = strtok(responses[i], " ");
+        while (token != NULL) {
+            int index = feature_hash[token] - 1; // 假设哈希函数将字符串映射到0到99之间的整数
+            if (index >= 0 && index < 100) {
+                feature_popularity[index]++;
+            }
+            token = strtok(NULL, " ");
+        }
+    }
+
+    // 排序
+    qsort(features, features_size, sizeof(char *), compare);
+
+    // 输出结果
+    for (int i = 0; i < features_size; i++) {
+        printf("%s\n", features[i]);
+    }
+
+    return 0;
+}
+#include <stdio.h>
+
+int maxBeauty(int* flowers, int flowersSize, int k) {
+    int ans = 0, sum = 0;
+    int i = 0, j = 0;
+    while (j < flowersSize) {
+        sum += flowers[j++];
+        if (j - i == k) {
+            ans = (sum > ans) ? sum : ans;
+            if (i < j) sum -= flowers[i++];
+        }
+    }
+    return ans;
+}
+
+int main() {
+    int flowers[] = {1, 2, 3, 1, 2};
+    int k = 2;
+    printf("Maximum beauty of the garden is: %d\n", maxBeauty(flowers, sizeof(flowers)/sizeof(int), k));
+    return 0;
+}
+typedef struct ListNode {
+    int val;
+    struct ListNode *next;
+} ListNode;
+
+// 创建一个函数来移除链表中的重复元素
+ListNode* deleteDuplicatesUnsorted(ListNode* head) {
+    ListNode* current = head;
+    HashSet set; // 假设的哈希表结构
+
+    while (current != NULL) {
+        // 如果当前元素在哈希表中，说明是重复的，需要删除
+        if (isInHashSet(set, current->val)) {
+            ListNode* toDelete = current;
+            current = current->next;
+            free(toDelete); // 释放内存
+        } else {
+            // 否则，将当前元素值添加到哈希表中
+            addtoHashSet(set, current->val);
+            current = current->next;
+        }
+    }
+
+    return head;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义链表节点结构体
+typedef struct ListNode {
+    int val;
+    struct ListNode *next;
+} ListNode;
+
+// 找到链表的中点
+ListNode* findMiddle(ListNode* head) {
+    ListNode *slow = head, *fast = head, *prev = NULL;
+    while (fast && fast->next) {
+        prev = slow;
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    if (prev) prev->next = NULL; // 切断链表
+    return slow;
+}
+
+// 合并两个有序链表
+ListNode* merge(ListNode* l1, ListNode* l2) {
+    ListNode dummy;
+    ListNode *tail = &dummy;
+    while (l1 && l2) {
+        if (l1->val < l2->val) {
+            tail->next = l1;
+            l1 = l1->next;
+        } else {
+            tail->next = l2;
+            l2 = l2->next;
+        }
+        tail = tail->next;
+    }
+    tail->next = l1 ? l1 : l2;
+    return dummy.next;
+}
+
+// 归并排序链表
+ListNode* sortLinkedList(ListNode* head) {
+    if (!head || !head->next) return head;
+    ListNode *mid = findMiddle(head);
+    ListNode *left = sortLinkedList(head); // 前半部分排序
+    ListNode *right = sortLinkedList(mid); // 后半部分排序
+    return merge(left, right); // 合并两个有序链表
+}
+
+int main() {
+    // 示例：构建一个链表，并调用排序函数
+    ListNode *head = (ListNode*)malloc(sizeof(ListNode));
+    head->val = 4;
+    head->next = NULL;
+    // 继续构建链表...
+    // 调用排序函数
+    ListNode *sorted = sortLinkedList(head);
+    // 打印排序后的链表...
+    return 0;
+}
+int rearrangeSticks(int n, int k) {
+    int MOD = 1e9 + 7;
+    int dp[1001][1001] = {0};
+    dp[0][0] = 1;
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 0; j <= k; j++) {
+            if (j > 0) {
+                dp[i][j] = (dp[i - 1][j - 1] * (i - j) + dp[i][j - 1]) % MOD;
+            } else {
+                dp[i][j] = dp[i][j - 1];
+            }
+        }
+    }
+    
+    return dp[n][k];
+}
+bool checkZeroOnes(char* s) {
+    int maxOnes = 0, maxZeros = 0;
+    int currOnes = 0, currZeros = 0;
+    for (int i = 0; s[i] != '\0'; i++) {
+        if (s[i] == '1') {
+            currOnes++;
+            currZeros = 0; // Reset zeros count
+        } else {
+            currZeros++;
+            currOnes = 0; // Reset ones count
+        }
+        if (currOnes > maxOnes) maxOnes = currOnes;
+        if (currZeros > maxZeros) maxZeros = currZeros;
+    }
+    return maxOnes > maxZeros;
+}
+#include <stdbool.h>
+
+// 判断在给定速度下是否能准时到达
+bool can_arrive_on_time(int* dist, int n, double hour, int speed) {
+    double time = 0;
+    for (int i = 0; i < n; ++i) {
+        time += (double)dist[i] / speed; // 乘车时间
+        if (time > (int)time) time = (int)time + 1; // 等待时间
+    }
+    return time <= hour;
+}
+
+int minSpeedOnTime(int* dist, int n, double hour) {
+    int left = 1, right = 1e7; // 设置搜索范围
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        if (can_arrive_on_time(dist, n, hour, mid)) {
+            right = mid; // 如果可以到达，尝试减小速度
+        } else {
+            left = mid + 1; // 否则增加速度
+        }
+    }
+    return left; // 找到的最小速度
+}
+#include <stdio.h>
+
+int stoneGameVIII(int* stones, int stonesSize) {
+    // 前缀和数组
+    int prefixSum[stonesSize + 1];
+    for (int i = 0; i < stonesSize; ++i) {
+        prefixSum[i + 1] = prefixSum[i] + stones[i];
+    }
+    
+    // dp数组，初始化为第一个石子的价值
+    int dp[stonesSize];
+    dp[0] = stones[0];
+    
+    // 动态规划求解
+    for (int i = 1; i < stonesSize; ++i) {
+        int maxDiff = -2000000000; // 初始化为最小可能值
+        for (int j = 0; j < i; ++j) {
+            maxDiff = max(maxDiff, prefixSum[i + 1] - prefixSum[j] - dp[j]);
+        }
+        dp[i] = maxDiff;
+    }
+    
+    // Alice 的最终分数与 Bob 的分数之差
+    return dp[stonesSize - 1];
+}
+
+// 辅助函数，用于计算两个数的最大值
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+int main() {
+    int stones[] = {-1, 2, -3, 4, -5};
+    int size = sizeof(stones) / sizeof(stones[0]);
+    printf("The difference of scores is: %d\n", stoneGameVIII(stones, size));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int* distinctNumbers(int* nums, int numsSize, int k, int* returnSize) {
+    int* result = (int*)malloc(sizeof(int) * numsSize);
+    *returnSize = 0;
+    
+    // 初始化哈希表，用于存储窗口内数字的出现次数
+    int** count = (int**)malloc(sizeof(int*) * 101);
+    for (int i = 0; i < 101; ++i) {
+        count[i] = (int*)calloc(numsSize + 1, sizeof(int)); // 假设数字范围在1到100
+    }
+    
+    int distinctCount = 0;
+    for (int i = 0; i < k; ++i) {
+        if (count[nums[i]]) {
+            count[nums[i]][i] = 1;
+        } else {
+            distinctCount++;
+            count[nums[i]] = (int*)malloc(sizeof(int) * (numsSize + 1));
+            count[nums[i]][i] = 1;
+        }
+    }
+    result[0] = distinctCount;
+    (*returnSize)++;
+    
+    for (int i = k; i < numsSize; ++i) {
+        // 移除窗口左边界元素
+        if (count[nums[i - k]]) {
+            count[nums[i - k]][i - k] = 0;
+            if (!count[nums[i - k]][i - k + 1]) {
+                distinctCount--;
+            }
+            free(count[nums[i - k]]);
+            count[nums[i - k]] = NULL;
+        }
+        // 添加新元素
+        if (!count[nums[i]]) {
+            distinctCount++;
+            result[*returnSize] = distinctCount;
+            (*returnSize)++;
+            count[nums[i]] = (int*)malloc(sizeof(int) * (numsSize + 1));
+            count[nums[i]][i] = 1;
+        } else {
+            result[*returnSize] = distinctCount;
+            (*returnSize)++;
+            count[nums[i]][i]++;
+        }
+    }
+    
+    // 清理分配的内存
+    for (int i = 0; i < 101; ++i) {
+        if (count[i]) {
+            free(count[i]);
+        }
+    }
+    free(count);
+    
+    return result;
+}
+
+int main() {
+    int nums[] = {1,2,3,2,2,1,3};
+    int k = 3;
+    int returnSize = 0;
+    int* result = distinctNumbers(nums, sizeof(nums)/sizeof(nums[0]), k, &returnSize);
+    
+    printf("Distinct numbers in each subarray of length %d:\n", k);
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+    
+    free(result);
+    return 0;
+}
+#include <stdbool.h>
+
+bool isCovered(int** ranges, int rangesSize, int* rangeColSize, int left, int right) {
+    // 按区间起始位置排序
+    qsort(ranges, rangesSize, sizeof(int[2]), (int (*)(const void*, const void*))compare);
+
+    int start = left, end = -1; // 初始化区间跟踪
+    for (int i = 0; i < rangesSize; ++i) {
+        int currentStart = ranges[i][0];
+        int currentEnd = ranges[i][1];
+        
+        // 如果当前区间的起始值大于end，说明出现间隔
+        if (currentStart > end) {
+            break;
+        }
+        
+        // 更新end值，如果当前区间的结束值更大
+        end = (currentEnd > end) ? currentEnd : end;
+        
+        // 如果已经覆盖到right，直接返回true
+        if (end >= right) {
+            return true;
+        }
+    }
+    // 如果end没有达到right，说明没有完全覆盖区间
+    return (end >= right);
+}
+
+// 比较函数，用于qsort
+int compare(const void* a, const void* b) {
+    int* rangeA = *(int**)a;
+    int* rangeB = *(int**)b;
+    return rangeA[0] - rangeB[0];
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_CITIES 200
+#define MAX_ROADS 400
+#define MAX_K 20
+
+int n, k;
+int highways[MAX_ROADS][3];
+int dp[MAX_CITIES][MAX_K+1];
+
+int findMaxCost(int city, int k) {
+    if (k == 0) {
+        return 0;
+    }
+    if (dp[city][k] != -1) {
+        return dp[city][k];
+    }
+    int max_cost = 0;
+    for (int i = 0; i < n; i++) {
+        if (highways[i][0] == city && (dp[highways[i][1]][k-1] == -1 || dp[highways[i][1]][k-1] < findMaxCost(highways[i][1], k-1))) {
+            max_cost = highways[i][2] + findMaxCost(highways[i][1], k-1);
+            break;
+        }
+    }
+    dp[city][k] = max_cost;
+    return max_cost;
+}
+
+int maximumCost(int n, int k, int highways[]) {
+    memset(dp, -1, sizeof(dp));
+    return findMaxCost(0, k);
+}
+
+int main() {
+    // 示例输入
+    n = 5;
+    k = 3;
+    highways[0][0] = 0; highways[0][1] = 1; highways[0][2] = 4;
+    highways[1][0] = 2; highways[1][1] = 1; highways[1][2] = 3;
+    highways[2][0] = 1; highways[2][1] = 4; highways[2][2] = 11;
+    highways[3][0] = 3; highways[3][1] = 2; highways[3][2] = 3;
+    highways[4][0] = 3; highways[4][1] = 4; highways[4][2] = 2;
+
+    printf("Maximum cost: %d\n", maximumCost(n, k, highways));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// 比较函数，用于 qsort
+int compare(const void *a, const void *b) {
+    return strlen(*(const char **)b) - strlen(*(const char **)a);
+}
+
+// 检查 word 是否是 prelude 的前缀
+int isPrefix(const char *word, const char *prelude) {
+    return strncmp(word, prelude, strlen(prelude)) == 0;
+}
+
+// 找到最长的前缀单词
+char *longestWordWithAllPrefixes(char **words, int wordsSize, char *prelude) {
+    qsort(words, wordsSize, sizeof(char *), compare);
+    char *longest = NULL;
+    for (int i = 0; i < wordsSize; ++i) {
+        if (isPrefix(words[i], prelude) && strlen(words[i]) > strlen(longest)) {
+            longest = words[i];
+        }
+    }
+    return longest;
+}
+
+int main() {
+    char *words[] = {"k", "ki", "kir", "kira", "kiran"};
+    int wordsSize = sizeof(words) / sizeof(words[0]);
+    char prelude[] = "kira";
+    char *result = longestWordWithAllPrefixes(words, wordsSize, prelude);
+    printf("The longest word with all prefixes is: %s\n", result);
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+// 将字符串转换为数值
+int wordToValue(char* word) {
+    int value = 0;
+    for (int i = 0; word[i] != '\0'; ++i) {
+        value = value * 10 + (word[i] - 'a');
+    }
+    return value;
+}
+
+// 检查两个单词的和是否等于目标单词的数值
+bool isSumEqual(char* firstWord, char* secondWord, char* targetWord) {
+    int sum = wordToValue(firstWord) + wordToValue(secondWord);
+    return sum == wordToValue(targetWord);
+}
+
+int main() {
+    char* firstWord = "acb";
+    char* secondWord = "cba";
+    char* targetWord = "cdb";
+    printf("%d\n", isSumEqual(firstWord, secondWord, targetWord)); // 输出应为 1（true）
+    return 0;
+}
+#include <stdio.h>
+#include <stdio.h>
+#include <string.h>
+
+char* maxValueAfterInsertion(char* n, int x) {
+    int len = strlen(n);
+    char maxEnd[13]; // 因为n的长度最大为10^5，加上x和负号，足够存储
+    int maxPtr = 0;
+
+    // 处理正数情况
+    int i;
+    for (i = 0; i < len; ++i) {
+        if (n[i] < '0' + x) {
+            break;
+        }
+        // 构建最大结束字符串
+        maxEnd[maxPtr++] = n[i];
+    }
+
+    // 在找到的位置前插入x
+    maxEnd[maxPtr++] = '0' + x;
+
+    // 继续添加剩余的部分
+    for (; i < len; ++i) {
+        maxEnd[maxPtr++] = n[i];
+    }
+    maxEnd[maxPtr] = '\0'; // 字符串结束符
+
+    return strdup(maxEnd); // 使用strdup复制字符串，因为不能修改输入的n
+}
+
+int main() {
+    char n[] = "99";
+    int x = 9;
+    char* result = maxValueAfterInsertion(n, x);
+    printf("%s\n", result);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义服务器结构体
+typedef struct {
+    int weight;   // 权重
+    int index;    // 下标
+    int freeTime; // 预计空闲时间
+} Server;
+
+int cmp(const void *a, const void *b) {
+    Server *serverA = (Server *)a;
+    Server *serverB = (Server *)b;
+    if (serverA->weight != serverB->weight) {
+        return serverA->weight - serverB->weight;
+    }
+    return serverA->index - serverB->index;
+}
+
+int* assignTasks(int* servers, int serversSize, int* tasks, int tasksSize, int* returnSize) {
+    // 初始化服务器数组
+    Server *serverArray = (Server *)malloc(sizeof(Server) * serversSize);
+    for (int i = 0; i < serversSize; i++) {
+        serverArray[i].weight = servers[i];
+        serverArray[i].index = i;
+        serverArray[i].freeTime = 0;
+    }
+
+    // 创建并初始化优先队列
+    int *ans = (int *)malloc(sizeof(int) * tasksSize);
+    Server *minHeap = (Server *)malloc(sizeof(Server) * serversSize);
+    *returnSize = tasksSize;
+    int heapSize = 0;
+
+    for (int taskIndex = 0; taskIndex < tasksSize; taskIndex++) {
+        // 将所有可以处理当前任务的服务器加入到优先队列中
+        for (int i = 0; i < serversSize; i++) {
+            if (serverArray[i].freeTime <= taskIndex) {
+                minHeap[heapSize++] = serverArray[i];
+            }
+        }
+
+        // 根据权重和下标对服务器进行排序
+        qsort(minHeap, heapSize, sizeof(Server), cmp);
+
+        // 取出权重最小的服务器
+        Server chosenServer = minHeap[0];
+        ans[taskIndex] = chosenServer.index;
+
+        // 更新服务器的预计空闲时间
+        chosenServer.freeTime = taskIndex + tasks[taskIndex];
+        serverArray[chosenServer.index] = chosenServer;
+
+        // 重新初始化优先队列
+        heapSize = 0;
+    }
+
+    free(serverArray);
+    free(minHeap);
+    return ans;
+}
+int minSkips(int dist[], int n, int speed, int hoursBefore) {
+    // 计算总距离
+    long long totalDistance = 0;
+    for (int i = 0; i < n; ++i) {
+        totalDistance += dist[i];
+    }
+    
+    // 计算不跳过休息所需时间
+    double timeNeeded = (double)totalDistance / speed;
+    
+    // 如果所需时间小于等于hoursBefore，不需要跳过休息
+    if (timeNeeded <= hoursBefore) {
+        return 0;
+    }
+    
+    // 初始化dp数组
+    int dp[n+1][hoursBefore+1];
+    memset(dp, 0x3f, sizeof(dp)); // 使用较大的数初始化，表示无穷大
+    
+    // 状态初始化：第0条路，任意小时数下都不需要跳过
+    for (int j = 0; j <= hoursBefore; ++j) {
+        dp[0][j] = 0;
+    }
+    
+    // 动态规划填表
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 0; j <= hoursBefore; ++j) {
+            // 走当前道路，不跳过休息
+            dp[i][j] = dp[i-1][(int)ceil((double)(dist[i-1] * speed) / hoursBefore)];
+            // 尝试跳过休息
+            for (int k = 1; k <= j; ++k) {
+                dp[i][j] = min(dp[i][j], dp[i-1][k-1] + 1);
+            }
+        }
+    }
+    
+    // 检查是否有解
+    if (dp[n][hoursBefore] < INT_MAX) {
+        return dp[n][hoursBefore];
+    } else {
+        return -1;
+    }
+}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+char* removeOccurrences(char* s, char* part) {
+    int len_s = strlen(s);
+    int len_part = strlen(part);
+    char *res = (char *)malloc(len_s + 1); // 申请足够的空间，+1为了存储结尾的'\0'
+    int j = 0; // res中的索引
+
+    for (int i = 0; i <= len_s - len_part; i++) {
+        // 如果找到匹配的子字符串part
+        if (strncmp(&s[i], part, len_part) == 0) {
+            // 跳过这个子字符串继续查找
+            i += len_part - 1;
+        } else {
+            // 否则，将当前字符添加到res中
+            res[j++] = s[i];
+        }
+    }
+
+    // 将剩余部分添加到res中
+    while (i < len_s) {
+        res[j++] = s[i++];
+    }
+
+    res[j] = '\0'; // 确保字符串以'\0'结尾
+    free(s); // 注意释放原始字符串s的内存
+    return res;
+}
+
+int main() {
+    char s[] = "daabcbaabcbc";
+    char part[] = "abc";
+    char *result = removeOccurrences(s, part);
+    printf("Output: %s\n", result);
+    free(result); // 释放结果字符串的内存
+    return 0;
+}
+#include <stdio.h>
+#include <stdbool.h>
+
+bool canBeEqual(char **words, int wordsSize) {
+    // 假设wordsSize是字符串数组的长度
+    int count[26] = {0}; // 存储每个字符出现的次数，假设是小写字母
+    for (int i = 0; i < wordsSize; ++i) {
+        for (int j = 0; words[i][j]; ++j) {
+            // 将字符转换为索引，例如'a' -> 0, 'b' -> 1, ...
+            int index = words[i][j] - 'a';
+            count[index]++;
+        }
+    }
+
+    int totalChars = 0;
+    for (int i = 0; i < 26; ++i) {
+        totalChars += count[i];
+    }
+
+    // 检查是否可以平均分配字符
+    for (int i = 0; i < 26; ++i) {
+        if (count[i] % wordsSize != 0) {
+            return false; // 如果不能平均分配，则返回false
+        }
+    }
+
+    // 如果所有字符都能平均分配，则返回true
+    return true;
+}
+
+int main() {
+    char *words1[] = {"abc", "aabc", "bc"};
+    int wordsSize1 = sizeof(words1) / sizeof(words1[0]);
+    printf("%s\n", canBeEqual(words1, wordsSize1) ? "true" : "false");
+
+    char *words2[] = {"ab", "a"};
+    int wordsSize2 = sizeof(words2) / sizeof(words2[0]);
+    printf("%s\n", canBeEqual(words2, wordsSize2) ? "true" : "false");
+
+    return 0;
+}
+#include <stdio.h>
+
+// 计算最晚回合数
+int calculateLatestRound(int n, int firstPlayer, int secondPlayer) {
+    int latest = 0;
+    while (n > 1) {
+        n /= 2; // 每轮后运动员数量减半
+        latest++; // 回合数增加
+        // 如果两个运动员在同一半区，则他们不会在这一轮比拼
+        if (firstPlayer <= n && secondPlayer > n) {
+            break;
+        }
+    }
+    return latest;
+}
+
+// 计算最早回合数
+int calculateEarliestRound(int n, int firstPlayer, int secondPlayer) {
+    int rounds = 0;
+    while (n > 2) { // 当剩下超过2个运动员时
+        n -= 1; // 每轮减少一个运动员
+        rounds++; // 回合数增加
+        // 如果两个运动员编号之差大于当前运动员数量，说明他们在这一轮会相遇
+        if (secondPlayer - firstPlayer > n) {
+            break;
+        }
+    }
+    return rounds;
+}
+
+// 返回最早和最晚的比拼回合数
+int* findEarliestAndLatestRound(int n, int firstPlayer, int secondPlayer, int returnSize) {
+    static int result[2];
+    result[0] = calculateEarliestRound(n, firstPlayer, secondPlayer);
+    result[1] = calculateLatestRound(n, firstPlayer, secondPlayer);
+    return result;
+}
+
+int main() {
+    int n = 11, firstPlayer = 2, secondPlayer = 4;
+    int returnSize = 2;
+    int* res = findEarliestAndLatestRound(n, firstPlayer, secondPlayer, returnSize);
+    printf("最早回合数: %d, 最晚回合数: %d\n", res[0], res[1]);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minProductSum(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+    // 对两个数组进行排序
+    qsort(nums1, nums1Size, sizeof(int), compare);
+    qsort(nums2, nums2Size, sizeof(int), compare);
+    
+    // 初始化最小乘积和为第一个元素乘积
+    int minProduct = nums1[0] * nums2[0];
+    
+    // 检查最后一个元素的乘积
+    int lastProduct = nums1[nums1Size - 1] * nums2[nums2Size - 1];
+    if (lastProduct < minProduct) {
+        minProduct = lastProduct;
+    }
+    
+    return minProduct;
+}
+
+// 用于qsort的比较函数
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int nums1[] = {5, 3, 4, 2};
+    int nums2[] = {4, 2, 2, 5};
+    printf("%d\n", minProductSum(nums1, sizeof(nums1)/sizeof(nums1[0]), nums2, sizeof(nums2)/sizeof(nums2[0])));
+    return 0;
+}
+#include <math.h>
+
+int twoEggDrop(int n) {
+    int l = 1, r = n;
+    while (l < r) {
+        int mid = l + (r - l) / 2;
+        int breaks = mid - 1;
+        int works = (n - mid) + (int)ceil((double)breaks / (mid + 1)) + 1;
+        if (works <= r) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+#include <stdio.h>
+
+// 计算从startTime到finishTime之间，有多少个15分钟的倍数。
+int numberOfRounds(char *startTime, char *finishTime) {
+    int startHour, startMinute, endHour, endMinute;
+    sscanf(startTime, "%d:%d", &startHour, &startMinute);
+    sscanf(finishTime, "%d:%d", &endHour, &endMinute);
+
+    // 如果结束时间小于开始时间，表示跨日。
+    if (endHour < startHour || (endHour == startHour && endMinute < startMinute)) {
+        endHour += 24;
+    }
+
+    int totalMinutes = (endHour - startHour) * 60 + endMinute - startMinute;
+    // 每个对局15分钟，计算总对局数。
+    int fullRounds = totalMinutes / 15;
+
+    // 检查边界情况，确保没有多算。
+    if (totalMinutes % 15 > 0 && (endHour == startHour && endMinute > startMinute)) {
+        fullRounds++;
+    }
+
+    return fullRounds;
+}
+
+int main() {
+    char startTime[] = "12:01";
+    char finishTime[] = "12:44";
+    printf("%d\n", numberOfRounds(startTime, finishTime)); // 输出应该是1
+    return 0;
+}
+#include <stdio.h>
+
+// 计算差分数组的函数
+void preprocessDiff(int *diff, int *nums, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        diff[i] = 0;
+    }
+    diff[0] = 1;
+    for (i = 1; i < size; i++) {
+        if (nums[i - 1] <= nums[i]) {
+            diff[i] = diff[i - 1] + 1;
+        } else {
+            diff[i] = diff[i - 1] - 1;
+        }
+    }
+}
+
+// 二分查找差分数组中的最小绝对差值
+int binarySearch(int *diff, int target, int size) {
+    int left = 0, right = size - 1, result = -1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (diff[mid] >= target) {
+            result = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return diff[result];
+}
+
+// 计算所有查询结果的函数
+int *minAbsoluteDifferenceQueries(int *nums, int numsSize, int **queries, int queriesSize, int *returnSize) {
+    // 预处理差分数组
+    int *diff = (int *)malloc(numsSize * sizeof(int));
+    preprocessDiff(diff, nums, numsSize);
+
+    // 存储结果的数组
+    int *result = (int *)malloc(queriesSize * sizeof(int));
+
+    // 处理每个查询
+    int i;
+    for (i = 0; i < queriesSize; i++) {
+        int l = queries[i][0];
+        int r = queries[i][1];
+        int size = r - l + 1;
+        if (size == 1) {
+            result[i] = -1; // 单个元素，没有绝对差
+        } else {
+            // 在差分数组中二分查找
+            result[i] = binarySearch(diff + l, size, r - l + 1);
+        }
+    }
+
+    *returnSize = queriesSize;
+    free(diff);
+    return result;
+}
+
+int main() {
+    int nums[] = {1, 3, 4, 8};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    int queries[][2] = {{0, 1}, {1, 2}, {2, 3}, {0, 3}};
+    int queriesSize = sizeof(queries) / sizeof(queries[0]);
+    int returnSize;
+
+    int *result = minAbsoluteDifferenceQueries(nums, numsSize, (int **)queries, queriesSize, &returnSize);
+
+    // 打印结果
+    int i;
+    for (i = 0; i < returnSize; i++) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    free(result);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义哈希表结构
+typedef struct {
+    int *keys;
+    int size;
+    int count;
+} HashTable;
+
+// 初始化哈希表
+HashTable *initHashTable(int size) {
+    HashTable *table = (HashTable *)malloc(sizeof(HashTable));
+    table->size = size;
+    table->count = 0;
+    table->keys = (int *)malloc(sizeof(int) * size);
+    return table;
+}
+
+// 哈希函数
+unsigned int hash(int key, int size) {
+    return key % size;
+}
+
+// 插入元素到哈希表
+void insert(HashTable *table, int key) {
+    unsigned int index = hash(key, table->size);
+    while (table->keys[index] != 0 && table->keys[index] != key) {
+        index = (index + 1) % table->size; // 线性探测解决冲突
+    }
+    if (table->keys[index] == 0) {
+        table->keys[index] = key;
+        table->count++;
+    }
+}
+
+// 查找元素是否存在于哈希表
+int find(HashTable *table, int key) {
+    unsigned int index = hash(key, table->size);
+    while (table->keys[index] != 0) {
+        if (table->keys[index] == key) {
+            return 1;
+        }
+        index = (index + 1) % table->size; // 线性探测解决冲突
+    }
+    return 0;
+}
+
+// 释放哈希表内存
+void freeHashTable(HashTable *table) {
+    free(table->keys);
+    free(table);
+}
+
+// 统计数对的函数
+int countPairs(int* nums1, int nums1Size, int* nums2, int nums2Size, int value) {
+    HashTable *table = initHashTable(nums1Size);
+    int count = 0;
+    for (int i = 0; i < nums1Size; i++) {
+        insert(table, nums1[i]);
+    }
+    for (int i = 0; i < nums2Size; i++) {
+        int complement = value - nums2[i];
+        if (find(table, complement)) {
+            count++;
+        }
+    }
+    freeHashTable(table);
+    return count;
+}
+
+int main() {
+    int nums1[] = {1, 2, 3};
+    int nums2[] = {2, 4, 6};
+    int value = 6;
+    int result = countPairs(nums1, sizeof(nums1)/sizeof(nums1[0]), nums2, sizeof(nums2)/sizeof(nums2[0]), value);
+    printf("Total pairs: %d\n", result);
+    return 0;
+}
+#include <stdio.h>
+#include <limits.h>
+
+// 定义图的邻接矩阵
+int graph[1001][1001];
+// 定义城市通行费数组
+int passingFees[1001];
+// 定义距离数组，记录从起点到每个状态的最小花费
+int dist[1001][1001];
+
+// Dijkstra 算法找到从 (startCity, 0) 到 (endCity, maxTime) 的最小花费
+void dijkstra(int n, int maxTime, int startCity, int endCity) {
+    int i, j, u, minCost, minTime;
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= maxTime; j++) {
+            dist[i][j] = INT_MAX;
+        }
+    }
+    dist[startCity][0] = 0;
+
+    for (j = 0; j <= maxTime; j++) {
+        for (i = 0; i < n; i++) {
+            if (dist[i][j] == INT_MAX)
+                continue;
+            for (u = 0; u < n; u++) {
+                minCost = dist[i][j] + graph[i][u] + passingFees[u];
+                minTime = j + 1;
+                if (minCost < dist[u][minTime] && minTime <= maxTime)
+                    dist[u][minTime] = minCost;
+            }
+        }
+    }
+}
+
+int main() {
+    int maxTime = 30;
+    int edges[] = {{0,1,10},{1,2,10},{2,5,10},{0,3,1},{3,4,10},{4,5,15}};
+    int passingFees[] = {5,1,2,20,20,3};
+    int n = 6; // 城市的数量
+
+    // 初始化图的邻接矩阵
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            graph[i][j] = (i == j) ? 0 : INT_MAX;
+        }
+    }
+
+    // 构建图
+    for (int i = 0; i < sizeof(edges) / sizeof(edges[0]); i++) {
+        int x = edges[i][0], y = edges[i][1], time = edges[i][2];
+        graph[x][y] = time;
+        graph[y][x] = time; // 因为是双向道路
+    }
+
+    dijkstra(n, maxTime, 0, n - 1);
+
+    // 输出结果
+    if (dist[n - 1][maxTime] == INT_MAX)
+        printf("-1\n");
+    else
+        printf("%d\n", dist[n - 1][maxTime]);
+
+    return 0;
+}
+#include <stdlib.h>
+#include <stdio.h>
+
+// 快速排序函数
+void quickSort(int* nums, int left, int right) {
+    if (left >= right) return;
+    int pivot = nums[right];
+    int i = left - 1;
+    for (int j = left; j < right; j++) {
+        if (nums[j] > pivot) {
+            i++;
+            int temp = nums[i];
+            nums[i] = nums[j];
+            nums[j] = temp;
+        }
+    }
+    int temp = nums[i + 1];
+    nums[i + 1] = nums[right];
+    nums[right] = temp;
+    quickSort(nums, left, i);
+    quickSort(nums, i + 2, right);
+}
+
+// 割绳子问题的C语言实现
+int cuttingRibbons(int* ribbons, int ribbonsSize, int k) {
+    if (k == 1) return 0; // 如果只需要一段，不需要切割
+    quickSort(ribbons, 0, ribbonsSize - 1); // 对丝带长度进行降序排序
+    int cuts = 0;
+    int totalLength = 0;
+    for (int i = 0; i < ribbonsSize && cuts < k - 1; i++) {
+        if (ribbons[i] > 1) { // 如果当前丝带长度大于1，可以切割
+            totalLength += ribbons[i]; // 累加当前丝带长度
+            ribbons[i] = 1; // 将当前丝带设置为1，表示已经切割
+            cuts++; // 切割次数加1
+        }
+    }
+    // 如果切割次数还不够，继续切割剩余的丝带
+    for (int i = 0; i < ribbonsSize && cuts < k - 1; i++) {
+        totalLength += ribbons[i];
+        cuts++;
+    }
+    return totalLength;
+}
+
+int main() {
+    int ribbons[] = {9, 7, 5};
+    int k = 3;
+    int result = cuttingRibbons(ribbons, sizeof(ribbons) / sizeof(ribbons[0]), k);
+    printf("The total length of the ribbons after cutting is: %d\n", result);
+    return 0;
+}
+#include <stdio.h>
+
+int* buildArray(int* nums, int numsSize, int* ansSize) {
+    // 初始化ans数组的大小
+    *ansSize = numsSize;
+    int* ans = (int*)malloc(sizeof(int) * numsSize);
+    
+    // 构建ans数组
+    for (int i = 0; i < numsSize; i++) {
+        ans[i] = nums[nums[i]]; // 直接按照题目描述构建ans
+    }
+    
+    return ans;
+}
+
+int main() {
+    int nums[] = {0, 2, 1, 5, 3, 4};
+    int ansSize;
+    int* ans = buildArray(nums, sizeof(nums) / sizeof(nums[0]), &ansSize);
+    
+    // 打印结果
+    for (int i = 0; i < ansSize; i++) {
+        printf("%d ", ans[i]);
+    }
+    
+    // 释放内存
+    free(ans);
+    
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int dist;
+    int speed;
+} Monster;
+
+int compare(const void *a, const void *b) {
+    double aTime = ((Monster *)a)->dist / ((Monster *)b)->speed;
+    double bTime = ((Monster *)b)->dist / ((Monster *)b)->speed;
+    return (aTime > bTime) - (aTime < bTime);
+}
+
+int eliminateMaxMonsters(int dist[], int speed[], int n) {
+    // 创建怪物数组
+    Monster monsters[n];
+    for (int i = 0; i < n; ++i) {
+        monsters[i].dist = dist[i];
+        monsters[i].speed = speed[i];
+    }
+
+    // 根据到达时间排序
+    qsort(monsters, n, sizeof(Monster), compare);
+
+    int count = 0; // 记录消灭的怪物数量
+    int time = 0;   // 当前时间
+    for (int i = 0; i < n; ++i) {
+        // 如果当前怪物到达时间大于时间，则可以消灭
+        if ((double)monsters[i].dist / monsters[i].speed > time) {
+            count++;
+            time++; // 武器充电需要一分钟
+        }
+    }
+    return count;
+}
+
+int main() {
+    int dist[] = {1, 3, 4};
+    int speed[] = {1, 1, 1};
+    int n = sizeof(dist) / sizeof(dist[0]);
+    printf("Maximum number of monsters that can be eliminated: %d\n", eliminateMaxMonsters(dist, speed, n));
+    return 0;
+}
+#include <stdio.h>
+
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 创建一个新节点
+TreeNode* createNode(int val) {
+    TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
+    node->val = val;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+// 根据BST的插入顺序构建树
+TreeNode* buildBST(int* order, int start, int end) {
+    if (start > end) return NULL;
+    int mid = (start + end) / 2;
+    TreeNode* root = createNode(order[mid]);
+    root->left = buildBST(order, start, mid - 1);
+    root->right = buildBST(order, mid + 1, end);
+    return root;
+}
+
+// 计算BST的深度
+int maxDepthBST(TreeNode* root) {
+    if (root == NULL) return 0;
+    return 1 + (maxDepthBST(root->left) > maxDepthBST(root->right) ? maxDepthBST(root->left) : maxDepthBST(root->right));
+}
+
+int main() {
+    int order[] = {2, 1, 4, 3};
+    int n = sizeof(order) / sizeof(order[0]);
+    TreeNode* root = buildBST(order, 0, n - 1);
+    printf("The maximum depth of the BST is: %d\n", maxDepthBST(root));
+    return 0;
+}
+bool areOccurrencesEqual(char *s) {
+    int count[26] = {0}; // 记录每个字符的出现次数
+    int firstCharOccurrence = 0; // 第一个出现的字符的计数
+
+    // 记录每个字符的出现次数
+    for (int i = 0; s[i]; i++) {
+        if (count[s[i] - 'a'] == 0) {
+            firstCharOccurrence = i; // 记录第一个字符的出现次数
+        }
+        count[s[i] - 'a']++;
+    }
+
+    // 检查所有字符的出现次数是否与第一个出现的字符相同
+    for (int i = firstCharOccurrence + 1; s[i]; i++) {
+        if (count[s[i] - 'a'] != count[s[firstCharOccurrence] - 'a']) {
+            return false;
+        }
+    }
+
+    return true;
+}
+#include <stdio.h>
+#include <string.h>
+
+int countPalindromicSubsequence(char* s) {
+    int len = strlen(s);
+    int count = 0;
+    int charIndex[26] = {0};
+
+    for (int i = 0; i < len; i++) {
+        // 更新字符最后出现的位置
+        charIndex[s[i] - 'a'] = i;
+        // 两边的字符相同，中间可以是任意字符
+        for (int j = 0; j < i; j++) {
+            if (s[j] == s[i]) {
+                count += (i - j - 1); // 减1是因为回文子序列长度为3，不能包括相同字符的两侧
+            }
+        }
+    }
+
+    // 三个字符都相同，如"aaa"
+    for (int i = 0; i < 26; i++) {
+        int sameCharCount = 0;
+        for (int j = 0; j < len; j++) {
+            if (s[j] - 'a' == i) {
+                sameCharCount++;
+            } else {
+                count += (sameCharCount * (sameCharCount - 1) / 2); // 计算连续相同字符的组合
+                sameCharCount = 0;
+            }
+        }
+        // 最后一组连续相同字符
+        count += (sameCharCount * (sameCharCount - 1) / 2);
+    }
+
+    return count;
+}
+
+int main() {
+    char s[] = "aabca";
+    printf("Output: %d\n", countPalindromicSubsequence(s));
+    return 0;
+}
+#include <string.h>
+
+int longestCommonSubsequence(int* nums1, int len1, int* nums2, int len2) {
+    // 创建动态规划表格，初始化为0
+    int dp[len1+1][len2+1];
+    memset(dp, 0, sizeof(dp));
+
+    // 动态规划填表
+    for (int i = 1; i <= len1; i++) {
+        for (int j = 1; j <= len2; j++) {
+            if (nums1[i-1] == nums2[j-1]) {
+                dp[i][j] = dp[i-1][j-1] + 1;
+            } else {
+                dp[i][j] = (dp[i-1][j] > dp[i][j-1]) ? dp[i-1][j] : dp[i][j-1];
+            }
+        }
+    }
+
+    // 返回最终的LCS长度
+    return dp[len1][len2];
+}
+#include <stdio.h>
+
+// 假设Light的结构体定义如下：
+typedef struct {
+    int x; // 路灯的横坐标
+    int y; // 路灯的亮度
+} Light;
+
+int brightestPosition(int n, Light lights[], int w) {
+    int maxBrightness = 0; // 最大亮度
+    int currentSum = 0;    // 当前窗口的亮度和
+
+    // 初始化窗口的起始位置
+    int start = 0;
+    for (int end = 0; end < n; end++) {
+        currentSum += lights[end].y; // 加入当前路灯的亮度
+
+        // 当窗口大小大于街道宽度时，开始移动窗口
+        while (end - start + 1 > w) {
+            currentSum -= lights[start].y; // 移除左侧路灯的亮度
+            start++;
+        }
+
+        // 更新最大亮度
+        if (currentSum > maxBrightness) {
+            maxBrightness = currentSum;
+        }
+    }
+
+    return maxBrightness;
+}
+
+int main() {
+    // 示例输入
+    int n = 3;
+    Light lights[] = {{-3, 2}, {1, 2}, {3, 3}};
+    int w = 2;
+    printf("The brightest position has a brightness of: %d\n", brightestPosition(n, lights, w));
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+int sumOfLetters(char c) {
+    return c - 'a' + 1;
+}
+
+int sumOfDigitsOfStringAfterConvert(char *s, int k) {
+    int num = 0;
+    while (k--) {
+        int sum = 0;
+        while (*s) {
+            num = num * 10 + sumOfLetters(*s++);
+        }
+        s = &num; // 重置字符串指针
+        while (num) {
+            sum += num % 10;
+            num /= 10;
+        }
+        num = sum;
+    }
+    return num;
+}
+
+int main() {
+    char s[] = "zbax";
+    int k = 2;
+    printf("Result: %d\n", sumOfDigitsOfStringAfterConvert(s, k));
+    return 0;
+}
+#include <math.h>
+bool isThree(int n) {
+    int count = 0;
+    for (int i = 1; i <= sqrt(n); i++) {
+        if (n % i == 0) {
+            count++; // i 是一个除数
+            if (i != 1 && n / i != i) count++; // n / i 也是除数，且不是 i 自身
+        }
+    }
+    return count == 3;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 比较函数，用于qsort
+int compare(const void *a, const void *b) {
+    return (*(int*)b - *(int*)a);
+}
+
+int numberOfWeeks(int* milestones, int milestonesSize) {
+    // 对里程碑进行排序
+    qsort(milestones, milestonesSize, sizeof(int), compare);
+    
+    int weeks = 0;
+    int i = 0;
+    int lastProject = -1; // 上一个选择的项目索引
+
+    while (i < milestonesSize) {
+        // 如果当前项目是上周的项目，尝试选择下一个项目
+        while (i < milestonesSize && i == lastProject) {
+            i++;
+        }
+        
+        if (i < milestonesSize) {
+            // 选择当前最多的项目，减少一个任务，并记录索引
+            milestones[i]--;
+            lastProject = i;
+            weeks++;
+        }
+    }
+    
+    return weeks;
+}
+
+int main() {
+    int milestones[] = {5, 2, 1};
+    int n = sizeof(milestones) / sizeof(milestones[0]);
+    printf("Maximum number of weeks: %d\n", numberOfWeeks(milestones, n));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MOD 1000000007
+
+// 用于比较两个整数的函数，用于优先队列
+int cmp(const void *a, const void *b) {
+    return (*(int *)a - *(int *)b);
+}
+
+// Dijkstra算法找到从起点到所有其他顶点的最短路径
+void dijkstra(int n, int roads[][3], int road_count, int *dist, int start) {
+    int i, j;
+    for (i = 0; i < n; i++) dist[i] = 1e+18; // 初始化距离为无穷大
+    dist[start] = 0;
+    int *q = malloc(n * sizeof(int)), *inq = malloc(n * sizeof(int));
+    for (i = 0; i < n; i++) q[i] = i, inq[i] = 1;
+    qsort(q, n, sizeof(int), cmp);
+    while (q[0] != start) {
+        int u = q[0];
+        for (j = 0; j < road_count; j++) {
+            if (!inq[roads[j][1]] && dist[u] + roads[j][2] < dist[roads[j][1]]) {
+                dist[roads[j][1]] = dist[u] + roads[j][2];
+                qsort(q, n, sizeof(int), cmp);
+            }
+        }
+        inq[u] = 0;
+        for (i = 0; i < n; i++)
+            if (inq[q[i]]) break;
+        if (i == n) break;
+        q[0] = q[i];
+        for (i = 1; i < n; i++)
+            if (!inq[q[i]] && q[i] < q[0]) break;
+        for (j = i; j > 0 && !inq[q[j - 1]]; j--) q[j] = q[j - 1];
+        q[j] = u;
+    }
+    free(q);
+    free(inq);
+}
+
+// 动态规划计算方案数
+int countWays(int n, int roads[][3], int road_count) {
+    int dist[n], time = 0;
+    dijkstra(n, roads, road_count, dist, 0);
+    time = dist[n - 1];
+    memset(dist, 0, n * sizeof(int));
+    dist[time] = 1;
+    for (int i = 1; i < time; i++) {
+        for (int j = 0; j < road_count; j++) {
+            if (dist[i - roads[j][2]] > 0) {
+                dist[i + roads[j][2]] = (dist[i + roads[j][2]] + dist[i - roads[j][2]]) % MOD;
+            }
+        }
+    }
+    return dist[time];
+}
+
+int main() {
+    int n = 7;
+    int roads[][3] = {{0,6,7},{0,1,2},{1,2,3},{1,3,3},{6,3,3},{3,5,1},{6,5,1},{2,5,1},{0,4,5},{4,6,2}};
+    printf("%d\n", countWays(n, roads, 10));
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+int numOfSubstrInWord(char **patterns, int patternsSize, char *word) {
+    int count = 0; // 计数器，用于统计子字符串的数量
+    for (int i = 0; i < patternsSize; ++i) {
+        char *pattern = patterns[i];
+        // 使用strstr查找word中是否包含当前pattern
+        if (strstr(word, pattern) != NULL) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int main() {
+    char patterns[][4] = {"a", "abc", "bc", "d"};
+    char word[] = "abc";
+    int patternsSize = sizeof(patterns) / sizeof(patterns[0]);
+    
+    int result = numOfSubstrInWord(patterns, patternsSize, word);
+    printf("Number of substrings: %d\n", result);
+    
+    return 0;
+}
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    // 初始化哈希表
+    int *hashTable = (int *)malloc(sizeof(int) * numsSize);
+    // 存储索引
+    int *indices = (int *)malloc(sizeof(int) * 2);
+
+    for (int i = 0; i < numsSize; i++) {
+        int complement = target - nums[i];
+        if (hashTable[complement] != -1) {
+            indices[0] = hashTable[complement];
+            indices[1] = i;
+            *returnSize = 2;
+            return indices;
+        } else {
+            hashTable[nums[i]] = i;
+        }
+    }
+
+    // 如果没有找到结果，返回空数组
+    *returnSize = 0;
+    return NULL;
+}
+int* averageHeightOfBuildings(int **buildings, int buildingsSize, int *buildingsColSize, int *returnSize) {
+    int n = 0;
+    for (int i = 0; i < buildingsSize; ++i) {
+        n = buildings[i][1] > n ? buildings[i][1] : n;
+    }
+    int *prefix = (int *)malloc((n + 1) * sizeof(int));
+    for (int i = 0; i <= n; ++i) {
+        prefix[i] = 0;
+    }
+    
+    for (int i = 0; i < buildingsSize; ++i) {
+        int *b = buildings[i];
+        prefix[b[0] - 1] += b[2];
+        if (b[1] < n) {
+            prefix[b[1]] -= b[2];
+        }
+    }
+    
+    int *result = (int *)malloc(n * sizeof(int));
+    result[0] = prefix[0];
+    for (int i = 1; i < n; ++i) {
+        prefix[i] += prefix[i - 1];
+        result[i] = prefix[i] / (i + 1);
+    }
+    
+    *returnSize = n;
+    free(prefix);
+    return result;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义一个结构体来存储结果
+typedef struct {
+    int index1;
+    int index2;
+} TwoSumResult;
+
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+    // 创建哈希表，用于存储已经遍历过的数字及其索引
+    int *hashTable = (int *)malloc(sizeof(int) * numsSize);
+    for (int i = 0; i < numsSize; ++i) {
+        hashTable[i] = -1;
+    }
+
+    // 遍历数组
+    for (int i = 0; i < numsSize; ++i) {
+        int complement = target - nums[i];
+        // 在哈希表中查找差值
+        int j;
+        for (j = 0; j < i; ++j) {
+            if (nums[j] == complement) {
+                // 找到匹配的数字，返回结果
+                return (TwoSumResult){i, j};
+            }
+        }
+        // 未找到匹配，更新哈希表
+        hashTable[i] = complement;
+    }
+
+    // 如果没有找到结果，返回一个无效的结果
+    TwoSumResult result = {-1, -1};
+    free(hashTable);
+    return result;
+}
+
+int main() {
+    int nums[] = {2, 7, 11, 15};
+    int target = 9;
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    TwoSumResult result = twoSum(nums, numsSize, target);
+    printf("Index1: %d, Index2: %d\n", result.index1, result.index2);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int account;
+    char day[11]; // 假设日期的最大长度为10
+    int amount;
+} Transaction;
+
+typedef struct {
+    Transaction *transactions;
+    int size;
+    int capacity;
+} AccountBalance;
+
+// 初始化AccountBalance
+AccountBalance* accountBalanceCreate() {
+    AccountBalance *obj = (AccountBalance *)malloc(sizeof(AccountBalance));
+    obj->size = 0;
+    obj->capacity = 2; // 初始容量
+    obj->transactions = (Transaction *)malloc(obj->capacity * sizeof(Transaction));
+    return obj;
+}
+
+// 辅助函数，用于在数组中查找交易记录
+int findTransaction(AccountBalance *obj, int account, char *day) {
+    for (int i = 0; i < obj->size; i++) {
+        if (obj->transactions[i].account == account && strcmp(obj->transactions[i].day, day) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 存款操作
+void accountBalanceDeposit(AccountBalance *obj, int account, char *day, int amount) {
+    int index = findTransaction(obj, account, day);
+    if (index != -1) {
+        obj->transactions[index].amount += amount; // 如果已存在，直接增加金额
+    } else {
+        if (obj->size >= obj->capacity) {
+            // 如果数组满了，扩容
+            obj->capacity *= 2;
+            obj->transactions = (Transaction *)realloc(obj->transactions, obj->capacity * sizeof(Transaction));
+        }
+        obj->transactions[obj->size].account = account;
+        strcpy(obj->transactions[obj->size].day, day);
+        obj->transactions[obj->size].amount = amount;
+        obj->size++;
+    }
+}
+
+// 取款操作
+void accountBalanceWithdraw(AccountBalance *obj, int account, char *day, int amount) {
+    accountBalanceDeposit(obj, account, day, -amount); // 取款可以看作是金额为负的存款操作
+}
+
+// 获取余额
+int accountBalanceGetBalance(AccountBalance *obj, int account, char *day) {
+    int balance = 0;
+    for (int i = 0; i < obj->size; i++) {
+        if (obj->transactions[i].account == account) {
+            balance += obj->transactions[i].amount;
+        }
+    }
+    return balance;
+}
+
+// 销毁AccountBalance
+void accountBalanceFree(AccountBalance *obj) {
+    free(obj->transactions);
+    free(obj);
+}
+
+// 测试代码
+int main() {
+    AccountBalance *balance = accountBalanceCreate();
+    accountBalanceDeposit(balance, 1, "2021-11-07", 2000);
+    accountBalanceWithdraw(balance, 1, "2021-11-09", 1000);
+    printf("Balance: %d\n", accountBalanceGetBalance(balance, 1, "2021-11-11")); // 输出余额
+    accountBalanceFree(balance);
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+// 函数用于计算子串的字符出现次数
+int equalCountSubstrings(char* s) {
+    int len = strlen(s);
+    int count[256] = {0}; // 用于存储字符出现次数的数组
+    int result = 0; // 结果变量
+
+    // 遍历所有可能的子串长度
+    for (int sublen = 1; sublen <= len; ++sublen) {
+        // 用滑动窗口的方法检查所有子串
+        for (int i = 0; i <= len - sublen; ++i) {
+            // 初始化哈希表
+            memset(count, 0, sizeof(count));
+            // 计算当前子串的字符出现次数
+            for (int j = i; j < i + sublen; ++j) {
+                count[s[j]]++;
+            }
+            // 检查所有字符的出现次数是否相等
+            int equal = 1;
+            for (int k = 1; k < 256; ++k) {
+                if (count[k] > 0 && (count[k] != count[s[i]])) {
+                    equal = 0;
+                    break;
+                }
+            }
+            if (equal) {
+                result++;
+            }
+        }
+    }
+    return result;
+}
+
+int main() {
+    char s[] = "aaabcbbcc";
+    printf("Number of equal count substrings: %d\n", equalCountSubstrings(s));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_MAZE_SIZE 100  // 假设迷宫的最大尺寸为100x100
+
+int maze[MAX_MAZE_SIZE][MAX_MAZE_SIZE];  // 迷宫数组
+int visited[MAX_MAZE_SIZE][MAX_MAZE_SIZE];  // 访问状态数组
+int dx[] = {-1, 0, 1, 0};  // x方向的移动
+int dy[] = {0, 1, 0, -1};  // y方向的移动
+
+// 检查坐标是否在迷宫内
+int isInside(int x, int y, int n, int m) {
+    return x >= 0 && x < n && y >= 0 && y < m;
+}
+
+// 深度优先搜索函数
+void dfs(int x, int y, int n, int m, int *roomCount) {
+    if (!isInside(x, y, n, m) || maze[x][y] == 1 || visited[x][y]) {
+        return;
+    }
+    visited[x][y] = 1;
+    // 检查是否到达房间
+    if (x == n - 1 && y == m - 1) {
+        (*roomCount)++;
+    }
+    // 遍历四个方向
+    for (int i = 0; i < 4; i++) {
+        int nx = x + dx[i], ny = y + dy[i];
+        dfs(nx, ny, n, m, roomCount);
+    }
+    visited[x][y] = 0;  // 回溯
+}
+
+// 计算迷宫中所有通往相同房间的路径数量
+int numberOfPaths(int n, int m, int** corridors, int corridorsSize, int* corridorsItemSize) {
+    int roomCount = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (maze[i][j] == 0) {
+                dfs(i, j, n, m, &roomCount);
+            }
+        }
+    }
+    return roomCount;
+}
+
+int main() {
+    // 示例输入
+    int n = 5;
+    int m = 5;
+    int corridors[][2] = {{1, 2}, {5, 2}, {4, 1}, {2, 4}, {3, 1}, {3, 4}};
+    int corridorsSize = sizeof(corridors) / sizeof(corridors[0]);
+    int *corridorItemSizes = (int *)malloc(corridorsSize * sizeof(int));
+    for (int i = 0; i < corridorsSize; i++) {
+        corridorItemSizes[i] = 2;
+    }
+
+    // 初始化迷宫
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            maze[i][j] = 0;
+            visited[i][j] = 0;
+        }
+    }
+    // 构建迷宫墙壁
+    for (int i = 0; i < corridorsSize; i++) {
+        maze[corridors[i][0]][corridors[i][1]] = 1;
+    }
+
+    // 计算路径数量
+    int result = numberOfPaths(n, m, corridors, corridorsSize, corridorItemSizes);
+    printf("Number of paths: %d\n", result);
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义一个结构体来存储客户ID和其累计销售额
+typedef struct {
+    int customer_id;
+    int amount;
+} Transaction;
+
+// 函数用于统计每月销售额超过amount的客户数量
+int countRichCustomers(Transaction* transactions, int transSize, int amount) {
+    // 使用哈希表存储客户的累计销售额，这里简化为固定大小数组
+    int customerSales[1001] = {0}; // 假设客户ID小于等于1000
+    int richCount = 0;
+
+    // 遍历所有交易记录
+    for (int i = 0; i < transSize; ++i) {
+        // 累加对应客户的销售额
+        customerSales[transactions[i].customer_id] += transactions[i].amount;
+    }
+
+    // 检查每个客户的累计销售额
+    for (int i = 1; i <= 1000; ++i) {
+        if (customerSales[i] > amount) {
+            // 如果超过指定金额，增加计数
+            richCount++;
+        }
+    }
+
+    return richCount;
+}
+
+int main() {
+    // 示例交易记录和金额限制
+    Transaction transactions[] = {
+        {1, 549},
+        {1, 834},
+        {2, 394},
+        {3, 657},
+        {3, 257}
+    };
+    int amount = 1500;
+    int transSize = sizeof(transactions) / sizeof(transactions[0]);
+
+    // 调用函数并输出结果
+    int result = countRichCustomers(transactions, transSize, amount);
+    printf("The number of rich customers is: %d\n", result);
+
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+// 函数用于计算以相同字母开头和结尾的子串总数
+long long numberOfSubstrings(char *s) {
+    int len = strlen(s);
+    long long count = 0;
+    
+    // 遍历字符串中的每个字符
+    for (int i = 0; i < len; ++i) {
+        // 以当前字符为开头，检查后面的字符
+        for (int j = i; j < len; ++j) {
+            if (s[i] == s[j]) {
+                // 如果当前字符与开头字符相同，增加计数
+                // 子串长度为 j - i + 1
+                count += (j - i + 1);
+            }
+        }
+    }
+    return count;
+}
+
+int main() {
+    char s[] = "abcba"; // 示例字符串
+    printf("Number of substrings: %lld\n", numberOfSubstrings(s));
+    return 0;
+}
+#include <stdio.h>
+
+// 定义一个结构体来存储糖果的类型和数量
+typedef struct {
+    int type;
+    int count;
+} Candy;
+
+// 比较函数，用于 qsort
+int compare(const void *a, const void *b) {
+    return ((Candy *)a)->count - ((Candy *)b)->count;
+}
+
+int shareCandies(int candies[], int candiesSize, int k) {
+    // 创建一个足够大的数组来存储所有可能的糖果类型
+    Candy candyList[2001]; // 假设糖果类型不会超过2000种
+    int uniqueFlavors = 0;
+    
+    // 初始化糖果列表
+    for (int i = 0; i < candiesSize; i++) {
+        int found = 0;
+        // 查找是否已经记录了这种糖果
+        for (int j = 0; j < uniqueFlavors; j++) {
+            if (candyList[j].type == candies[i]) {
+                candyList[j].count++;
+                found = 1;
+                break;
+            }
+        }
+        // 如果没有记录，添加新的糖果类型
+        if (!found) {
+            candyList[uniqueFlavors].type = candies[i];
+            candyList[uniqueFlavors].count = 1;
+            uniqueFlavors++;
+        }
+    }
+    
+    // 根据糖果的数量进行排序
+    qsort(candyList, uniqueFlavors, sizeof(Candy), compare);
+    
+    // 移除足够多的糖果直到剩下k个
+    for (int i = uniqueFlavors - 1; i >= 0 && k > 0; i--) {
+        if (candyList[i].count > 1) {
+            int shared = candyList[i].count - 1;
+            candyList[i].count = 1;
+            k -= shared;
+        }
+    }
+    
+    // 返回剩下的独特口味数量
+    return uniqueFlavors;
+}
+
+int main() {
+    int candies[] = {1,2,2,3,4,3};
+    int k = 3;
+    printf("Number of unique flavors after sharing: %d\n", shareCandies(candies, sizeof(candies)/sizeof(int), k));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minimumDifference(int* nums, int numsSize) {
+    // 对数组进行排序
+    qsort(nums, numsSize, sizeof(int), compare);
+
+    int n = numsSize / 3;
+    long long minDiff = LLONG_MAX;
+    long long sumLeft, sumRight;
+    int left = 0, right = 2 * n;
+
+    // 使用双指针技术
+    while (left < n) {
+        // 计算当前两部分的和
+        sumLeft = 0;
+        for (int i = 0; i < left; ++i) {
+            sumLeft += nums[i];
+        }
+        for (int i = left; i < left + n; ++i) {
+            sumLeft += nums[i];
+        }
+
+        sumRight = 0;
+        for (int i = right; i < right + n; ++i) {
+            sumRight += nums[i];
+        }
+
+        // 更新最小差值
+        minDiff = fmin(minDiff, sumLeft - sumRight);
+
+        // 移动指针
+        left++;
+        right++;
+    }
+
+    return minDiff;
+}
+
+// 用于qsort的比较函数
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int nums[] = {3,1,2};
+    int n = sizeof(nums) / sizeof(nums[0]);
+    printf("Minimum Difference: %d\n", minimumDifference(nums, n));
+    return 0;
+}
+```
+
+## 讲解
+
+这段代码首先对输入数组进行排序，然后使用双指针技术来找到最小的和的差值。`qsort`函数是一个标准库函数，用于对数组进行排序，我们提供了一个比较函数`compare`来指定排序的方式。在主循环中，我们计算了以当前左右指针划分的两部分的和，并更新了最小差值。最后，我们返回了计算出的最小差值。
+
+请注意，这个问题的关键在于理解如何通过删除元素来平衡两部分的和，排序和双指针技术是解决这个问题的有效方法。['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！根据您提供的信息，您似乎正在寻找解决 LeetCode 问题 "2162. 设置时间的最少代价" 的方法。这个问题要求我们找到设置微波炉加热时间到特定秒数的最少代价。具体来说，我们需要考虑移动到不同数字的成本以及输入数字的成本。
+
+首先，我们来审视一下解决这个问题所需的算法和数据结构。这个问题可以通过动态规划或者贪心算法来解决。我们可以将问题分解为以下几个步骤：
+
+1. **理解问题**：我们需要将微波炉的时间设置为特定的秒数，同时最小化操作成本。时间由分钟和秒组成，范围从 0 到 99。
+
+2. **算法设计**：我们可以为每一分钟数计算出达到目标秒数的最少成本。由于分钟数的范围是 0 到 99，我们可以遍历每一种可能的分钟数，然后找到与之对应的最少成本的秒数。
+
+3. **状态定义**：我们可以定义一个二维数组 `dp[min][sec]` 来存储达到 `min` 分钟和 `sec` 秒的最少成本。
+
+4. **状态转移**：对于每一分钟 `m`（0 ≤ m ≤ 99），我们计算所有可能的秒数 `s`（0 ≤ s ≤ 99），并更新 `dp[m][s]`。
+
+5. **初始状态**：`dp[0][0] = 0`，表示初始状态下（0 分 0 秒）不需要任何成本。
+
+6. **边界条件**：注意处理分钟和秒数的边界情况，例如，当目标秒数超过 60 时，我们需要将多出的秒数转换为分钟。
+
+7. **实现**：根据上述逻辑，我们可以编写代码来实现算法。
+
+下面是一个可能的 C 语言实现示例：
+
+```c
+int minCostSetTime(int startAt, int moveCost, int pushCost, int targetSeconds) {
+    int minutes = targetSeconds / 60;
+    int seconds = targetSeconds % 60;
+    int dp[100][100] = {0}; // 存储到达每个分钟和秒数的最少成本
+
+    // 初始化 dp 数组
+    for (int m = 0; m < 100; ++m) {
+        for (int s = 0; s < 100; ++s) {
+            if (m == 0 && s == 0) {
+                dp[m][s] = 0;
+            } else {
+                int cost = INT_MAX;
+                for (int digit = 0; digit < 10; ++digit) {
+                    int move = (digit == startAt) ? 0 : moveCost;
+                    int push = pushCost;
+                    if (m == 0) {
+                        cost = min(cost, move + push);
+                    } else {
+                        int prevM = m - 1;
+                        int prevCost = dp[prevM][seconds];
+                        cost = min(cost, move + push + prevCost);
+                    }
+                }
+                dp[m][s] = cost;
+            }
+        }
+    }
+
+    return dp[minutes][seconds];
+}
+```
+
+请注意，这个示例是一个简化的版本，可能需要进一步优化以满足所有边界条件和问题要求。希望这个示例能帮助您理解如何解决问题，并为您提供一个良好的起点。如果您有任何具体问题或需要进一步的解释，请随时提问。['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！作为一名LeetCode讲师，我将为您提供问题的解答和解题思路。根据您提供的问题描述，您需要解决的是LeetCode上的2161号问题：“根据给定数字划分数组”。
+
+这个问题的描述是这样的：给定一个整数数组`nums`和一个整数`pivot`，请你将`nums`重新排列，使得所有小于`pivot`的元素都出现在所有大于`pivot`的元素之前，同时保持等于`pivot`的元素在中间，并且小于和大于`pivot`的元素之间的相对顺序不发生改变。
+
+## 解题思路
+
+1. **双指针法**：使用三个指针`i`, `j`, `k`分别遍历数组，`i`用于记录小于`pivot`的元素，`j`用于记录大于`pivot`的元素，`k`为当前遍历到的元素的索引。
+2. **分类存储**：创建两个数组或指针，一个用于存储所有小于`pivot`的元素，另一个用于存储所有大于`pivot`的元素。
+3. **原地重组**：在遍历结束后，将小于`pivot`的元素移动到数组的前部，然后将等于`pivot`的元素填充到它们的后面，最后将大于`pivot`的元素放在数组的最后。
+
+## C语言实现
+
+```c
+#include <stdio.h>
+
+void partitionArray(int* nums, int numsSize, int pivot) {
+    int i = 0, j = 0, k = 0;
+    int less = 0, equal = 0, greater = 0;
+    
+    // 统计小于、等于、大于pivot的元素数量
+    for (k = 0; k < numsSize; k++) {
+        if (nums[k] < pivot) less++;
+        else if (nums[k] > pivot) greater++;
+        else equal++;
+    }
+    
+    // 重新排列数组
+    for (k = 0; k < numsSize; k++) {
+        if (nums[k] < pivot) {
+            nums[k] = nums[less];
+            nums[less++] = nums[k];
+        } else if (nums[k] == pivot) {
+            nums[k] = nums[less + equal];
+            nums[less + equal++] = nums[k];
+        }
+    }
+}
+
+int main() {
+    int nums[] = {9, 12, 5, 10, 14, 3, 10};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    int pivot = 10;
+    
+    partitionArray(nums, numsSize, pivot);
+    
+    // 输出结果
+    for (int i = 0; i < numsSize; i++) {
+        printf("%d ", nums[i]);
+    }
+    
+    return 0;
+}
+```
+
+## 解题步骤详细讲解
+
+1. **初始化**：定义三个指针`i`, `j`, `k`，分别用于记录不同类别的元素，以及当前遍历到的位置。
+2. **统计**：通过一次遍历，统计数组中小于、等于、大于`pivot`的元素数量。
+3. **重组**：使用三个指针`less`, `equal`, `greater`来记录不同类别元素的当前索引，然后在遍历数组的同时，将元素放到正确的位置。
+4. **输出**：最后打印出重新排列后的数组。
+
+这个问题主要考察了数组的操作和双指针技巧，通过有效的分类和原地重组，可以在不使用额外空间的情况下解决问题。希望这个解答和讲解对您有所帮助！如果您有任何其他问题或需要进一步的解释，请随时告诉我。['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！根据您提供的信息，您正在寻求解决 LeetCode 问题的帮助，特别是编号为 2160 的问题：“拆分数位后四位数字的最小和”。这个问题要求您给定一个四位数，使用它的数位将其拆分为两个新的整数，且这两个整数的和最小。
+
+### 问题描述
+给定一个四位数 `num`，请使用 `num` 中的数位，将其拆成两个新的整数 `new1` 和 `new2`。要求 `new1` 和 `new2` 中可以有前导 0，且 `num` 中所有数位都必须使用。
+
+### 示例
+- 输入：`num = 2932`
+  - 输出：`52`
+  - 解释：可能的数对 `[new1, new2]` 为 `[29, 23]`，`[223, 9]` 等。最小和为 `[29, 23]` 的和：`29 + 23 = 52`。
+
+### 提示
+- `1000 <= num <= 9999`
+
+### 解题思路
+这个问题可以通过贪心算法来解决。我们需要找到一种方式，使得两个新整数的和尽可能小。根据题目的提示，我们可以将最小的两个数位放在十位上，最大的两个数位放在个位上，这样可以得到最小的和。
+
+### C 语言实现
+```c
+#include <stdio.h>
+
+int minimumSum(int num) {
+    int digits[4] = {0}; // 存储 num 的每一位数字
+    int i, sum = 0;
+    
+    // 将 num 的每一位存储到 digits 数组中
+    for (i = 0; num > 0; i++) {
+        digits[i] = num % 10;
+        num /= 10;
+    }
+    
+    // 对 digits 数组进行排序
+    for (i = 0; i < 3; i++) {
+        for (int j = i + 1; j < 4; j++) {
+            if (digits[i] > digits[j]) {
+                int temp = digits[i];
+                digits[i] = digits[j];
+                digits[j] = temp;
+            }
+        }
+    }
+    
+    // 构造 new1 和 new2 并计算和
+    int new1 = digits[0] * 10 + digits[1];
+    int new2 = digits[2] * 10 + digits[3];
+    sum = new1 + new2;
+    
+    return sum;
+}
+
+int main() {
+    int num = 2932;
+    printf("The minimum sum is: %d\n", minimumSum(num));
+    return 0;
+}
+```
+
+### 算法分析
+- 时间复杂度：O(n^2)，其中 n 为数字的位数。在本问题中，n 固定为 4。
+- 空间复杂度：O(1)，因为我们只需要常数级别的额外空间。
+
+希望这个解答能帮助您理解问题并找到解决方案。如果您还有其他问题或需要进一步的帮助，请随时告诉我。['/home/tong/bin/new_2.py', '-f', './finished.txt']
+['/home/tong/bin/new_2.py', '-f', './finished.txt']
+['/home/tong/bin/new_2.py', '-f', './finished.txt']
+['/home/tong/bin/new_2.py', '-f', './finished.txt']
+['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！作为一名LeetCode讲师，我注意到您正在准备技术面试或希望通过解决算法问题提升编程能力。LeetCode是一个极客们非常喜爱的技术成长平台，提供了丰富的编程挑战和算法问题。我的任务是帮助您解决这些问题，提供正确的答案和详细的解题思路。
+
+对于您提出的LeetCode问题“2123. 使矩阵中的 1 互不相邻的最小操作数”，这属于“困难”级别的题目，主要考察的是贪心算法和动态规划的应用。
+
+### 问题描述
+给定一个 `m x n` 的矩阵 `grid`，每次操作可以选择任意一个 `1`，并将其变为 `0`。`1` 互不相邻指的是，矩阵中任意两个 `1` 都不相邻（没有共享行或列）。返回使矩阵中的所有 `1` 互不相邻的最小操作数。
+
+### 解题思路
+1. **贪心算法**：首先尝试使用贪心算法，从左到右，从上到下遍历矩阵，如果当前元素是 `1` 且其上方或左方的元素也是 `1`，则进行操作将其变为 `0`。
+2. **动态规划**：如果贪心算法无法解决问题，考虑使用动态规划。定义状态 `dp[i][j]` 表示在 `(i, j)` 位置的矩阵变为互不相邻的最小操作数。状态转移方程需要考虑当前位置是否为 `1` 以及其上方和左方的状态。
+
+### C语言实现
+以下是使用贪心算法的C语言实现示例：
+
+```c
+#include <string.h>
+
+int minOperations(int *grid, int gridSize, int *gridColSize) {
+    int m = gridSize, n = *gridColSize;
+    int dp[m][n] = {0};
+    int res = 0;
+
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            if (grid[i * n + j] == 1) {
+                if ((i > 0 && dp[i - 1][j] == 1) || (j > 0 && dp[i][j - 1] == 1)) {
+                    dp[i][j] = 1;
+                    res++;
+                }
+            }
+        }
+    }
+
+    return res;
+}
+```
+
+请注意，这只是一个解题思路的示例，实际的解决方案可能需要根据问题的具体要求进行调整。
+
+### 附加建议
+- 在解决问题前，确保您已经掌握了相关的算法和数据结构。
+- 尝试多种解决方案，并比较它们的时间和空间复杂度。
+- 定期复习和练习，以巩固所学知识。
+
+如果您需要更详细的讲解或有其他问题，欢迎随时提问。祝您在LeetCode的学习和面试准备中取得好成绩！['/home/tong/bin/new_2.py', '-f', './finished.txt']
+您好！作为一名LeetCode讲师，我将遵循您的指示，使用中文与您交流，并在讲解前向您问好。接下来，我将根据您提出的问题提供C语言实现的代码答案和详细的讲解，每行代码都需要有注释。
+
+根据您提供的LeetCode问题“2113. 查询删除和添加元素后的数组”，我将提供一个可能的解决方案，并详细讲解每个解决方案的思路和实现步骤。
+
+### 问题描述
+给定一个数组`nums`，以及一个查询列表`queries`，每个查询包含两个元素：`val`和`index`。对于每个查询，如果`index`小于数组的长度，我们就将`nums[index]`替换为`val`。如果`index`等于数组长度，我们就将`val`追加到数组的末尾。返回所有操作完成后的数组。
+
+### 解题思路
+1. 创建一个与原数组同样大小的数组`result`，用于存放最终结果。
+2. 遍历每个查询，根据查询中的`index`和`val`执行操作：
+   - 如果`index`小于`nums`的长度，替换`result`中相应位置的元素。
+   - 如果`index`等于`nums`的长度，将`val`追加到`result`的末尾。
+3. 由于查询可能包含追加操作，所以最终结果数组的大小可能大于原数组。
+
+### C语言实现
+```c
+#include <stdio.h>
+
+// 定义一个函数用于执行查询操作
+void processQuery(int *nums, int *result, int val, int index, int numsSize) {
+    if (index < numsSize) {
+        result[index] = val; // 替换操作
+    } else {
+        result[index] = val; // 追加操作
+    }
+}
+
+// 定义主函数
+int* arrayManipulation(int *nums, int numsSize, int *queries, int queriesSize, int *returnSize) {
+    // 初始化结果数组
+    int *result = (int *)malloc((queriesSize + numsSize) * sizeof(int));
+    *returnSize = queriesSize + numsSize; // 设置返回数组的大小
+
+    // 复制原数组到结果数组
+    for (int i = 0; i < numsSize; i++) {
+        result[i] = nums[i];
+    }
+
+    // 处理每个查询
+    for (int i = 0; i < queriesSize; i++) {
+        processQuery(nums, result, queries[i * 2], queries[i * 2 + 1], numsSize);
+    }
+
+    return result;
+}
+
+int main() {
+    // 示例输入
+    int nums[] = {0, 1, 2};
+    int queries[][2] = {{5, 1}, {1, 5}, {2, 1}, {2, 8}};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    int queriesSize = sizeof(queries) / sizeof(queries[0]) / 2;
+    int returnSize = 0;
+
+    // 调用函数并打印结果
+    int *result = arrayManipulation(nums, numsSize, (int *)queries, queriesSize, &returnSize);
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    // 释放结果数组
+    free(result);
+
+    return 0;
+}
+#include <stdio.h>
+
+// 比较函数，用于qsort
+int compare(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+// 题目要求的函数实现
+int countElements(int *nums, int numsSize) {
+    // 对数组进行排序
+    qsort(nums, numsSize, sizeof(int), compare);
+    
+    int count = 0; // 初始化计数器
+    for (int i = 1; i < numsSize - 1; ++i) { // 从第二个元素开始，到倒数第二个元素结束
+        if (nums[i - 1] < nums[i] && nums[i] < nums[i + 1]) { // 检查是否严格介于两个元素之间
+            ++count;
+        }
+    }
+    
+    return count;
+}
+
+int main() {
+    int nums[] = {11, 7, 2, 15}; // 示例数组
+    int size = sizeof(nums) / sizeof(nums[0]);
+    printf("输出: %d\n", countElements(nums, size)); // 调用函数并打印结果
+    return 0;
+}
+#include <stdio.h>
+
+// 假设bucket是一个整型数组，表示每个水桶中的水量
+// n是bucket数组的长度
+void pourWater(int *buckets, int n) {
+    int maxLevel = 0; // 用来记录当前最大的水位
+    int minLevel = buckets[0]; // 用来记录当前最小的水位
+    int maxIndex = 0; // 最大水位水桶的索引
+    int minIndex = 0; // 最小水位水桶的索引
+
+    for (int i = 1; i < n; ++i) {
+        if (buckets[i] > buckets[maxIndex]) {
+            maxIndex = i;
+            maxLevel = buckets[i];
+        }
+        if (buckets[i] < buckets[minIndex]) {
+            minIndex = i;
+            minLevel = buckets[i];
+        }
+    }
+
+    // 模拟倒水过程
+    while (maxLevel - minLevel > 1) {
+        // 从最大水位的水桶倒水到最小水位的水桶
+        buckets[maxIndex] -= (maxLevel - minLevel) / 2;
+        buckets[minIndex] += (maxLevel - minLevel) / 2;
+
+        // 更新最大和最小水位及对应的索引
+        maxIndex = minIndex = 0;
+        maxLevel = buckets[0];
+        minLevel = buckets[0];
+        for (int i = 1; i < n; ++i) {
+            if (buckets[i] > maxLevel) {
+                maxLevel = buckets[i];
+                maxIndex = i;
+            }
+            if (buckets[i] < minLevel) {
+                minLevel = buckets[i];
+                minIndex = i;
+            }
+        }
+    }
+}
+
+int main() {
+    int buckets[] = {1, 2, 7};
+    int n = sizeof(buckets) / sizeof(buckets[0]);
+    pourWater(buckets, n);
+
+    // 输出最终的水位分布
+    for (int i = 0; i < n; ++i) {
+        printf("%d ", buckets[i]);
+    }
+    return 0;
+}
+#include <stdio.h>
+
+// 函数用于返回乘以2后的最终值
+int findFinalValue(int* nums, int numsSize, int original) {
+    int result = original; // 初始化result为original
+    while (result <= 1000) { // 确保result不会超过题目给定的限制
+        int found = 0; // 标记是否找到result
+        for (int i = 0; i < numsSize; i++) {
+            if (nums[i] == result) {
+                result *= 2; // 找到result，乘以2
+                found = 1; // 标记为已找到
+                break; // 跳出循环，继续查找新的result
+            }
+        }
+        if (!found) break; // 如果没有找到result，结束循环
+    }
+    return result; // 返回最终的result
+}
+
+int main() {
+    int nums[] = {5, 3, 6, 1, 12}; // 示例数组
+    int original = 3; // 示例original值
+    int result = findFinalValue(nums, sizeof(nums)/sizeof(nums[0]), original); // 调用函数
+    printf("The final value is: %d\n", result); // 打印结果
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+char *smallestNumber(int num) {
+    int len = 0;
+    char *digits = NULL;
+    char *result = (char *)malloc(12 * sizeof(char)); // 足够存储36位数
+
+    // 将数字转换为字符串并计算长度
+    char numStr[12] = {0};
+    sprintf(numStr, "%d", num);
+    len = strlen(numStr);
+
+    // 将字符串转换为字符数组
+    digits = (char *)malloc(len * sizeof(char));
+    for (int i = 0; i < len; ++i) {
+        digits[i] = numStr[i];
+    }
+
+    // 对字符数组进行排序
+    int isNegative = (num < 0);
+    if (isNegative) {
+        digits[0] = '-'; // 负号保留在最高位
+    }
+    qsort(&digits[isNegative], len - isNegative, sizeof(char), compare);
+
+    // 重排数字
+    for (int i = 0; i < len; ++i) {
+        result[i] = digits[i];
+    }
+    result[len] = '\0'; // 确保字符串正确结束
+
+    free(digits);
+    return result;
+}
+
+// 比较函数，用于qsort
+int compare(const void *a, const void *b) {
+    return *(char *)b - *(char *)a;
+}
+
+int main() {
+    int num = 310;
+    printf("Original number: %d\n", num);
+    char *minNumber = smallestNumber(num);
+    printf("Smallest rearranged number: %s\n", minNumber);
+    free(minNumber);
+    return 0;
+}
+int minimumTime(char *s) {
+    int n = strlen(s);
+    int totalOnes = 0, leftOnes = 0, rightOnes = 0;
+    int time = 0;
+
+    // 计算总的'1'的数量
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == '1') totalOnes++;
+    }
+
+    // 使用双指针从两边开始计算
+    for (int i = 0; i < n && totalOnes > 0; ++i) {
+        if (s[i] == '1') leftOnes++;
+        if (s[n - 1 - i] == '1') rightOnes++;
+
+        // 当左右两边的'1'的数量加起来等于总数时，计算时间
+        if (leftOnes + rightOnes == totalOnes) {
+            time = totalOnes;
+            break;
+        }
+    }
+
+    // 计算中间需要移除的车厢数量
+    int middleOnes = totalOnes - leftOnes - rightOnes;
+
+    // 计算总时间
+    time += middleOnes * 2; // 中间移除的成本是两端的两倍
+
+    // 优化：如果左边或右边的'0'的数量大于中间的'1'的数量，可以替换为更优的解
+    if (leftOnes > middleOnes) {
+        time -= middleOnes;
+        time += leftOnes;
+    }
+    if (rightOnes > middleOnes) {
+        time -= middleOnes;
+        time += rightOnes;
+    }
+
+    return time;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minSteps(char* s, char* t) {
+    int count[26] = {0}; // 用于存储字符出现次数的数组，索引对应字符的ASCII码减去'a'
+    int steps = 0; // 最少操作数
+
+    // 统计字符串s中每个字符的出现次数
+    for (int i = 0; s[i] != '\0'; i++) {
+        count[s[i] - 'a']++;
+    }
+
+    // 统计字符串t中每个字符的出现次数，并计算操作数
+    for (int i = 0; t[i] != '\0'; i++) {
+        if (count[t[i] - 'a'] > 0) {
+            count[t[i] - 'a']--;
+        } else {
+            steps++; // 如果s中没有该字符，操作数加1
+        }
+    }
+
+    // 计算还需要添加的字符数
+    for (int i = 0; i < 26; i++) {
+        steps += count[i];
+    }
+
+    return steps;
+}
+
+int main() {
+    char s[] = "leetcode";
+    char t[] = "coats";
+    printf("Minimum steps: %d\n", minSteps(s, t));
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+int maxSubsequenceCount(char *text, char *pattern) {
+    int n = strlen(text);
+    int maxCount = 0;
+    int countA = 0, countB = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (text[i] == pattern[0]) {
+            countA++;
+        } else if (text[i] == pattern[1]) {
+            countB++;
+            maxCount += countA;
+        }
+    }
+
+    // 最后，countA中可能包含了可以与text末尾的pattern[1]形成子序列的pattern[0]
+    maxCount += countA;
+
+    // 由于我们可以在开头或结尾插入一个字符，我们需要检查pattern作为一个整体在开头和结尾的情况
+    maxCount = (maxCount > countB) ? maxCount : countB;
+
+    return maxCount;
+}
+
+int main() {
+    char text[] = "abdcdbc";
+    char pattern[] = "ac";
+    printf("Maximum number of '%s' subsequences in '%s' is %d\n", pattern, text, maxSubsequenceCount(text, pattern));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int minOperations(int *nums, int numsSize) {
+    // 计算数组的初始总和
+    long long sum = 0;
+    for (int i = 0; i < numsSize; ++i) {
+        sum += nums[i];
+    }
+
+    // 定义操作次数
+    int ops = 0;
+
+    // 当总和大于一半时，继续操作
+    while (sum > sum / 2) {
+        // 寻找当前数组中最大的元素
+        int maxIndex = 0;
+        for (int i = 1; i < numsSize; ++i) {
+            if (nums[i] > nums[maxIndex]) {
+                maxIndex = i;
+            }
+        }
+
+        // 将最大元素减小一半，并更新总和
+        nums[maxIndex] /= 2;
+        sum -= nums[maxIndex];
+
+        // 增加操作次数
+        ops++;
+    }
+
+    return ops;
+}
+
+int main() {
+    int nums[] = {5, 19, 8, 1};
+    int numsSize = sizeof(nums) / sizeof(nums[0]);
+    int result = minOperations(nums, numsSize);
+    printf("最少操作次数为: %d\n", result);
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 线段树节点结构
+typedef struct SegmentTreeNode {
+    char character; // 当前节点代表的字符
+    int length;     // 当前字符重复的长度
+    // 其他可能需要的字段，例如左右子节点指针等
+} SegmentTreeNode;
+
+// 线段树的初始化、更新和查询等函数的声明
+
+void initializeSegmentTree(SegmentTreeNode* tree, char* s, int size);
+void updateSegmentTree(SegmentTreeNode* tree, int index, char newChar);
+int querySegmentTree(SegmentTreeNode* tree, int start, int end);
+
+int* maxRepeating(SegmentTreeNode** tree, char* s, char* queryCharacters, int* queryIndices, int k) {
+    int* lengths = (int*)malloc(sizeof(int) * k); // 存储每次查询后的结果
+    initializeSegmentTree(*tree, s, strlen(s)); // 初始化线段树
+
+    for (int i = 0; i < k; ++i) {
+        updateSegmentTree(*tree, queryIndices[i], queryCharacters[i]); // 更新线段树
+        lengths[i] = querySegmentTree(*tree, 0, strlen(s) - 1); // 查询最长重复子字符串长度
+    }
+
+    return lengths;
+}
+
+int main() {
+    char s[] = "babacc";
+    char queryCharacters[] = "bcb";
+    int queryIndices[] = {1, 3, 3};
+    int k = sizeof(queryIndices) / sizeof(queryIndices[0]);
+    SegmentTreeNode* tree = NULL;
+
+    int* result = maxRepeating(&tree, s, queryCharacters, queryIndices, k);
+
+    // 打印结果
+    for (int i = 0; i < k; ++i) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    // 释放线段树内存
+    // ...
+
+    free(result);
+    return 0;
+}
+#include <stdio.h>
+
+int compare(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int* findKDistantIndices(int* nums, int numsSize, int key, int k, int* returnSize) {
+    int* result = malloc(numsSize * sizeof(int)); // 存储结果的数组
+    *returnSize = 0; // 结果数组的当前大小
+
+    // 遍历数组，记录等于key的元素下标
+    for (int i = 0; i < numsSize; ++i) {
+        if (nums[i] == key) {
+            // 检查并添加符合条件的下标
+            for (int j = i - k; j <= i + k; ++j) {
+                if (j >= 0 && j < numsSize && (j != i)) {
+                    result[*returnSize] = j; // 添加邻居下标
+                    (*returnSize)++;
+                }
+            }
+        }
+    }
+
+    // 去除重复的下标
+    qsort(result, *returnSize, sizeof(int), compare);
+    int uniqueIndex = 0;
+    for (int i = 1; i < *returnSize; ++i) {
+        if (result[i] != result[uniqueIndex]) {
+            result[++uniqueIndex] = result[i];
+        }
+    }
+    *returnSize = uniqueIndex + 1;
+
+    return result;
+}
+int numberOfWays(char *s) {
+    int n = strlen(s);
+    int dp[3][2] = {0}; // dp[i][j] 表示前i栋楼中，以第j类建筑结尾的合法方案数
+    dp[0][0] = dp[0][1] = 1; // 基础情况，只有一种建筑类型时的方案数
+
+    for (int i = 1; i < n; ++i) {
+        // 转移方程，根据当前楼的类型更新方案数
+        dp[i][0] = dp[i - 1][1]; // 0结尾的方案数等于1结尾的方案数
+        dp[i][1] = dp[i - 1][0] + (s[i - 1] == '0' ? dp[i - 1][1] : 0);
+    }
+
+    // 最后一个数字可以是0或1，所以总方案数是两者之和
+    return dp[n - 1][0] + dp[n - 1][1];
+}
+#include <stdio.h>
+#include <string.h>
+
+int sumScoresOfBuiltString(char *s) {
+    int len = strlen(s);
+    int score = 0;
+    // 用于存储每个si的最长公共前缀长度
+    int prefix[len + 1];
+
+    // 初始化前缀数组，所有si的最长公共前缀都是1
+    for (int i = 0; i < len; i++) {
+        prefix[i] = 1;
+    }
+    prefix[len] = 0; // sn的得分是0
+
+    // 从后向前遍历字符串，计算每个si的最长公共前缀
+    for (int i = len - 1; i > 0; i--) {
+        // 如果当前字符与后面的字符相同，则公共前缀加1
+        if (s[i] == s[i - 1]) {
+            prefix[i - 1] = prefix[i] + 1;
+        }
+        // 否则，公共前缀重置为1
+        else {
+            prefix[i - 1] = 1;
+        }
+    }
+
+    // 累加每个si的得分
+    for (int i = 0; i < len; i++) {
+        score += prefix[i];
+    }
+
+    return score;
+}
+
+int main() {
+    char s[] = "babab";
+    printf("The sum of scores is: %d\n", sumScoresOfBuiltString(s));
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// 定义矩阵中的一个点
+typedef struct {
+    int x; // 行
+    int y; // 列
+} Point;
+
+// 广度优先搜索
+int minStepToExtractMantra(char** matrix, int rows, int cols, char* mantra) {
+    // 如果矩阵为空或者咒语为空，直接返回-1
+    if (rows == 0 || cols == 0 || mantra == NULL) return -1;
+
+    // 初始化队列和访问集合
+    Point* queue = (Point*)malloc(sizeof(Point) * (rows * cols));
+    int head = 0, tail = 0;
+    int* visited = (int*)calloc(rows * cols, sizeof(int)); // 0 表示未访问，1 表示已访问
+
+    // 将起点加入队列
+    queue[tail++] = (Point){0, 0};
+    visited[0] = 1;
+    int step = 0; // 记录步数
+
+    while (head < tail) {
+        // 队列中的元素数量
+        int queueSize = tail - head;
+        for (int i = 0; i < queueSize; ++i) {
+            Point curr = queue[head++];
+
+            // 检查当前点的字符是否与咒语的当前字符匹配
+            if (mantra[step] == matrix[curr.x][curr.y]) {
+                // 如果是咒语的最后一个字符，返回步数
+                if (step == strlen(mantra) - 1) {
+                    free(queue);
+                    free(visited);
+                    return step + 1;
+                }
+                step++;
+            } else {
+                // 如果不匹配，继续搜索
+                continue;
+            }
+
+            // 检查上下左右四个方向
+            int dx[] = {-1, 0, 1, 0};
+            int dy[] = {0, 1, 0, -1};
+            for (int j = 0; j < 4; ++j) {
+                int nx = curr.x + dx[j];
+                int ny = curr.y + dy[j];
+                // 检查新位置是否在矩阵内，并且未被访问过
+                if (nx >= 0 && nx < rows && ny >= 0 && ny < cols && !visited[nx * cols + ny]) {
+                    queue[tail++] = (Point){nx, ny};
+                    visited[nx * cols + ny] = 1;
+                }
+            }
+        }
+    }
+
+    free(queue);
+    free(visited);
+    return -1; // 如果没有找到完整的路径，返回-1
+}
+
+int main() {
+    char matrix[2][2] = {{'s', 'd'}, {'e', 'p'}};
+    char* mantra = "speed";
+    printf("Minimum steps: %d\n", minStepToExtractMantra(matrix, 2, 2, mantra));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int maxRunes(int* runes, int runesSize) {
+    // 对符文数组进行排序
+    int i, j, temp;
+    for (i = 0; i < runesSize - 1; i++) {
+        for (j = 0; j < runesSize - 1 - i; j++) {
+            if (runes[j] > runes[j + 1]) {
+                temp = runes[j];
+                runes[j] = runes[j + 1];
+                runes[j + 1] = temp;
+            }
+        }
+    }
+
+    int count = 0, left = 0, right = 1;
+    while (right < runesSize) {
+        if (runes[right] == runes[left] || runes[right] == runes[left] + 1) {
+            count++; // 符合条件的符文数量加1
+            right++;  // 右指针向右移动
+        } else {
+            left = right; // 左指针移动到右指针的位置
+        }
+    }
+    return count;
+}
+
+int main() {
+    int runes[] = {1, 3, 5, 4, 1, 7};
+    int runesSize = sizeof(runes) / sizeof(runes[0]);
+    printf("最大符文数量: %d\n", maxRunes(runes, runesSize));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+int maxBlessing(int **forceField, int forceFieldSize, int *forceFieldColSize) {
+    int maxSide = 0;
+    for (int i = 0; i < forceFieldSize; ++i) {
+        maxSide = maxSide < forceField[i][2] ? forceField[i][2] : maxSide;
+    }
+    
+    int **count = (int **)malloc((maxSide * 2 + 1) * sizeof(int *));
+    for (int i = 0; i <= maxSide * 2; ++i) {
+        count[i] = (int *)calloc(maxSide * 2 + 1, sizeof(int));
+    }
+    
+    for (int i = 0; i < forceFieldSize; ++i) {
+        int x = forceField[i][0], y = forceField[i][1], side = forceField[i][2];
+        for (int dx = -side; dx <= side; ++dx) {
+            for (int dy = -side; dy <= side; ++dy) {
+                count[x + dx][y + dy]++;
+            }
+        }
+    }
+    
+    int maxCount = 0;
+    for (int i = 0; i <= maxSide * 2; ++i) {
+        for (int j = 0; j <= maxSide * 2; ++j) {
+            maxCount = maxCount > count[i][j] ? maxCount : count[i][j];
+        }
+    }
+    
+    for (int i = 0; i <= maxSide * 2; ++i) {
+        free(count[i]);
+    }
+    free(count);
+    
+    return maxCount;
+}
+
+int main() {
+    int forceField[][3] = {{0, 0, 1}, {1, 0, 1}};
+    int forceFieldSize = sizeof(forceField) / sizeof(forceField[0]);
+    printf("%d\n", maxBlessing(forceField, forceFieldSize, NULL));
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+int findMaxNewCampsites(char **expeditions, int expeditionsSize) {
+    // 创建哈希表存储访问过的营地
+    int visited[26] = {0}; // 假设营地名称只包含小写字母
+    int maxNewCampsites = 0;
+    int index = -1;
+    
+    for (int i = 0; i < expeditionsSize; i++) {
+        int newCampsites = 0;
+        char *campsite = strtok(expeditions[i], "->");
+        while (campsite) {
+            if (!visited[campsite[0] - 'a']) { // 检查是否新发现的营地
+                newCampsites++;
+                visited[campsite[0] - 'a'] = 1;
+            }
+            campsite = strtok(NULL, "->");
+        }
+        // 更新最大新发现营地数和索引
+        if (newCampsites > maxNewCampsites) {
+            maxNewCampsites = newCampsites;
+            index = i;
+        }
+    }
+    
+    return maxNewCampsites ? index : -1;
+}
+
+int main() {
+    // 示例输入
+    char *expeditions[] = {"leet->code", "leet->code->Campsite->Leet", "leet->code->leet->courier"};
+    int n = sizeof(expeditions) / sizeof(expeditions[0]);
+    // 调用函数并输出结果
+    printf("%d\n", findMaxNewCampsites(expeditions, n));
+    return 0;
+}
+#include <stdio.h>
+
+void merge(int* supplies, int first, int second) {
+    supplies[first] = supplies[first] + supplies[second];
+    // 合并后，删除原第二辆马车的物资记录
+    // 由于C语言数组不能动态调整大小，我们简单地覆盖第二辆车的物资
+    // 并在后面的操作中忽略它。
+}
+
+int* mergeSupplies(int* supplies, int suppliesSize, int* returnSize) {
+    int length = suppliesSize;
+    int* result = (int*)malloc(length * sizeof(int));
+    *returnSize = length;
+
+    while (length > ((length + 1) / 2)) {
+        int minSum = supplies[0] + supplies[1];
+        int mergeIndex = 0;
+        for (int i = 1; i < length - 1; i++) {
+            if (supplies[i] + supplies[i + 1] < minSum) {
+                minSum = supplies[i] + supplies[i + 1];
+                mergeIndex = i;
+            }
+        }
+        merge(supplies, mergeIndex, mergeIndex + 1);
+        length--;
+    }
+
+    for (int i = 0; i < length; i++) {
+        result[i] = supplies[i];
+    }
+    return result;
+}
+
+int main() {
+    int supplies[] = {7, 3, 6, 1, 8};
+    int returnSize;
+    int* result = mergeSupplies(supplies, sizeof(supplies) / sizeof(supplies[0]), &returnSize);
+
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    free(result);
+    return 0;
+}
+#include <stdio.h>
+
+void merge(int* supplies, int first, int second) {
+    supplies[first] = supplies[first] + supplies[second];
+    // 合并后，删除原第二辆马车的物资记录
+    // 由于C语言数组不能动态调整大小，我们简单地覆盖第二辆车的物资
+    // 并在后面的操作中忽略它。
+}
+
+int* mergeSupplies(int* supplies, int suppliesSize, int* returnSize) {
+    int length = suppliesSize;
+    int* result = (int*)malloc(length * sizeof(int));
+    *returnSize = length;
+
+    while (length > ((length + 1) / 2)) {
+        int minSum = supplies[0] + supplies[1];
+        int mergeIndex = 0;
+        for (int i = 1; i < length - 1; i++) {
+            if (supplies[i] + supplies[i + 1] < minSum) {
+                minSum = supplies[i] + supplies[i + 1];
+                mergeIndex = i;
+            }
+        }
+        merge(supplies, mergeIndex, mergeIndex + 1);
+        length--;
+    }
+
+    for (int i = 0; i < length; i++) {
+        result[i] = supplies[i];
+    }
+    return result;
+}
+
+int main() {
+    int supplies[] = {7, 3, 6, 1, 8};
+    int returnSize;
+    int* result = mergeSupplies(supplies, sizeof(supplies) / sizeof(supplies[0]), &returnSize);
+
+    for (int i = 0; i < returnSize; i++) {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
+
+    free(result);
+    return 0;
+}
+#include <stdlib.h>
+
+// 定义三角形的结构体
+typedef struct Triangle {
+    int x, y;
+} Triangle;
+
+int** sandyLandManagement(int size, int* returnSize) {
+    // 分配内存给返回的二维数组
+    int** res = (int**)malloc(sizeof(int*) * size);
+    *returnSize = size;
+    for (int i = 0; i < size; i++) {
+        res[i] = (int*)malloc(sizeof(int) * (2 * i + 1));
+    }
+
+    // 从底部开始种植
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < 2 * i + 1; j++) {
+            // 每隔一棵树种植一棵
+            if (j % 2 == 0) {
+                res[i][j] = 1;
+            }
+        }
+    }
+
+    return res;
+}
+#include <stdio.h>
+#include <string.h>
+
+int minCost(char **words, int wordsSize) {
+    // 存储每个字母出现的次数和位置
+    int count[26] = {0};
+    int positions[26][50]; // 假设每个字母最多出现在50个位置
+    int minCost = 0;
+    char target[] = "helloleetcode";
+    int targetLen = strlen(target);
+
+    // 记录每个字母出现的次数和位置
+    for (int i = 0; i < wordsSize; ++i) {
+        for (int j = 0; words[i][j]; ++j) {
+            if (count[target[targetLen - words[i][j] - 'a']] < 50) {
+                positions[target[targetLen - words[i][j] - 'a']][count[target[targetLen - words[i][j] - 'a']]] = j;
+            }
+            count[target[targetLen - words[i][j] - 'a']]++;
+        }
+    }
+
+    // 计算取得所有字母的最少代币消耗
+    for (int i = 0; i < targetLen; ++i) {
+        int current = target[i] - 'a';
+        // 选择消耗最小的字母位置
+        for (int j = 0; j < count[current]; ++j) {
+            if (j * (count[current] - j - 1) < minCost) {
+                minCost = j * (count[current] - j - 1);
+            }
+        }
+    }
+
+    return minCost > 0 ? minCost : -1; // 如果无法取得所有字母，则返回-1
+}
+
+int main() {
+    char *words[] = {"hello", "leetcode"};
+    int wordsSize = sizeof(words) / sizeof(words[0]);
+    printf("Minimum cost: %d\n", minCost(words, wordsSize));
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义二叉树的节点结构
+typedef struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+
+// 创建一个新的树节点
+TreeNode* createNode(int val) {
+    TreeNode* node = (TreeNode*)malloc(sizeof(TreeNode));
+    node->val = val;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+// 装饰树的递归函数
+TreeNode* decorateTree(TreeNode* node) {
+    if (node == NULL) return NULL;
+    
+    // 创建两个-1节点，分别作为当前节点的左右子节点
+    TreeNode* leftNegativeOne = createNode(-1);
+    TreeNode* rightNegativeOne = createNode(-1);
+    
+    // 递归地装饰当前节点的左右子树
+    leftNegativeOne->left = decorateTree(node->left);
+    rightNegativeOne->right = decorateTree(node->right);
+    
+    // 将-1节点连接到当前节点，并返回当前节点
+    node->left = leftNegativeOne;
+    node->right = rightNegativeOne;
+    
+    return node;
+}
+
+int main() {
+    // 构建示例中的二叉树
+    TreeNode* root = createNode(7);
+    root->left = createNode(5);
+    root->right = createNode(6);
+    root->left->left = createNode(3);
+    root->left->right = createNode(8);
+    root->right->left = createNode(4);
+    
+    // 装饰二叉树
+    root = decorateTree(root);
+    
+    // 打印装饰后的二叉树
+    // 这里需要一个辅助函数来遍历和打印二叉树，此处省略实现细节
+    
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+// 假设展台类型的数量不会超过26个小写字母
+#define MAX_TYPE 26
+
+int minNumBooths(char **demand, int demandSize) {
+    int boothCount = 0; // 展台数量计数器
+    int typeCount[MAX_TYPE] = {0}; // 记录每个展台类型的出现次数
+
+    for (int i = 0; i < demandSize; i++) {
+        char *day = demand[i];
+        // 重置当天展台类型出现次数
+        memset(typeCount, 0, sizeof(typeCount));
+        for (int j = 0; j < strlen(day); j++) {
+            int index = day[j] - 'a'; // 计算展台类型在数组中的索引
+            if (typeCount[index] == 0) {
+                // 如果该类型展台尚未记录，则增加展台数量计数器
+                boothCount++;
+                typeCount[index] = 1; // 标记该展台类型已记录
+            }
+        }
+    }
+
+    return boothCount;
+}
+
+int main() {
+    // 示例输入
+    char *demand1[] = {"acd", "bed", "accd"};
+    int size1 = sizeof(demand1) / sizeof(demand1[0]);
+    printf("Minimum number of booths: %d\n", minNumBooths(demand1, size1));
+
+    // 第二个示例
+    char *demand2[] = {"abc", "ab", "ac", "b"};
+    int size2 = sizeof(demand2) / sizeof(demand2[0]);
+    printf("Minimum number of booths: %d\n", minNumBooths(demand2, size2));
+
+    return 0;
+}
+#include <stdio.h>
+#include <string.h>
+
+// 假设展台类型的数量不会超过26个小写字母
+#define MAX_TYPE 26
+
+int minNumBooths(char **demand, int demandSize) {
+    int boothCount = 0; // 展台数量计数器
+    int typeCount[MAX_TYPE] = {0}; // 记录每个展台类型的出现次数
+
+    for (int i = 0; i < demandSize; i++) {
+        char *day = demand[i];
+        // 重置当天展台类型出现次数
+        memset(typeCount, 0, sizeof(typeCount));
+        for (int j = 0; j < strlen(day); j++) {
+            int index = day[j] - 'a'; // 计算展台类型在数组中的索引
+            if (typeCount[index] == 0) {
+                // 如果该类型展台尚未记录，则增加展台数量计数器
+                boothCount++;
+                typeCount[index] = 1; // 标记该展台类型已记录
+            }
+        }
+    }
+
+    return boothCount;
+}
+
+int main() {
+    // 示例输入
+    char *demand1[] = {"acd", "bed", "accd"};
+    int size1 = sizeof(demand1) / sizeof(demand1[0]);
+    printf("Minimum number of booths: %d\n", minNumBooths(demand1, size1));
+
+    // 第二个示例
+    char *demand2[] = {"abc", "ab", "ac", "b"};
+    int size2 = sizeof(demand2) / sizeof(demand2[0]);
+    printf("Minimum number of booths: %d\n", minNumBooths(demand2, size2));
+
+    return 0;
+}
