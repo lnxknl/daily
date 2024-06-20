@@ -1,0 +1,2413 @@
+Result twoSum(int* nums, int numsSize, int target) {
+int getNandResult(int k, int *arr, int *operations, int operationsSize) {
+void dfs(int node, int **children, int nodes, char *result, int size) {
+int minStepToExtractMantra(char** matrix, int rows, int cols, char* mantra) {
+    while (head < tail) {
+int expandWalls(Wall rampart[], int n) {
+int maxRunes(int* runes, int runesSize) {
+    while (right < runesSize) {
+int isValid(char **chessboard, int i, int j, char color, int n, int m) {
+        if (chessboard[row][j] != '.' && chessboard[row][j] != color) {
+        if (chessboard[i][col] != '.' && chessboard[i][col] != color) {
+int totalWays(char **chessboard, int n, int m) {
+void dfs(Point current, int steps) {
+int findShortestPath() {
+int findMaxNewCampsites(char **expeditions, int expeditionsSize) {
+        if (newCampsites > maxNewCampsites) {
+void merge(int* supplies, int first, int second) {
+int* mergeSupplies(int* supplies, int suppliesSize, int* returnSize) {
+            if (supplies[i] + supplies[i + 1] < minSum) {
+int max(int a, int b) {
+int trap(int** matrix, int rows, int cols) {
+int** sandyLandManagement(int size, int* returnSize) {
+int minCost(char **words, int wordsSize) {
+            if (j * (count[current] - j - 1) < minCost) {
+TreeNode* createNode(int val) {
+TreeNode* decorateTree(TreeNode* node) {
+int minNumBooths(char **demand, int demandSize) {
+int isValid(int x, int y, int N, int M) {
+int simulateBall(int x, int y, int N, int M, char* plate, int num) {
+int closeSubtree(TreeNode* node) {
+int minOperations(TreeNode* root) {
+int minUncomfortableDegree(int *operate, int operateSize) {
+int dailyTemperatures(int* temperatureA, int sizeA, int* temperatureB, int sizeB) {
+    while (i < sizeA) {
+int max(int a, int b) {
+        if (wood[i][1] == num) {
+    while (front < rear) {
+            if (nx >= 0 && nx < rows && ny >= 0 && ny < cols) {
+int getMinimumTime(int* time, int fruitsSize, int* fruits, int limit) {
+void createGraph(Graph* graph, int* cost, int costSize, int* roads, int roadSize) {
+int findMinCostNode(Graph* graph, int* visited, int* cost) {
+        if (!visited[i] && cost[i] < minCost) {
+int minimumCost(int* cost, int costSize, int* roads, int roadSize) {
+int defendSpaceCity(int* time, int timeSize, int* position, int positionSize) {
+int countRedNodes(TreeNode* root) {
+void dye(TreeNode* root, int x, int y, int type) {
+int maxDeliciousness(int materials[], int cookbooks[][5], int attribute[][2], int limit, int len) {
+int getGemMaxMinDifference(int* gem, int gemSize, int** operations, int operationsSize) {
+int** bicycleYard(int* position, int positionSize, int** terrain, int** obstacle, int n, int m, int* resultSize) {
+const char* predictTheWinner(int pieces[][3], int len) {
+bool simulate(int pieces[][3], int len, char color) {
+bool checkWin(int x, int y, char color, int pieces[][3], int len) {
+int* calculateInitialVolunteers(VolunteerPlan plan) {
+int countCoveredToys(int **toys, int *toysSize, int **circles, int *circlesSize, int r) {
+int isCovered(int *toy, int *circle, int r) {
+int dfs(char (*chessboard)[MAX_M], int x, int y, int* visited) {
+int maxScore(int* cards, int cardsSize, int cnt) {
+            if (cards[i] % 2 != 0 && cards[i] < minOdd) {
+int trafficCommand(char **directions, int directionsSize) {
+        if (size[WEST] && size[NORTH] && queue[WEST][0] == NORTH && queue[NORTH][0] == WEST) {
+        } else if (size[EAST] && size[SOUTH] && queue[EAST][0] == SOUTH && queue[SOUTH][0] == EAST) {
+int numColor(TreeNode* root) {
+    void dfs(TreeNode* node) {
+int minScore(int* challenge, int challengeSize) {
+void DFS(int **isConnected, int n, int *visited, int i) {
+int findCircleNum(int **isConnected, int n) {
+long long combination(int m, int n) {
+int uniquePaths(int m, int n) {
+void initialize(int n, int k) {
+void cleanup() {
+void solve(int n, int k) {
+struct ListNode* mergeKLists(struct ListNode** lists, int listsSize) {
+ListNode* findMiddle(ListNode* head) {
+ListNode* sortList(ListNode* head) {
+int partition(int arr[], int low, int high) {
+        if (arr[j] > pivot) {
+int quickSelect(int arr[], int low, int high, int k) {
+int findKthLargest(int* nums, int numsSize, int k) {
+void relativeSortArray(int* arr1, int arr1Size, int* arr2, int arr2Size, int* answer) {
+int minEatingSpeed(int piles[], int pilesSize, int H) {
+    while (left < right) {
+    while (left <= right) {
+Solution* Solution_init(int* w, int wSize) {
+int Solution_pickIndex(Solution* obj) {
+    while (left < right) {
+        if (obj->prefixSums[mid] > randNum) {
+void Solution_free(Solution* obj) {
+int singleNonDuplicate(int *nums, int numsSize) {
+    while (left < right) {
+int peakIndexInMountainArray(int* arr, int arrSize) {
+    while (left < right) {
+int searchInsert(int* nums, int numsSize, int target) {
+    while (left <= right) {
+        if (nums[mid] == target) {
+        } else if (nums[mid] < target) {
+TrieNode* newNode() {
+void insert(TrieNode* root, int num) {
+int findMaximumXOR(TrieNode* root, int num) {
+TrieNode* newNode() {
+MapSum* mapSumCreate() {
+void mapSumInsert(MapSum* obj, char* key, int val) {
+int mapSumSum(MapSum* obj, char* prefix) {
+void dfs(TrieNode* node, int* sum) {
+void mapSumFree(MapSum* obj) {
+MagicDictionary* magicDictionaryCreate() {
+void magicDictionaryBuildDict(MagicDictionary* dict, char **dictionary, int size) {
+void magicDictionaryFree(MagicDictionary* dict) {
+int kSmallestPairs(int *nums1, int nums1Size, int *nums2, int nums2Size, int k) {
+            if (j == nums2Size) {
+TrieNode* newNode() {
+void insert(TrieNode* root, const char* word) {
+bool search(TrieNode* root, const char* word) {
+bool startsWith(TrieNode* root, const char* prefix) {
+Trie* TrieCreate() {
+int* topKFrequent(int* nums, int numsSize, int k, int* returnSize) {
+struct KthLargest* kthLargest(int k, int* nums, int numsSize) {
+int kthLargestAdd(struct KthLargest* obj, int val) {
+void heapify(int* heap, int heapSize, int root) {
+    if (largest != root) {
+void kthLargestFree(struct KthLargest* obj) {
+MyCalendar* myCalendarCreate() {
+bool myCalendarBook(MyCalendar* obj, int start, int end) {
+    while (current != NULL) {
+        if (current->end > start || current->start < end) {
+void myCalendarFree(MyCalendar* obj) {
+    while (current != NULL) {
+bool containsNearbyAlmostDuplicate(int* nums, int numsSize, int k, int t) {
+int longestConsecutive(int* nums, int numsSize) {
+bool findTarget(TreeNode* root, int k) {
+    if (prev != NULL && root->val == target) {
+    if (prev == NULL || prev->val != target) {
+UnionFind initUnionFind(int size) {
+int find(UnionFind *uf, int i) {
+void unionOperation(UnionFind *uf, int i, int j) {
+    if (rootI != rootJ) {
+int isRedundant(UnionFind *uf, int *edges, int len) {
+void convertBSTToGreaterTree(TreeNode* root) {
+    while (curr != NULL) {
+        if (curr->right == NULL) {
+            while (prev->left != NULL && prev->left != curr) {
+            if (prev->left == NULL) {
+TreeNode* createTreeNode(int value) {
+void initQueue(Queue* q, int size) {
+void enqueue(Queue* q, Vertex v) {
+char* alienOrder(char** words, int wordsSize) {
+    if (*pPrev != NULL) {
+TreeNode* increasingBST(TreeNode* root) {
+        if (node != NULL) {
+int* findOrder(int numCourses, int** prerequisites, int prerequisitesSize, int* prerequisitesRowSize, int* returnSize) {
+    while (index < numCourses) {
+    if (index == numCourses) {
+int maxPathSum(TreeNode* root) {
+int max(int a, int b) {
+double fmax(double a, double b) {
+int longestIncreasingPath(int matrix[MAX_M][MAX_N], int m, int n) {
+int max(int a, int b) {
+TreeNode* createNode(int value) {
+int sumNumbers(TreeNode* root) {
+int dfs(TreeNode* node, int pathSum) {
+    if (node->left == NULL && node->right == NULL) {
+CBTInserter* CBTInserter_init(int value) {
+int CBTInserter_insert(CBTInserter *inserter, int value) {
+bool isBipartite(int** graph, int graphSize, int* graphColSize) {
+bool dfs(int** graph, int node, int color, int* colors, int graphSize) {
+RecentCounter* recentCounterCreate() {
+void recentCounterPing(RecentCounter* obj, int t) {
+int recentCounterQuery(RecentCounter* obj, int t) {
+void recentCounterFree(RecentCounter* obj) {
+MovingAverage* movingAverageCreate(int size) {
+double movingAverageNext(MovingAverage* obj, int val) {
+void movingAverageFree(MovingAverage* obj) {
+int maxAreaOfIsland(int** grid, int gridSize, int* gridColSize) {
+int max(int a, int b) {
+int combinationSum4(int* nums, int numsSize, int target) {
+    if (i == numsSize) { // 如果数组已经是升序，无需排序
+            if (nums[i] > target) {
+        for (int num : nums) {
+int coinChange(int *coins, int coinsSize, int amount) {
+            if (coins[j] <= i && dp[i - coins[j]] != INT_MAX) {
+int findTargetSumWays(int* nums, int numsSize, int target) {
+bool canPartition(int* nums, int numsSize) {
+bool canPartitionHelper(int* nums, int numsSize, int target, int* count) {
+int minimumTotal(int** triangle, int triangleSize, int* triangleColSize) {
+int minPathSum(int **grid, int m, int n) {
+int maximalRectangle(char **matrix, int rows, int cols) {
+int largestRectangleArea(int *height, int size) {
+int largestRectangleArea(int* heights, int heightsSize) {
+int* dailyTemperatures(int* temperatures, int temperaturesSize, int* returnSize) {
+int* asteroidCollision(int* asteroids, int asteroidsSize, int* returnSize) {
+int evalRPN(std::vector<std::string>& tokens) {
+    for (const std::string& token : tokens) {
+int findMinDifference(char **timePoints, int timePointsSize) {
+        if (diff < minDiff) {
+    if (firstLastDiff < minDiff) {
+int lenLongestFibSubseq(int *arr, int arrSize) {
+LRUCache* LRUCacheCreate(int capacity) {
+int LRUCacheGet(LRUCache* obj, int key) {
+void LRUCachePut(LRUCache* obj, int key, int value) {
+void LRUCacheFree(LRUCache* obj) {
+int minCost(int** costs, int* m, int n) {
+RandomizedSet* randomizedSetCreate() {
+bool randomizedSetInsert(RandomizedSet* obj, int val) {
+bool randomizedSetRemove(RandomizedSet* obj, int val) {
+        if (obj->nums[i] == val) {
+int randomizedSetGetRandom(RandomizedSet* obj) {
+void randomizedSetFree(RandomizedSet* obj) {
+int rob(int* nums, int numsSize) {
+ListNode* insertIntoCircularSortedList(ListNode* head, int insertVal) {
+Node* flatten(Node* head) {
+struct ListNode* reverseList(struct ListNode* head) {
+    while (curr != NULL) {
+int isPalindrome(struct ListNode* head) {
+    while (fast->next != NULL && fast->next->next != NULL) {
+    while (p1 != NULL && p2 != NULL) {
+ListNode* findMiddle(ListNode* head) {
+ListNode* reverseList(ListNode* head) {
+void reorderList(ListNode* head) {
+ListNode* createList(int* values, int size) {
+void printList(ListNode* head) {
+    while (l1 != NULL || l2 != NULL) {
+struct ListNode* reverseList(struct ListNode* head) {
+    while (curr != NULL) {
+struct ListNode* reverseList(struct ListNode* head) {
+    if (head == NULL || head->next == NULL) {
+    if (lenA > lenB) {
+    while (headA && headB && headA != headB) {
+        if (slow == fast) {           // 相遇时，说明存在环
+    while (slow != fast) {           // 再次使用慢指针和快指针相遇的方法找到环的入口
+struct ListNode* removeNthFromEnd(struct ListNode* head, int n) {
+    while (second->next != NULL) {
+    while (left < right) {
+bool isPalindrome(char * s, int start, int end) {
+    while (start < end) {
+    while (left < right) {
+    while (right < sLen) {
+        while (validCounts == tLen) {
+            if (right - left + 1 < minLen) {
+char* substr(char* s, int start, int len) {
+        while (last_index[(int)s[right]] >= left) {
+NumMatrix* numMatrixCreate(int** matrix, int matrixRowSize, int matrixColSize) {
+void numMatrixFree(NumMatrix* obj) {
+int pivotIndex(int* nums, int numsSize) {
+        if (leftSum * 2 + nums[i] == totalSum) {
+int findMaxLength(int* nums, int numsSize) {
+int max(int a, int b) {
+int subarraysDivByK(int* nums, int numsSize, int k) {
+int rob(int* nums, int numsSize) {
+int max(int a, int b) {
+int numSubarrayProductLessThanK(int* nums, int numsSize, int k) {
+    while (right < numsSize) {
+int minCostClimbingStairs(int* cost, int costSize) {
+int min(int a, int b) {
+int minSubArrayLen(int target, int nums[], int numsSize) {
+        while (sum >= target) {
+int min(int a, int b) {
+void backtrack(int start, int end, char* s, vector<vector<string>>& result) {
+    if (start >= end) {
+        while (left < right) {
+    if (close < open) {
+int* twoSum(int* numbers, int numbersSize, int target, int* returnSize) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+int maxProduct(char **words, int wordsSize) {
+void backtrack(int* nums, int numsSize, int* path, int pathSize, int* used, int* res, int resSize) {
+    if (pathSize == numsSize) {
+int** permuteUnique(int* nums, int numsSize, int** columnSizes, int* returnSize) {
+void printPermutation(int* nums, int size) {
+void permute(int* nums, int size, int start) {
+    if (start == size) { // 一个全排列生成完成
+int singleNumber(int* nums, int numsSize) {
+void findCombinations(int* candidates, int candidatesSize, int target, int* current, int currentSize, int* result, int* resultSize) {
+int** combinationSum2(int* candidates, int candidatesSize, int target, int* returnSize, int** returnColumnSizes) {
+int* countBits(int n, int* returnSize) {
+void backtrack(int start, int target, int* candidates, int candidatesSize, int** res, int* resSize, int* path, int pathSize) {
+int** combinationSum(int* candidates, int candidatesSize, int target, int* returnSize, int** returnColumnSizes) {
+int divide(int dividend, int divisor) {
+    while (tmp >= divisor_abs) {
+int dfs(char grid[][MAX_WIDTH], int x, int y, int max_width) {
+int largestArea(char grid[][MAX_WIDTH], int max_height, int max_width) {
+int halfQuestions(int *questions, int questionsSize) {
+int minAdjustment(int* nums, int numsSize) {
+int max(int a, int b) {
+int isInside(int x, int y) {
+int manhattanDistance(char grid[][MAX_N], int x, int y) {
+int maxGroups(int* tiles, int tilesSize) {
+int storeWater(int *bucket, int *vat, int n) {
+        if (waterBucket >= maxVat) {
+int minimumTimeRequired(Task *tasks, int tasksSize) {
+        if (tasks[i].start > maxTime) {
+int orchestraLayout(int num, int xPos, int yPos) {
+        if (total - i * (i - 1) * 2 >= num) {
+int purchasePlans(int* nums, int numsSize, int target) {
+    while (left < right) {
+        if (nums[left] + nums[right] == target) {
+        } else if (nums[left] + nums[right] < target) {
+int countBreakfast(int* staple, int stapleSize, int* drinks, int drinksSize, int x) {
+int gcd(int a, int b) {
+long long combination(int n, int k) {
+int paintingPlan(int n, int k) {
+int calculate(int k, int n) {
+int chaseGame(Graph graph, int startA, int startB) {
+    while (front < rear) {
+        if (stepA == stepB) {
+int busRapidTransit(int target, int inc, int dec, int jump[], int cost[], int m) {
+int min(int a, int b) {
+int min_operations(int* nums, int numsSize) {
+int minimumOperations(char* leaves) {
+int minJump(int *jump, int jumpSize) {
+        if (i == curEnd) {
+TreeNode* createTreeNode(int val) {
+int maxSumOfNodes(TreeNode* root, int k) {
+void dfs(TreeNode* node, int k, Result* result) {
+        if (leftSum > rightSum) {
+int minTime(int *time, int timeSize, int m) {
+long long expectedNumber(int *scores, int length) {
+Node* createNode(int val) {
+void addEdge(Node* nodes, int src, int dest) {
+int dfs(Node* nodes, int index, int* visited, int A, int* result) {
+            if (val > maxVal) {
+int maxScore(int** edges, int edgesSize, int* edgesColSize, int* value, int valueSize) {
+node* newNode(int to) {
+int dfs(node* graph, int start, int end, int rounds, int currentRounds) {
+    if (currentRounds == rounds) {
+int numWays(int n, int relation[][2], int k) {
+int minCount(int* coins, int n) {
+int missingNumber(int* nums, int numsSize) {
+int add(int a, int b) {
+int* smallestK(int* arr, int arrSize, int k, int* returnSize) {
+void wiggleSort(int* nums, int numsSize) {
+void merge(int A[], int m, int B[], int n) {
+ListNode* getKthFromEnd(ListNode* head, int k) {
+    while (p1 != NULL) {
+int maxSubArray(int nums[], int size) {
+        if (maxSoFar < maxEndingHere) {
+int* divingBoard(int shorter, int longer, int k, int* returnSize) {
+int findMax(int a, int b) {
+void permute(char *str, int l, int r) {
+int sum(int n, int acc) {
+int mechanicalAccumulator(int target) {
+bool checkDynasty(int* places, int placesSize) {
+void calculateProductExceptSelf(int* arrayA, int length, int* arrayB) {
+int encryptionCalculate(int dataA, int dataB) {
+int min(int a, int b) {
+int missingNumber(int* records, int recordsSize) {
+int rob(int** frame, int rows, int cols) {
+void backtrack(int* ciphertext, int len, int start, int* results) {
+    if (start == len) {
+int numDecodings(int* ciphertext, int len) {
+int findCoach(int* actions, int actionsSize) {
+int* findAnagrams(int* sockets, int socketsSize, int* returnSize) {
+int reversePairs(int* nums, int l, int r, int* count) {
+int reversePairs(int* nums, int length) {
+void permute(char *str, int l, int r) {
+int* leastNumberofBuckets(int* stock, int stockSize, int cnt, int* resultSize) {
+    if (cnt <= 0 || stock == NULL || resultSize == NULL) {
+ListNode* createNode(int val) {
+ListNode* deleteNode(ListNode* head, int val) {
+    if (head->val == val) {
+    while (current->next != NULL && current->next->val != val) {
+    if (current->next != NULL) {
+    while (temp != NULL) {
+    while (head != NULL) {
+int* countNumbers(int n, int* returnSize) {
+int findKthFromEnd(ListNode* head, int k) {
+    while (fast != NULL) {
+int max(int a, int b) {
+ListNode* reverseList(ListNode* head) {
+    while (curr != NULL) {
+ListNode* createList(int* values, int size) {
+        if (head == NULL) {
+void printList(ListNode* head) {
+    while (head != NULL) {
+char* pathEncryption(char* path) {
+    while ((token = strtok_r(NULL, &delimiter, &last)) != NULL) {
+int trainWays(int num) {
+int findRepeatNumber(int* nums, int numsSize) {
+int smallestDifference(int *a, int aSize, int *b, int bSize) {
+        if (diff < minDiff) {
+int findMagicIndex(int* nums, int numsSize) {
+    while (left <= right) {
+        if (nums[mid] == mid) {
+        } else if (nums[mid] < mid) {
+int search(int* nums, int numsSize, int target) {
+    while (left <= right) {
+        if (nums[mid] == target) {
+int findMaxConsecutiveOnes(int num) {
+char* binaryTransformation(double num) {
+    if (right < left) {
+int multiply(int A, int B) {
+void deleteNode(struct ListNode* node) {
+void setZeroes(int** matrix, int matrixRowSize, int matrixColSize) {
+int countOnes(int num) {
+void findClosedNumbers(int num, int* smaller, int* larger) {
+        if (countOnes(i) == ones) {
+        if (countOnes(i) == ones) {
+int exchangeBits(int num) {
+int convertInteger(int A, int B) {
+bool isValidBST(TreeNode* root) {
+bool validateBST(TreeNode* node, long minVal, long maxVal) {
+bool isBalanced(struct TreeNode* root) {
+int checkHeight(struct TreeNode* node) {
+int max(int a, int b) {
+ListNode* createListNode(int val) {
+ListNode** createLinkedLists(TreeNode* root, int* listSize) {
+void freeLinkedLists(ListNode** lists, int listSize) {
+TreeNode* sortedArrayToBST(int* nums, int left, int right) {
+TreeNode* sortedArrayToBSTWrapper(int* nums, int numsSize) {
+int isPalindrome(ListNode* head) {
+    while (fast->next != NULL && fast->next->next != NULL) {
+    while (curr != NULL) {
+    while (p2 != NULL) {
+struct ListNode* removeDuplicateNodes(struct ListNode* head) {
+    while (curr != NULL) {
+            while (start < end) {
+    if (compressedLen >= len) {
+void replaceSpaces(char *str, int length) {
+int isTopStudent(Enrollment *enrollments, int count, int student_id) {
+Result twoSum(int* nums, int numsSize, int target) {
+double calculate_duration(time_t start, time_t end) {
+double calculate_fee(double duration) {
+int findMinSumTreeLevel(TreeNode* root) {
+    while (front < rear) {
+        if (sum < minSum) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+        if (hashTable[complement] != NULL) {
+int hammingDistance(int x, int y) {
+int maxHammingDistance(int nums[], int length) {
+int findMaxBitwiseAnd(int *nums, int numsSize) {
+int getPermutationIndex(int* perm, int permSize) {
+    while (low <= high) {
+int maximumIncreasingTripletValue(int* nums, int numsSize) {
+        if (nums[i] > mid) {
+        } else if (nums[i] < min) {
+        } else if (nums[i] > min && nums[i] < mid) {
+int trap(int* height, int heightSize) {
+    while (left < right) {
+            if (height[left] >= leftMax) {
+            if (height[right] >= rightMax) {
+ListNode* createNode(int value) {
+void appendNode(ListNode** head, int value) {
+    if (*head == NULL) {
+        while (current->next != NULL) {
+void printList(ListNode* head) {
+    while (current != NULL) {
+void freeList(ListNode* head) {
+    while (current != NULL) {
+HashNode *createHashNode(int key) {
+void updateHash(HashNode **head, int key) {
+    while (current != NULL) {
+        if (current->key == key) {
+    while (current != NULL) {
+    while (current != NULL) {
+    while (head != NULL) {
+    while (current != NULL) {
+ListNode *createListNode(int val) {
+    while (head != NULL) {
+User *createUser(int size) {
+void addUser(User *user, int friendId) {
+            if (user->friends[i] == friendId) {
+int findPattern(int* stream, int streamSize, int* pattern, int patternSize) {
+        if (matches == patternSize) {
+        if (windowEnd - windowStart + 1 > patternSize) {
+MinStack* minStackCreate(int capacity) {
+void minStackPush(MinStack* obj, int val) {
+void minStackPop(MinStack* obj) {
+int minStackTop(MinStack* obj) {
+int minStackGetMin(MinStack* obj) {
+void minStackFree(MinStack* obj) {
+int* findMinStock(int* stock, int stockSize, int cnt, int* returnSize) {
+Node* copyRandomList(Node* head) {
+ListNode* createNode(int value) {
+ListNode* deleteNode(ListNode* head, int val) {
+    if (head == NULL || head->val == val) {
+    while (current->next != NULL) {
+        if (current->next->val == val) {
+    while (current != NULL) {
+    while (current != NULL) {
+struct ListNode* reverseList(struct ListNode* head) {
+    while (current != NULL) {
+int* countNumbers(int cnt, int* returnSize) {
+double myPow(double x, long n) {
+int findKthFromEnd(ListNode* head, int k) {
+        if (first == NULL) {
+    while (first != NULL) {
+    while (head != NULL) {
+int* spiralOrder(int** matrix, int matrixSize, int* matrixColSize, int* returnSize) {
+    while (top <= bottom && left <= right) {
+        if (top <= bottom) {
+        if (left <= right) {
+void reorderOddEven(int* actions, int actionsSize) {
+    while (i < len) {
+bool isSymmetric(TreeNode* left, TreeNode* right) {
+bool isSymmetricTree(TreeNode* root) {
+    if (root == NULL) {
+struct TreeNode* createTreeNode(int val) {
+int cuttingBamboo(int bamboo_len) {
+                    int* inorder, int inorderLeft, int inorderRight) {
+    if (preorderLeft > preorderRight || inorderLeft > inorderRight) {
+TreeNode* sortedArrayToBST(int* preorder, int preorderSize, int* inorder, int inorderSize) {
+ListNode* createListNode(int val) {
+int* reversePrint(ListNode* head, int* size) {
+    if (head == NULL) {
+    while (current != NULL) {
+int digit_sum(int num) {
+int wardrobeFinishing(int m, int n, int cnt) {
+            if (digit_sum(i) + digit_sum(j) <= cnt) {
+char* pathEncryption(char* path) {
+int isInside(int x, int y, int rows, int cols) {
+bool dfs(char** grid, int rows, int cols, int i, int j, char* target, int index) {
+bool exist(char** grid, int rows, int cols, char* target) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+int trainWays(int num) {
+bool searchMatrix(int** plants, int plantsSize, int* plantsColSize, int target) {
+        if (plants[row][col] == target) {
+        } else if (plants[row][col] > target) {
+void initHashTable(HashTable *hashTable, int size) {
+int hashFunction(int key, int size) {
+void insert(HashTable *hashTable, int key) {
+    while (hashTable->keys[index] != -1 && hashTable->keys[index] != key) {
+int find(int* documents, int documentsSize) {
+BookQueue* bookQueueCreate() {
+void bookQueuePush(BookQueue* obj, int bookID) {
+int bookQueuePop(BookQueue* obj) {
+void bookQueueFree(BookQueue* obj) {
+int smallestDifference(int *a, int aSize, int *b, int bSize) {
+    while (i < aSize && j < bSize) {
+        if (diff < minDiff) {
+char winner(char board[][MAXC], int rows, int cols) {
+    if (intersection != NULL) {
+unsigned int hashFunction(char *word, int capacity) {
+WordsFrequency* WordsFrequencyCreate(char **book, int bookSize) {
+        while (obj->words[index].word != NULL) {
+        if (obj->words[index].word == NULL) {
+    while (obj->words[index].word != NULL) {
+void WordsFrequencyFree(WordsFrequency* obj) {
+    while (left <= right) {
+void backtrack(char *s, int length) {
+    if (strlen(s) == length) {
+int findMagicIndex(int* nums, int numsSize) {
+    while (left <= right) {
+        if (nums[mid] == mid) {
+        } else if (nums[mid] < mid) {
+int isSafe(int row, int col) {
+void solveNQueens(int row, int n) {
+int search(int* nums, int numsSize, int target) {
+    while (left <= right) {
+        if (nums[mid] == target) {
+int reverseBits(int num) {
+TreeNode* buildTree(int* nums, int numsSize, int* index) {
+    if (*index >= numsSize || nums[*index] == null) {
+AnimalShelf* createShelf() {
+void enqueue(AnimalShelf *shelf, int id, int type) {
+    if (!shelf->oldest || shelf->oldest->id < id) {
+char* binaryNumberToString(double num) {
+int pileBox(Box boxes[], int n) {
+void floodFill(int **image, int imageSize, int *imageColSize, int sr, int sc, int newColor) {
+void dfs(int **image, int imageRowSize, int *imageColSize, int x, int y, int originalColor, int newColor) {
+        image[x][y] != originalColor) {
+    if (close < open) {
+int multiply(int A, int B) {
+    if (index == numsSize) {
+void update(int *array, int w, int x, int value) {
+int* drawLine(int length, int w, int x1, int x2, int y) {
+SetOfStacks* setOfStacksCreate(int capacity) {
+Stack* getStack(SetOfStacks* obj, int index) {
+    if (obj->stacks[index] == NULL) {
+void setOfStacksPush(SetOfStacks* obj, int x) {
+int setOfStacksPop(SetOfStacks* obj) {
+int setOfStacksPopAt(SetOfStacks* obj, int index) {
+void setOfStacksFree(SetOfStacks* obj) {
+        if (obj->stacks[i] != NULL) {
+ListNode* createNode(int val) {
+ListNode* reverseList(ListNode* head) {
+    while (l1 || l2 || carry) {
+    if (node == NULL || node->next == NULL) {
+void setZeroes(int** matrix, int matrixRowSize, int matrixColSize) {
+void initMatrix(int** matrix, int rowSize, int colSize) {
+void freeMatrix(int** matrix, int rowSize) {
+void printMatrix(int* matrix, int matrixSize) {
+int countOnes(int num) {
+void findClosedNumbers(int num, int* smaller, int* larger) {
+        if (countOnes(i) == ones) {
+    if (num > 1 && countOnes(num - 1) == ones) {
+int exchangeBits(int num) {
+int convertInteger(int A, int B) {
+unsigned int insertBits(unsigned int N, unsigned int M, int i, int j) {
+    if (left && right) {
+    if (successor != NULL) {
+    if (p->right != NULL) {
+    while (root != NULL) {
+bool isValidBST(TreeNode* root) {
+bool isValidBSTHelper(TreeNode* node, long min, long max) {
+bool checkBalance(struct TreeNode* node, int* height) {
+    if (node == NULL) {
+bool isBalanced(struct TreeNode* root) {
+ListNode* createListNode(int val) {
+ListNode** createLinkedLists(TreeNode* root, int* depths, int depthCount) {
+    while (root != NULL) {
+            if (lists[currentDepth] == NULL) {
+            if (node->left != NULL) {
+            if (node->right != NULL) {
+void freeLinkedLists(ListNode** lists, int count) {
+        while (node != NULL) {
+TreeNode* sortedArrayToBST(int* nums, int left, int right) {
+TreeNode* sortedArrayToBSTLCCI(int* nums, int numsSize) {
+void InitializeStack(Stack *s, int size) {
+void Push(Stack *s, int value) {
+        while (!IsEmpty(&temp) && temp.stack[temp.top] > current) {
+TripleInOne* tripleInOneCreate(int stackSize) {
+void tripleInOnePush(TripleInOne* obj, int stackNum, int value) {
+int tripleInOnePop(TripleInOne* obj, int stackNum) {
+int tripleInOnePeek(TripleInOne* obj, int stackNum) {
+bool tripleInOneIsEmpty(TripleInOne* obj, int stackNum) {
+void tripleInOneFree(TripleInOne* obj) {
+Graph createGraph(int size) {
+void addEdge(Graph *graph, int start, int end) {
+bool dfs(int start, int target, int *visited, Graph graph) {
+bool findWhetherExistsPath(int n, int **graph, int start, int target) {
+stack* createStack(int capacity) {
+void push(stack* s, int value) {
+MyQueue* newQueue() {
+void freeQueue(MyQueue* queue) {
+void queuePush(MyQueue* queue, int value) {
+int queuePop(MyQueue* queue) {
+int queuePeek(MyQueue* queue) {
+int queueEmpty(MyQueue* queue) {
+MinStack* create(int capacity) {
+void destroy(MinStack* minStack) {
+void push(MinStack* minStack, int x) {
+void pop(MinStack* minStack) {
+int min(MinStack* minStack) {
+ListNode* detectCycle(ListNode* head) {
+    while (slow != fast) {
+    while (fast != slow) {
+    if (cycleStart != NULL) {
+    if (lenA > lenB) {
+    while (pA && pB) {
+        if (pA == pB) {
+int isPalindrome(ListNode* head) {
+    while (fast->next != NULL && fast->next->next != NULL) {
+    while (slow->next != NULL) {
+    while (p2 != NULL) {
+struct ListNode* removeDuplicateNodes(struct ListNode* head) {
+        while (i + 1 < len && S[i + 1] == currentChar) {
+    if (j >= len) {
+void replaceSpaces(char *str, int length) {
+int game(int* guess, int* answer, int guessSize) {
+bool isRobotPossible(char *command, int *obstacles, int obstaclesSize, int x, int y) {
+int calcDominoes(int n, int m, int broken[][2], int b) {
+int countWays(int *nums, int numsSize, int target) {
+char* betterCompression(char* source, char* compressed) {
+    while (i < sourceLen) {
+int* getBitwiseOR(int* nums, int numsSize, int* returnSize) {
+int findMinSumTreeLevel(TreeNode* root) {
+    while (front < rear) {
+        if (levelSum < minSum) {
+int maximumLength(int *nums, int numsSize, int k) {
+int maximumLength(int* nums, int numsSize, int k) {
+int max(int a, int b) {
+char* compressString(char* word) {
+int findTheChildWhoHasTheBallAfterKSeconds(int n, int k) {
+int hammingDistance(int x, int y) {
+int maxHammingDistance(int* nums, int numsSize, int m) {
+int max(int a, int b) {
+int maxConsecutiveAvailable(int* seats, int seatsSize) {
+    while (i < len) {
+int numberOfPairs(int* nums1, int nums1Size, int* nums2, int nums2Size, int k) {
+    while (i < len) {
+int numberOfPairs(int* nums1, int nums1Size, int* nums2, int nums2Size, int k) {
+int maxTotalReward(int *rewardValues, int rewardValuesSize) {
+int maxTotalReward(int* rewardValues, int rewardValuesSize) {
+    while (i < rewardValuesSize) {
+        if (rewardValues[i] > totalReward) {
+int minOperations(char* initial, char* target) {
+int minimumDifference(int *nums, int numsSize, int k) {
+int* distinctColors(int limit, int **queries, int n, int* returnSize) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+int countDaysWithoutMeetings(int days, int **meetings, int meetingsSize) {
+        if (meetings[i][0] > end) {
+bool isSpecialArray(int* nums, int numsSize) {
+int findTheXOR(int* nums, int numsSize) {
+bool isSpecialArray(int *nums, int numsSize, int *queries, int queriesSize, int *answer, int answerSize) {
+int maxPotholes(char * road, int budget) {
+int maxSumSubsequence(int *nums, int numsSize, int *queries, int queriesSize) {
+int valueAfterKSeconds(int n, int k) {
+int* findOccurrences(int* nums, int numsSize, int* queries, int queriesSize, int x, int* returnSize) {
+int getPermutationIndex(int* perm, int permSize) {
+int sumDigitDifferences(int* nums, int numsSize) {
+        if (nums[i] > maxNum) {
+bool checkIfGridSatisfiesConditions(int** grid, int gridSize, int* gridColSize) {
+int findWinningPlayer(int* skills, int skillsSize, int k) {
+    while (head != tail) {
+            if (winStreak[player1] > maxStreak) {
+            if (winStreak[player2] > maxStreak) {
+int countSpecialCharacters(const char* word) {
+int maximumIncreasingTripletValue(int* nums, int numsSize) {
+ListNode* createLinkedList(int* values, int size) {
+int winnerOfLinkedList(ListNode* head) {
+bool areAllDigitsUnique(int num) {
+int countNumbersWithUniqueDigits(int a, int b) {
+int isSelfDivisible(int *permutation, int n) {
+int maxGcdSum(int* nums, int numsSize, int k) {
+int gcdGCD(int a, int b) {
+int perimeter(Point *hull, int k) {
+int maxMinVal(int* nums, int numsSize) {
+int kthSmallestSubarraySum(int *nums, int numsSize, int k) {
+    while (end < numsSize) {
+TreeNode* createNode(int val) {
+void buildTree(int* parents, TreeNode* nodes[], int n) {
+void calculateAncestors(TreeNode* node, int* ancestors, int val) {
+    if (node->parent != NULL) {
+int processQuery(TreeNode* node, int val, int* ancestors) {
+    while (node != NULL) {
+int* maxGeneticDifference(int* parents, int parentsSize, int** queries, int queriesSize, int* returnSize) {
+int maxPoints(int** points, int m, int n) {
+int addRungs(int* rungs, int rungsSize, int dist) {
+        while (rungs[i] - current > dist) {
+int checkContradictions(Equation *equations, int length) {
+void add(HashSet *hs, int value) {
+int contains(HashSet *hs, int value) {
+        if (hs->arr[i] == value) {
+IndexPair twoSum(int* nums, int numsSize, int target) {
+bool canWinNim(int* piles, int pilesSize) {
+int colorTheGrid(int m, int n) {
+TreeNode* canMerge(int** trees, int treesSize) {
+int* getConcatenation(int* nums, int numsSize, int* returnSize) {
+        if (segments[i].start > prevEnd) {
+int findSmallestChair(int **times, int timesSize, int targetFriend) {
+        if (events[i] == arrivalTime) {
+        if (count[i] != 0 && count[i] != firstOccurrence) { // 如果存在字符出现次数不同
+int maxDepthBST(TreeNode* root) {
+    if (root == NULL) {
+int longestCommonSubpath(int n, int paths[][1], int m) {
+            if (paths[i][j + 1] > cityCount) {
+int* buildArray(int* nums, int numsSize, int* ansSize) {
+int** findPeakElement(int** mat, int matRowSize, int matColSize) {
+    while (left < right) {
+int canCut(int *ribbons, int len, int k, int maxLen) {
+int maxRibbons(int *ribbons, int len, int k) {
+    while (left <= right) {
+int countWonderfulSubstrings(char* word) {
+void rotate(int *layer, int m, int n, int k) {
+void reverse(int *start, int count) {
+void rotateGrid(int **grid, int gridSize, int *gridColSize, int k) {
+int maxProductDifference(int* nums, int numsSize) {
+void getLoginRecords(LoginRecord *records, int size) {
+void findLatestLoginIn2020(LoginRecord *records, int size) {
+    for (Edge edge : edges) {
+bool canPlaceFlowers(int* flowerbed, int flowerbedSize, int n) {
+int nearestExit(char** maze, int mazeSize, int* mazeColSize, int* entrance) {
+    while (head < tail) {
+int countPairs(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+void dfs(int x, int y, vector<vector<int>>& grid1, vector<vector<int>>& grid2, int m, int n) {
+int* minDifferenceQueries(int* nums, int numsSize, int* queries, int queriesSize, int* returnSize) {
+    if (finish < start) {
+char* largestOddNumber(char* num) {
+void groupEmployeesBySalary(Employee* employees, int size) {
+        if (employees[i].salary > maxSalary) {
+        if (group == NULL) {
+        if (groups[i] != NULL) {
+int minimizeProductSum(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int calculateLatestRound(int n, int firstPlayer, int secondPlayer) {
+int calculateEarliestRound(int n, int firstPlayer, int secondPlayer) {
+    while (firstPlayer != secondPlayer) {
+int* findEarliestAndLatest(int n, int firstPlayer, int secondPlayer, int returnSize) {
+int maximumRemovals(char *s, char *p, int *removable, int removableSize) {
+            while (removableIndex < removableSize && removable[removableIndex] < sIndex) {
+            if (removableIndex < removableSize && removable[removableIndex] == sIndex) {
+bool mergeTriplets(int **triplets, int tripletsSize, int *tripletsColSize, int *target, int targetSize) {
+bool makeEqual(char **words, int wordsSize) {
+int maxAlternatingSum(int* nums, int numsSize) {
+char* removeOccurrences(char* s, char* part) {
+            if (j < lenS) {
+bool canBeIncreasing(int* nums, int numsSize) {
+int** findRLEArray(int** encoded1, int* encoded1Size, int** encoded2, int* encoded2Size, int* returnSize, int** returnColumnSizes) {
+        if (s[i] == expected) {
+int reductionOperations(int* nums, int numsSize) {
+        if (nums[i] > maxValue) {
+        } else if (nums[i] > secondMaxValue && nums[i] < maxValue) {
+        if (nums[i] == maxValue) {
+bool isMatrixEqual(int** mat, int* matRowSize, int* matColSize, int** target, int* targetRowSize, int* targetColSize) {
+int minSkips(int dist[], int distSize, int speed, int hoursBefore) {
+int* assignTasks(int* servers, int serversSize, int* tasks, int tasksSize, int* returnSize) {
+        while (ptr < serversSize && available[ptr].time > taskIndex) {
+        if (ptr == serversSize) {
+            while (available[ptr].time > taskIndex) {
+char* maxValueAfterInsertion(char* n, int x) {
+char *longestWord(TrieNode *root, char **words, int wordsSize) {
+            if (strlen(words[i]) > maxLen) {
+char *findLongestWord(char **words, int wordsSize) {
+int maximumCost(int n, int **highways, int highwaysSize, int *highwaysColSize, int k) {
+int findStudentToReplaceChalk(int chalk[], int k, int n) {
+int isCovered(int* ranges, int rangesSize, int left, int right) {
+        if (ranges[i] <= left && (i + 1 < rangesSize ? ranges[i + 1] : ranges[i]) >= left) {
+char* convertDate(char* date) {
+int* distinctNumbers(int* nums, int numsSize, int k, int* returnSize) {
+    while (right < numsSize) {
+int stoneGameVIII(int* stones, int n) {
+int max(int a, int b) {
+bool canReach(char *s, int minJump, int maxJump) {
+    while (front < rear) {
+int minSpeedToArriveOnTime(int dist[], int n, double hour) {
+    while (left < right) {
+        if (totalTime <= hour) {
+int isPalindrome(const char* str) {
+char* nextPalindrome(char* num) {
+int rearrangeSticks(int n, int k) {
+FindSumPairs* findSumPairs(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+void add(FindSumPairs* obj, int index, int val) {
+int count(FindSumPairs* obj, int tot) {
+        if (s[i] != expected) {
+int subsetXORSum(int *nums, int numsSize) {
+    void backtrack(int index, int sum) {
+int rhombusSum(int **grid, int m, int n, int x, int y) {
+int* getBiggestThree(int** grid, int m, int n, int* returnSize) {
+int findMinimumXOR(int *nums1, int *nums2, int nums1Size, int nums2Size) {
+int minimizeMaxPairSum(int* nums, int numsSize) {
+    while (left < right) {
+int hasCycle(int *colors, int **edges, int n, int m) {
+int dfs(int node, int *visited, char *colors, int **edges, int n, int m) {
+        if (edges[i][0] == node) {
+            if (edges[i][0] == node) {
+int largestColorValue(int *colors, int **edges, int n, int m) {
+            if (edges[j][0] == node) {
+int max(int a, int b) {
+int maxSumMinProduct(int* nums, int numsSize, int MOD) {
+int maxDistance(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int maximumPopulation(int** logs, int* logsSize, int* logeSize) {
+        if (population[year] > maxPop) {
+struct ListNode* deleteDuplicatesUnsorted(struct ListNode* head) {
+    while (curr != NULL) {
+int faultySensor(int* sensor1, int sensor1Size, int* sensor2, int sensor2Size) {
+int catchMaximumAmountofPeople(int* team, int teamSize, int dist) {
+    while (left < right) {
+        if (right - left >= dist) {
+int getMinSwaps(char* num, int k) {
+int* minInterval(int** intervals, int intervalsSize, int* queries, int queriesSize, int* returnSize) {
+        while (left <= right) {
+                if (mid > 0 && intervals[mid - 1][1] >= query) {
+int isDecreasingSubsequence(char *s, int i) {
+int canSplit(char *s, int index) {
+int getMinDistance(int* nums, int numsSize, int target, int start) {
+    while (forward < numsSize && nums[forward] != target) {
+    while (backward >= 0 && nums[backward] != target) {
+    if (forward < numsSize) {
+void findCustomersWithPositiveRevenue() {
+void fillDown(int m, int n, char** matrix, int row, int col) {
+char** rotateTheBox(char*** box, int boxSize, int* boxColSize) {
+int isBeautifulSubstring(const char* word, int length) {
+    while (right < length) {
+int longestBeautifulSubstring(char* word) {
+int maxFrequency(int* nums, int numsSize, int k) {
+int sumBase(int n, int k) {
+int getXORSum(int* arr1, int arr1Size, int* arr2, int arr2Size) {
+int maxIceCream(int costs[], int costsSize, int coins) {
+        while (count[price] > 0 && coins >= price) {
+bool checkIfPangram(char * sentence) {
+void bfs(int start_x, int start_y) {
+        if (x == end_x && y == end_y) {
+TrieNode* createNode() {
+void insert(TrieNode* root, const char* word) {
+bool search(TrieNode* root, const char* word) {
+int countQuadruples(char* firstString, char* secondString) {
+int maximumBeauty(int* flowers, int flowersSize, int k) {
+    while (head < tail) {
+void mruQueuePush(MRUQueue* obj, int x) {
+void mruQueuePop(MRUQueue* obj) {
+int mruQueueTop(MRUQueue* obj) {
+void mruQueueInc(MRUQueue* obj) {
+void mruQueueFree(MRUQueue* obj) {
+int maxSubarraySumAfterOneOperation(int* nums, int numsSize) {
+void findPath(TreeNode* node, int target, vector<int>& path) {
+int countSteps(const vector<int>& path, int start, int end) {
+int findDistance(TreeNode* root, int p, int q) {
+int biggestWindow(const Date dates[], int size) {
+int largestSubarraySum(int* nums, int numsSize, int k) {
+TreeNode* lowestCommonAncestorIV(TreeNode* root, int x, int y) {
+int findDeepestLeaf(struct TreeNode* root, int leaf) {
+struct TreeNode* changeRoot(struct TreeNode* root, int leaf) {
+    while (curr->right && curr->right->val != leaf) {
+SumInfo sumOfArithmeticSubsequence(int* nums, int numsSize, int start, int d) {
+    while (end < numsSize) {
+int sumOfSpecialEvenlySpacedElements(int* nums, int numsSize, int* queries, int queriesSize, int* returnSize) {
+int hammingDistance(int x, int y) {
+int maxHammingDistance(int* nums, int numsSize, int m) {
+int minOperations(char* initial, char* target) {
+void initHashTable(HashTable *hashTable, int size) {
+int hashFunction(int key, int size) {
+void insert(HashTable *hashTable, int key) {
+    while (hashTable->keys[index] != -1 && hashTable->keys[index] != key) {
+int find(HashTable *hashTable, int key) {
+        if (hashTable->keys[index] == key) {
+int[] twoSum(int* nums, int numsSize, int target) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    if (indices != NULL) {
+        if (end - start + 1 > max_len) {
+    while (start < end) {
+int findPattern(int** board, int boardSize, int* boardColSize, char** pattern, int patternSize) {
+int match(int** board, int i, int j, char** pattern, int patternSize) {
+void recordMatch(int i, int j, int size) {
+int maximumIncreasingTripletValue(int* nums, int size) {
+int max(int a, int b) {
+    while (low <= high) {
+int trap(int* heights, int heightsSize) {
+    while (left < right) {
+            if (heights[left] >= leftMax) {
+            if (heights[right] >= rightMax) {
+        if (domains[i] != NULL) {
+        if (domains[i] != NULL) {
+        if (domains[i] != NULL) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+            if (hashTable[j].value == complement) {
+int[] twoSum(int[] nums, int numsSize, int target) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+int isMatch(int* stream, int j, int k, int* pattern, int patternLen) {
+int findPatternInStream(int* stream, int streamSize, int* pattern, int patternSize) {
+    while (j <= streamSize - patternSize) { // 保证至少可以读取模式长度的数字
+int maximumProcessableQueries(int* nums, int numsSize, int* queries, int queriesSize, int* answer, int answerSize) {
+    while (i < numsSize && j < queriesSize) {
+int dfs(int node, int color, int parentColor, vector<int>& edges, vector<int>& colors) {
+    if (colors[node] != parentColor) {
+        if (i != parentColor) {
+int maximumSubtreeSize(vector<int>& edges, vector<int>& colors) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    if (indices != NULL) {
+Transaction findThirdTransaction(Transaction *transactions, int n) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+int minimumCost(int K, int N, int* prices) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+            if (map[j].num == complement) {
+int countSubarrays(int *nums, int numsSize) {
+long long chooseEdgesToMaximizeScore(TreeNode* root, int edges[], int* selected, int selectedSize, long long currentScore, int currentCost) {
+        if (edges[i] == currentCost) {
+TreeNode* createNode(int val) {
+void dfs(TreeNode* node, int[] vals, int n) {
+int countGoodPaths(int[] vals, int[][] edges) {
+char **sortPeople(char **names, int *heights, int n) {
+int minimumCosts(int regular[], int express[], int n, int expressCost) {
+int* smallestSubarrays(int* nums, int numsSize, int* returnSize) {
+        if (currentOr >= maxOr) {
+int maxMatching(int players[], int playersSize, int trainers[], int trainersSize) {
+    while (i < playersSize && j < trainersSize) {
+        if (i == AliceArriveMonth) {
+        } else if (i == AliceLeaveMonth) {
+        if (i == BobArriveMonth) {
+        } else if (i == BobLeaveMonth) {
+TrieNode* newNode() {
+void insert(TrieNode* root, char* word) {
+int calculateScore(TrieNode* node, char* word) {
+int* sumOfPrefixScores(char** words, int wordsSize, int* returnSize) {
+TreeNode* reverseOddLevels(TreeNode* root) {
+void merge(int arr[], int l, int m, int r) {
+void sortArray(int arr[], int l, int r) {
+void printArray(int A[], int size) {
+        if (intervals[i][0] >= end) {
+int mostFrequentEven(int* nums, int numsSize) {
+   int visibleMountains(int** peaks, int peaksSize, int* peaksColSize) {
+               if (peaks[i][j] > max_height) {
+Result twoSum(int* nums, int numsSize, int target) {
+int scheduler(int tasks[], int tasksSize, int space) {
+        if (day - lastDone[tasks[i]] < space) {
+int maxRows(int** matrix, int m, int n, int numSelect) {
+    sort(idx, idx + m, [&count](int i, int j) { return count[i] > count[j]; });
+            if (count[row] >= numSelect - selected) {
+        while (left < right) {
+unsigned int hash(int sum) {
+HashNode** initHashTable() {
+void insertOrUpdate(HashNode** table, int sum, int index, int length) {
+    if (table[key]->size < length) {
+int findAnotherPosition(HashNode** table, int sum, int index, int length) {
+            if (table[key]->positions[i] != index) {
+bool areThereTwoSubarraysWithEqualSum(int* nums, int numsSize) {
+        while (heapSize > 0 && heap[0] <= start) {
+int longestNiceSubarray(int* nums, int numsSize) {
+int combination(int n, int k) {
+int numberOfWays(int startPos, int endPos, int k) {
+bool checkDistances(char *s, int *distance, int distanceSize) {
+int minSwaps(int *nums, int numsSize) {
+int sum_of_digits(int num) {
+int maxSumPairs(int* nums, int numsSize) {
+int garbageCollection(char **garbage, int garbageSize, int *travel, int travelSize) {
+void initStack(Stack *stack, int size) {
+void push(Stack *stack, char value) {
+int longestSubsequenceWithLimitedSum(int* nums, int numsSize, int* queries, int queriesSize, int limit) {
+        while (sum > limit && start <= end) {
+int max(int a, int b) {
+    while (left < right) {
+void initTree(TreeNode** tree) {
+void updateTree(TreeNode* tree, int index) {
+int queryMaxSum(TreeNode* tree) {
+int* maxSegmentSumAfterDeletions(int* nums, int numsSize, int* removeQueries, int removeQueriesSize, int* returnSize) {
+char* shiftingLetters(char* s, int shifts[10][3], int shiftsRowSize, int shiftsColSize) {
+int minimumRecolors(char *blocks, int k) {
+int min(int a, int b) {
+long long combination(int n, int k) {
+long long findKthLargestSum(int *nums, int numsSize, int k) {
+    while (minSum <= maxSum) {
+TreeNode* createNode(int val) {
+int amountOfTime(TreeNode* root, int start) {
+    std::function<void(TreeNode*, std::unordered_map<int, TreeNode*>&)> dfs = [&](TreeNode* node, std::unordered_map<int, TreeNode*>& nodes) {
+int minNumberOfHours(int initialEnergy, int initialExperience, int energy[], int experience[], int n) {
+int canFinish(int* jobs, int jobsSize, int k, int timeLimit) {
+int minimumTimeToFinishAllJobs(int* jobs, int jobsSize, int k) {
+    while (left < right) {
+char* smallestNumberFromDIString(char* pattern, char** returnColumnSizes, int* returnSize) {
+int nodeWithHighestEdgeScore(int* edges, int edgesSize) {
+        if (scores[i] > maxScore) {
+void largestLocalValues(int** matrix, int rows, int cols, int** result, int* resultRows, int* resultCols) {
+Match* findMatch(char **teams, int teamsSize, int* returnSize) {
+int minimumReplacements(int* nums, int numsSize) {
+int maxRobots(int chargeTimes[], int runningCosts[], int n, int budget) {
+        if (maxCharge + windowSum <= budget) {
+int countBadPairs(int *nums, int numsSize) {
+        if (diff > maxDiff) {
+int reachableNodes(int n, int edges[][2], int restricted[], int* restrictedSize) {
+int longestIdealString(char *s, int k) {
+bool validPartition(int* nums, int numsSize) {
+int numberOfArithmeticTriplets(int* nums, int numsSize, int diff) {
+        if (nums[j] - nums[j - 1] == diff) {
+            while (k < numsSize && nums[k] - nums[j] == diff) {
+Node* createGraph(int edges[], int n) {
+Node* createNode(int val) {
+    if (graph[start]->next != NULL) {
+void bfs(int start, int* edges, int n, int* distances) {
+    while (front != rear) {
+        if (maxDistance < minMaxDistance) {
+        } else if (maxDistance == minMaxDistance && i < result) {
+int maximumGroups(int* grades, int gradesSize) {
+        if (studentCount + 1 > groupCount || grades[i] + lastSum <= lastSum) {
+int minimumOperations(int *nums, int numsSize) {
+int shortestSequence(int *rolls, int rollsSize, int k) {
+NumberContainers* create(int capacity) {
+void change(NumberContainers* obj, int index, int number) {
+    if (obj->numbers[number] != NULL) {
+            if (obj->numbers[number][i] == index) {
+            if (obj->numbers[number][i] > index) {
+int find(NumberContainers* obj, int number) {
+void destroy(NumberContainers* obj) {
+char* bestHand(char* ranks, char* suits) {
+bool isStraight(char* ranks) {
+bool hasThreeOfAKind(int* count) {
+bool hasTwoPair(int* count) {
+bool hasOnePair(int* count) {
+int zeroFilledSubarray(int* nums, int numsSize) {
+    while (right < numsSize) {
+int countBits(int num) {
+long long countExcellentPairs(int* nums, int numsSize, int k) {
+int equalPairs(int **grid, int gridRowSize, int gridColSize) {
+int areArraysEqual(int *a, int *b, int size) {
+int maximumProfit(int prices[], int pricesSize) {
+        if (prices[i] < minPrice) {
+int visiblePeople(int** heights, int n, int m) {
+int gcd(int a, int b) {
+int arrayGcd(int *nums, int length) {
+int minDeletionSize(int* nums, int numsSize, int* numsDivide, int numsDivideSize) {
+   int* numberOfPairs(int* nums, int numsSize, int* returnSize) {
+TreeNode* buildTree(int nodes, int* edges, int edgesSize) {
+void dfs(TreeNode* node, int target, int* visited, int* minNode) {
+int closestNode(TreeNode* root, int target) {
+int validSubarraySize(int* nums, int numsSize, int threshold) {
+    while (left < right) {
+int latestTime(int* buses, int busesSize, int* passengers, int passengersSize, int capacity) {
+    while (i < passengersSize) {
+int evaluateTree(TreeNode* root) {
+    if (root->left == NULL && root->right == NULL) {
+int countIdealArrays(int n, int maxValue) {
+SmallestInfiniteSet* smallestInfiniteSetCreate() {
+int popSmallest(SmallestInfiniteSet* set) {
+void addBack(SmallestInfiniteSet* set, int num) {
+void smallestInfiniteSetFree(SmallestInfiniteSet* set) {
+int fillCups(int* amount, int amountSize) {
+    if (maxCups > secondMaxCups) {
+int** generateMatrix(int m, int n) {
+    while (top <= bottom && left <= right) {
+ListNode* createListNode(int val) {
+int countPaths(int** grid, int m, int n, int i, int j, int mod) {
+int countIncreasingPaths(int** grid, int m, int n) {
+int totalPeopleAwareOfSecret(int n, int delay, int forget) {
+int gcd(int a, int b) {
+int countPairs(int n, int* edges, int edgesSize) {
+int maximumXOR(int *nums, int numsSize) {
+int minFlips(TreeNode* root, bool result) {
+int dfs(TreeNode* node, bool wantOne) {
+VideoSharingPlatform* videoSharingPlatformCreate() {
+int videoSharingPlatformUpload(VideoSharingPlatform *platform, Video video) {
+    if (platform->videos[index] == NULL) {
+        if (platform->videos[i] != NULL) {
+int* findValidUsers(Purchases* purchases, int purchasesSize, char* startDate, char* endDate, int minAmount, int* returnSize) {
+        if (userSum[i] >= minAmount) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+int canPassWithHealth(int mid, int* damage, int damageSize, int armor) {
+int findMinimumHealth(int* damage, int damageSize, int armor) {
+    while (left < right) {
+int buildWall(int height, int width, int bricks[], int bricksSize) {
+int max(int a, int b) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+                if (nums[j] == complement) {
+int minFlips(int** grid, int gridRowSize, int gridColSize) {
+int* amountOfNewAreaPaintedEachDay(Paint* paint, int paintSize, int* returnSize) {
+int minimumNumberOfLines(Point points[], int pointsSize) {
+double equalizeWater(int *buckets, int bucketsSize) {
+        if (buckets[i] > target) {
+bool removeOnes(int** grid, int gridSize, int* gridColSize) {
+int minimumOperations(int** grid, int gridRowSize, int gridColSize) {
+void initArrayOps(ArrayOps* ops, int capacity) {
+void addElement(ArrayOps* ops, int value) {
+void removeElement(ArrayOps* ops, int index) {
+int* getElementsAfterOperations(int* nums, int numsSize, int** queries, int queriesSize, int* returnSize) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+int rectangleArea(Point* points, int pointsSize) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+bool evaluateExpression(const char* expression, int index) {
+IndexPair twoSum(int* nums, int numsSize, int target) {
+Result twoSum(int* nums, int numsSize, int target) {
+bool isValidSequence(struct TreeNode* root, int* arr, int arrSize) {
+bool checkIfIsValidSequence(struct TreeNode* root, int* values, int valuesSize) {
+int** findContinuousRanges(int* nums, int numsSize, int target, int* returnSize, int** returnColumnSizes) {
+Result twoSum(int* nums, int numsSize, int target) {
+bool isConsecutive(int arr[], int n) {
+    if (right < left) {
+        if (rev > INT_MAX || rev < INT_MIN) {
+char* convert(char* s, int numRows) {
+int isPalindrome(const char* s, int start, int end) {
+    while (start < end) {
+double findMedianSortedArrays(int* nums1, int m, int* nums2, int n) {
+        while (hash[s[right]] && hash[s[right]] >= left) {
+int max(int a, int b) {
+    while (p != NULL || q != NULL) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+int modPow(int base, int exponent, int modulus) {
+int* getGoodIndices(int** variables, int variablesSize, int* variablesColSize, int target, int* returnSize) {
+        if (modPow((variables[i][0] * variables[i][1]) % 10, variables[i][2], variables[i][3]) == target) {
+int maxPartitionsAfterOperations(char *s, int k) {
+int gcd(int a, int b) {
+int sumGcd(int* nums, int start, int end) {
+int maxGcdSum(int* nums, int numsSize, int k) {
+int minNumberCoins(int* coins, int coinsSize, int target) {
+        if (currSum == need) {
+            while (i < coinsSize && coins[i] <= need) {
+int minOperations(char* word) {
+int maximumSetSize(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int* findMissingAndRepeated(int** grid, int gridSize, int* gridColSize, int* returnSize) {
+int* minimumNumberGame(int* nums, int numsSize, int* returnSize) {
+int maxSubarrayLength(int* nums, int numsSize, int k) {
+int countCompleteSubstrings(char *word, int k) {
+int countBlocks(int* nums, int numsSize) {
+        while (i + 1 < numsSize && nums[i + 1] == num) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+int countTestedDevices(int* batteryPercentages, int n) {
+    if (rootX != rootY) {
+int* smallestArrayWithSwaps(int* nums, int numsSize, int limit, int* returnSize) {
+        if (abs(nums[i] - nums[i - 1]) <= limit) {
+void updateMax(NodeInfo *info, int val) {
+void updateMin(NodeInfo *info, int val) {
+int* placeCoins(int* edges, int edgesSize, int* cost, int costSize, int* returnSize) {
+    void dfs(int node) {
+long long combination(int n, int k) {
+void floydWarshall(int **distance, int n) {
+                        if (distance[i][j] > maxDistance) {
+bool areSimilar(int** mat, int matSize, int* matColSize, int k) {
+int maximizeSquareHoleArea(int n, int m, int hBars[], int hBarsSize, int vBars[], int vBarsSize) {
+int min(int a, int b) {
+int max(int a, int b) {
+int countSubarrays(int* nums, int numsSize, int k) {
+int countGoodPartitions(int* nums, int numsSize) {
+int findMaximumLength(int* nums, int numsSize) {
+int max(int a, int b) {
+int countBeautifulSubstrings(char *s, int k) {
+int minimumNumber(int* prices, int pricesSize) {
+int countBeautifulSubstrings(char* s, int k) {
+int* findIntersectionValues(int* nums1, int nums1Size, int* nums2, int nums2Size, int* returnSize) {
+int maxProfit(int* prices, int pricesSize) {
+bool canMakePalindrome(char * s, int * queries, int queriesSize) {
+int distributeCandies(int n, int limit) {
+int gcd(int a, int b) {
+int inverse(int num, int mod) {
+long long C(int n, int k, int mod) {
+long long combine(int n, int k) {
+int distributeCandies(int n, int limit) {
+int numberOfWays(int m, int n, int* source, int* dest) {
+int maxStrongPairXor(int* nums, int numsSize) {
+            if (xor_val > max_xor) {
+int bsearch(int *nums, int n, int k) {
+    while (left <= right) {
+            if (i < mid) {
+            } else if (i > mid) {
+int maxFrequencyScore(int *nums, int numsSize, int k) {
+        else if (nums[i] > mode) {
+int max(int a, int b) {
+int* findWordsContainingCharacter(char** words, int wordsSize, char x, int* returnSize) {
+        if (strchr(words[i], x) != NULL) {
+int maximumXOR(int* nums, int numsSize) {
+int maximumXOR(int a, int b, int n) {
+int minOperations(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int findChampion(int n, int** edges, int* edgesRowSize, int* edgesColSize) {
+                    while (temp != NULL) {
+int findChampion(int** grid, int gridRowSize, int gridColSize) {
+int maxProfit(int* prices, int pricesSize) {
+        if (prices[i] < minPrice) {
+int max(int a, int b) {
+int minimumSum(int* nums, int numsSize) {
+int binarySearch(int* arr, int size, int target) {
+    while (left <= right) {
+        if (arr[mid] >= target) {
+int maxBalancedSubsequenceSum(int* nums, int numsSize) {
+int findKOr(int* nums, int numsSize, int k) {
+int maxScore(int* prices, int pricesSize) {
+int binarySearch(int* heights, int height, int n) {
+    while (left <= right) {
+        if (heights[mid] >= height) {
+int findMeetingPoint(int* heights, int a, int b, int n) {
+int* findBuildingsWhereAliceAndBobCanMeet(int* heights, int heightsSize, int** queries, int queriesSize, int* returnSize) {
+int minIncrementOperations(int* nums, int numsSize, int k) {
+int minimizeArrayAfterReplacements(int* nums, int numsSize, int k) {
+int minimumSum(int* nums, int numsSize) {
+            if (currentSum < minSum) {
+bool canFormWord(char** a, int aSize, char** b, int bSize, char* word) {
+bool canFormWord(char** a, int aSize, char** b, int bSize, char* word) {
+int divisibleAndNonDivisibleSumsDifference(int n, int m) {
+int minSumEqualize(int* nums1, int m, int* nums2, int n) {
+int* findIndices(int* nums, int numsSize, int indexDifference, int valueDifference, int* returnSize) {
+        if (nums[j] - nums[i] >= valueDifference) {
+int minimum_number_of_groups(int *balls, int ballsSize) {
+        if (balls[i] > max_val) {
+int* findIndices(int* nums, int numsSize, int indexDifference, int valueDifference, int* returnSize) {
+            if (abs(i - j) >= indexDifference && abs(nums[i] - nums[j]) >= valueDifference) {
+int* lastVisited(int* nums, int numsSize, int* returnSize) {
+            if (seenSize == capacity) {
+            if (k <= seenSize) {
+                if (ansSize == capacity) {
+                if (ansSize == capacity) {
+int sumOfSquares(int* nums, int numsSize) {
+            if (prefix[j][i - 1] == num) {
+int maxSemidcreasingSubarraySize(int *nums, int numsSize) {
+double* rollingAverage(Step* steps, int stepsSize, int k, int* returnSize) {
+int maximumTripletValue(int* nums, int numsSize) {
+int maxSum(int* nums, int numsSize, int k) {
+int maximumTripletValue(int* nums, int numsSize) {
+int minimumProcessingTime(int *processorTime, int processorTimeSize, int *tasks, int tasksSize) {
+    while (j < tasksSize) {
+            if (timeTaken > maxTime) {
+char* shortestBeautifulSubstring(char* s, int k) {
+            if (count == k && j - i + 1 < minLen) {
+int is_valid(int x, int y, int n, int m) {
+    while (head < tail) {
+long long sumOfRemoteness(int** grid, int gridRowSize, int gridColSize) {
+int getWordsInLongestSubsequence(char** words, int wordsSize, int* groups, int groupsSize) {
+        if (dp[i] > maxLen) {
+int minSubarrayLength(int *nums, int numsSize, int target) {
+        while (sum >= target) {
+void addEdge(Graph *graph, int start, int end) {
+int *countVisitedNodes(Graph *graph, int n) {
+int distinctCountSquaresSum(int* nums, int numsSize) {
+int maximumSum(int *maxHeights, int n) {
+bool isPrime(int num) {
+void dfs(vector<vector<int>>& tree, int node, int n, vector<bool>& primes, int& count, int primeNode) {
+        if (nextNode == primeNode) {
+int countValidPaths(int n, vector<vector<int>>& edges) {
+    for (auto& edge : edges) {
+int maxSpending(int** values, int valuesSize, int* valuesColSize) {
+int lengthOfLongestSubsequence(int *nums, int numsSize, int target) {
+ResultPair twoSum(int* nums, int numsSize, int target) {
+    while (left <= right) {
+int canMakeAlloys(int k, int n, int budget, int composition[][n], int stock[], int mid) {
+int minOperations(int *nums, int numsSize) {
+int sumIndicesWithKSetBits(int* nums, int numsSize, int k) {
+int is_valid(int x, int y) {
+int minimumLength(int* nums, int numsSize) {
+    if (splitIndex == 0 || splitIndex == numsSize) {
+long long* calculateOptimalDistribution(int* prices, int pricesSize) {
+long long* handleQueries(int* prices, int pricesSize, int* queries, int queriesSize) {
+void printDataFrame(Student students[], int length) {
+int minimumTimeToReachDestination(char land[MAX_ROW][MAX_COL], int rows, int cols) {
+    while (front < rear) {
+bool isLucky(int num) {
+int numberOfCategories(int n, int* categoryHandler) {
+int heightOfTree(TreeNode* root) {
+    if (root == NULL) {
+    if (root->left == NULL && root->right == NULL) {
+char* invertObject(char* obj) {
+function deepFilter(obj, condition) {
+  for (let item of obj) {
+function delayAll(functions, ms) {
+void myForEach(std::vector<int>& arr, Callback callback) {
+void exampleCallback(int value, int index, std::vector<int>& arr) {
+int calculateExpression(const char* fn, int* args, int argsSize) {
+int partial(int* args, int argsSize, const char* restArgs) {
+    while (right < len) {
+        while (left < len && lastOccurrence[(unsigned char)s[left]] != left) {
+int maxHouses(int* street, int streetSize, int k) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+Object createObject(int size) {
+void addObjectProperty(Object *obj, char *key, int value) {
+Node* splitList(Node* head, int val) {
+        if (head->val < val) {
+                if (knightTour(m, n, tx, ty, visited, returnSize) != NULL) {
+void printResult(int *path, int size) {
+int isLeapYear(int year) {
+int getMaxDay(int year, int month) {
+    if (day < maxDay) { // 如果没有超出本月天数
+void findMaximalUncoveredRanges(Range *ranges, int size, int n) {
+        if (ranges[i].start > prevEnd) {
+void add_days_to_date(char *date, int days) {
+char **dateRangeGenerator(char *start, char *end, int step) {
+    for (int i = 0; compare_dates(start, end) <= 0; i += step) {
+Promise* createPromise() {
+void resolve(Promise* p, void* value) {
+void reject(Promise* p, void* value) {
+void onFulfilled(void* result) {
+void onRejected(void* error) {
+void undefinedToNull(void** obj) {
+        if (value == IS_UNDEFINED || value == NULL) {
+int compare_int(int a, int b) {
+char* serializeObjectToObjectJSON(Object obj) {
+int add(int a, int b) {
+int countKFreeSubsets(int* nums, int numsSize, int k) {
+int minOperations(int* nums, int numsSize, int x) {
+TodoList* todoListCreate() {
+int todoListAddTask(TodoList* obj, int userId, char *taskDescription, int dueDate, char **tags, int tagsSize) {
+char** todoListGetAllTasks(TodoList* obj, int* returnSize) {
+char** todoListGetTasksForTag(TodoList* obj, int userId, char* tag, int* returnSize) {
+void todoListCompleteTask(TodoList* obj, int userId, int taskId) {
+void todoListFree(TodoList* obj) {
+int minOperations(int* nums, int numsSize) {
+bool hasPath(int** grid, int rows, int cols, int* moves, int zeroCount, int oneCount) {
+    if (zeroCount == oneCount) {
+int subsequenceBitwiseOR(int* nums, int numsSize) {
+int countEvenProductSubarrays(int *nums, int numsSize) {
+int countGood(int* nums, int numsSize, int k) {
+    while (right < numsSize) {
+void buildPrefixSum(int **prefixSum, int *row, int n) {
+int digitSum(int num) {
+int differenceOfSum(int* nums, int numsSize) {
+int xorBeauty(int* nums, int numsSize) {
+bool isConsecutive(int *nums, int size, int k, int value) {
+        if (nums[i] != value) {
+DataStream* createDataStream(int value, int k) {
+bool consec(DataStream* obj, int num) {
+void destroyDataStream(DataStream* obj) {
+char *categorizeBox(int length, int width, int height, int mass) {
+    if (isBulky && isHeavy) {
+   int maxScore(int* nums, int numsSize, int k) {
+int maximumCount(int* nums, int numsSize) {
+long long minimumCost(int n, int appleCost[], int k) {
+int closestPrimes(int left, int right) {
+                if (isPrime[j] && (j - i) < minDiff) {
+int distinctPrimeFactors(int *nums, int numsSize) {
+int countDigits(int num) {
+int minSubarrays(int *nums, int numsSize) {
+int** differenceMatrix(int** grid, int m, int n) {
+int minOperations(int nums1[], int nums2[], int n, int k) {
+int* topStudents(char **positive_feedback, char **negative_feedback, char **report, int *student_id, int reportSize, int k) {
+        while (word != NULL) {
+int captureForts(int* forts, int fortsSize) {
+    while (left < right) {
+        if (leftCount <= rightCount) {
+int countPartitions(int nums[], int size, int k) {
+int canMakeBasketWithTastiness(int* price, int k, int n, int tastiness) {
+        if (price[i + 1] - price[i] <= tastiness) {
+int maximumTastiness(int* price, int n, int k) {
+    while (left <= right) {
+int minMinutes(char *s, int k) {
+    while (left <= right) {
+        if (word[left] == target) {
+        if (word[right] == target) {
+int shortestDistanceToTarget(char **words, int wordsSize, char *target, int startIndex) {
+int find(UnionFind *uf, int x) {
+void unionSets(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+int countCycle(UnionFind *uf, int n, int a, int b) {
+    if (rootA == rootB) {
+bool isPossible(int n, int edges[][2], int edgesSize) {
+int countSimilarPairs(char **words, int wordsSize) {
+int countDistinctBinaryStrings(char * s, int k) {
+                    if (!dp[i - 1][m] || dp[i - 1][m] != state) {
+int minimumTotalCost(int *nums1, int *nums2, int n) {
+int canReach(int* stones, int n, int maxJump) {
+int minCost(int* stones, int n) {
+    while (left < right) {
+int centerSum(Node *nodes, int node, int k) {
+int maxStarSum(Node *nodes, int n, int edges[][2], int e, int k) {
+int maximumValue(char **strs, int strsSize) {
+int* maxPoints(int** grid, int gridRowSize, int gridColSize, int* queries, int queriesSize, int* returnSize) {
+int* allocate(int n, int size, int mID, int* returnSize) {
+int free(int* memory, int mID) {
+        if (memory[i] == mID) {
+int longestSquareStreak(int* nums, int numsSize) {
+        if ((int)sqrt(num) * (int)sqrt(num) == num) {
+int deleteGreatestValue(int** grid, int m, int n) {
+Result twoSum(int* nums, int numsSize, int target) {
+UnionFind initUnionFind(int size) {
+int find(UnionFind *uf, int x) {
+void unionNodes(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+int maxNumOfGroups(int n, int *edges, int edgesSize) {
+UnionFind initUnionFind(int size) {
+int find(UnionFind *uf, int x) {
+void unionOperation(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+long long dividePlayers(int* skill, int skillSize) {
+    while (left < right) {
+        if (skill[left] + skill[right] == targetSum) {
+        } else if (skill[left] + skill[right] < targetSum) {
+    while ((endword = strchr(word, ' ')) != NULL) {
+        if (lastChar != nextChar) {
+int minimumSplit(int* nums, int numsSize) {
+        if (penalty < minPenalty) {
+int countSubarrays(int* nums, int numsSize, int k) {
+    while (right < numsSize) {
+        while (smallerCount * 2 > right) {
+ListNode* createListNode(int val) {
+ListNode* removeNodes(ListNode* head) {
+    while (curr != NULL) {
+    while (current != NULL) {
+    while (i < lenS && j < lenT) {
+int maximizeTastiness(Fruit fruits[], int numFruits, int maxAmount) {
+int isPrime(int num) {
+int countBeautifulPartitions(char* s, int k, int minLength) {
+void inorderTraversal(TreeNode* root, int** arr, int* size, int* capacity) {
+int* binarySearch(int* arr, int size, int target) {
+    while (left < right) {
+int** closestNodesQueries(TreeNode* root, int* queries, int queriesSize, int* returnSize, int** returnColumnSizes) {
+        if (*lowerBound == target) {
+        } else if (lowerBound == sortedArr) {
+int numberOfUnequalTriplets(int* nums, int numsSize) {
+void merge(int *nums, int left) {
+int isPalindrome(int *nums, int len) {
+int minOperations(int *nums, int numsSize) {
+int canSplit(char *message, int limit, int parts) {
+    while (i < len) {
+    while (minParts <= maxParts) {
+int countGoodStrings(int low, int high, int zero, int one) {
+int distinctAverages(int* nums, int numsSize) {
+    while (left < right) {
+        if (currentAvg != prevAvg) {
+int closestFairInteger(int n, int k) {
+int isPalindrome(const char* s, int start, int end) {
+    while (start < end) {
+int maxPalindromes(const char* s, int k) {
+int max(int a, int b) {
+int minimumOperations(struct TreeNode* root) {
+queue createQueue() {
+int gcd(int a, int b) {
+int lcm(int a, int b) {
+int countSubarraysLCM(int* nums, int numsSize, int k) {
+double roundToTwo(double num) {
+double[] convertTemperature(double celsius) {
+int minimumTotalDistance(int *robot, int robotSize, Factory *factory, int factorySize) {
+int min(int a, int b) {
+int totalCostToHireWorkers(int* costs, int costsSize, int k, int candidates) {
+            if (!selected[i + j] && costs[i + j] < minCost) {
+            if (!selected[j] && costs[j] < minCost) {
+int maxSum(int* nums, int numsSize, int k) {
+void applyOperations(int* nums, int numsSize) {
+bool canBeFormed(char* query, char* dictionary[], int dictSize) {
+int* nextGreaterElements(int* nums, int numsSize, int* returnSize) {
+int destroySequentialTargets(int* nums, int numsSize, int space) {
+        if (count > maxDestroyed) {
+int* calculateDifference(const char* word, int n) {
+int compareDifference(int* diff1, int* diff2, int size) {
+char* findDifferentString(char** words, int wordsSize) {
+int gcd(int a, int b) {
+int countSubarrays(int* nums, int numsSize, int k) {
+    while (i < numsSize) {
+int minAddition(int n, int target) {
+        if (*(totalViews[i]) > maxViews) {
+        if (*(totalViews[i]) == maxViews) {
+                if (strcmp(creators[i], creators[j]) == 0 && views[j] > maxViewCount) {
+int averageValue(int* nums, int numsSize) {
+bool isSumEqual(int num) {
+int minOperations(int* nums, int numsSize, int* target, int targetSize) {
+int minCostToMoveChips(int* nums, int numsSize) {
+        if (currentCost > minCost) {
+int countSubarrays(int *nums, int numsSize) {
+int xorAllNums(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int gcd(int a, int b) {
+int lcm(int a, int b) {
+int find(UnionFind *uf, int x) {
+void unionElements(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+int maxNumEdgesToRemove(int* nums, int numsSize, int** edges, int edgesSize) {
+        if (find(uf, i) == i && nums[i] == divisor) {
+int minimizeMax(int* nums, int numsSize) {
+int modInverse(int a, int m) {
+int rangeProduct(int left, int right, int MOD) {
+int* constructArray(int n, int* queries, int queriesSize, int* returnSize) {
+int calculateTotalMedals(OlympicMedal medal) {
+    if (totalA != totalB) {
+void sortArray(int* nums, int numsSize, int k) {
+int minimumSwaps(int* nums, int numsSize) {
+    while (left < right) {
+int findMinTime(int* jobs, int jobsSize, int k) {
+int calculateTotalSales(SalesRecord *records, int size) {
+Result* firstDay(int* temperatures, int temperaturesSize, int* returnSize) {
+int countOrdersForYear(int product_id, int year, Order orders[], int size) {
+int* findValidProducts(Order orders, int ordersSize, int* returnSize) {
+int maximumProfit(int prices[], int pricesSize) {
+        if (prices[i] < minPrice) {
+int visiblePeople(int** heights, int heightsSize, int* heightsColSize) {
+TreeNode* createTreeNode(int val) {
+int closestValue(TreeNode* root, int path[], int pathSize) {
+void dfs(TreeNode* node, int path[], int pathSize, int* closestNodeVal, int* closestDist) {
+        if (requirement[i] > maxReach) {
+int maximumSum(int arr[], int n) {
+int maxWhiteTiles(int **tiles, int tilesSize, int carpetLen) {
+int waysToSplitArray(int* nums, int numsSize, int* returnSize) {
+CountIntervals* countIntervalsCreate() {
+void countIntervalsAdd(CountIntervals* obj, int left, int right) {
+int countIntervalsCount(CountIntervals* obj) {
+void countIntervalsFree(CountIntervals* obj) {
+int countBits(unsigned int num) {
+int largestCombinationWithBitwiseAND(int* candidates, int candidatesSize) {
+        if (candidatesSize - bitCount > maxLen) {
+int maxConsecutive(int bottom, int top, int special[], int specialSize) {
+        if (count > maxCount) {
+long long minimumHealth(int* damage, int damageSize, int armor) {
+ATM* ATM_Create() {
+void ATM_deposit(ATM* obj, int* banknotesCount) {
+int* ATM_withdraw(ATM* obj, int amount) {
+void ATM_free(ATM* obj) {
+int findClosestNumber(int* nums, int numsSize) {
+        if (abs(nums[i]) < minAbs) {
+int max(int a, int b) {
+                if (j > 1 && k == key) {
+int countNodesEqualAverage(TreeNode* root) {
+char* largestGoodInteger(char* num) {
+            if (val > maxVal) {
+int isSafe(int m, int n, int x, int y) {
+int getMaxMinutes(int** grid, int m, int n) {
+    while (front < rear) {
+void markGuarded(int x, int y) {
+int minimumAverageDifference(int* nums, int numsSize) {
+        if (currentDiff < minDiff) {
+int countDistinct(int* nums, int numsSize, int k, int p) {
+int minConsecutiveCards(int* cards, int cardsSize) {
+    while (right < cardsSize) {
+            if (right - left < minSize) {
+        if (lastSeen[cards[left]] == left) {
+            if (right - left < minSize) {
+char* removeDigit(char* number, char digit) {
+        if (number[i] == digit) {
+int* countFlowers(int** flowers, int *flowersSize, int* people, int peopleSize, int* returnSize) {
+int countLatticePoints(int circles[][3], int circlesSize) {
+int* intersection(int** nums, int numsSize, int* numsSize_column, int* returnSize) {
+        if (counts[i] == totalArrays) {
+int maximumProduct(int* nums, int numsSize, int k) {
+int tryAddParentheses(char *expression, int index) {
+        if (val < minVal) {
+int largestNumberAfterSwaps(int num) {
+int triangularSum(int *nums, int numsSize) {
+int minBitFlips(int start, int goal) {
+int countWays(int *bricks, int bricksSize, int width) {
+int* findKDistantIndices(int* nums, int numsSize, int key, int k, int* returnSize) {
+        if (nums[i] == key) {
+int* maxRepeating(SegmentTreeNode** tree, char* s, char* queryCharacters, int* queryIndices, int k) {
+int countCollisions(char* directions) {
+int countHillsAndValleys(int* nums, int numsSize) {
+        if (isHill || isValley) {
+int mostFrequent(int* nums, int numsSize, int key) {
+        if (nums[i] == key && i + 1 < numsSize) {
+            if (targets[nextVal].count > maxCount) {
+int minimumWhiteTiles(char *floor, int numCarpets, int carpetLen) {
+int minOperations(int *nums, int numsSize) {
+TreeNode* createBinaryTree(int **descriptions, int descriptionsSize) {
+int minimalKSum(int* nums, int numsSize, int k) {
+        if (nums[i] > maxNum) {
+int contains(int* nums, int size, int num) {
+        if (nums[i] == num) {
+int titleToNumber(char col) {
+char** findCellsInRange(char* s, int* returnSize) {
+int countPairs(int* nums, int numsSize, int k) {
+char* constructString(char* s, int repeatLimit) {
+        while (i < len && s[i] == current) {
+        if (count > repeatLimit) {
+int countEvenSum(int num) {
+int calculateArea(int *amountPainted, int n, int width) {
+int minimumFinishTime(int tires[][2], int changeTime, int numLaps) {
+int minimumTimeToCompleteTrips(int time[], int timeSize, int totalTrips) {
+    while (left < right) {
+        if (trips >= totalTrips) {
+int maximumANDSum(int* nums, int numsSize, int numSlots) {
+int minimumRemoval(int beans[], int beansSize) {
+        if (beans[i] < minBean) {
+        if (leftOnes + rightOnes == totalOnes) {
+    if (leftOnes > middleOnes) {
+    if (rightOnes > middleOnes) {
+Bitset* bitset(int size) {
+void fix(Bitset* obj, int idx) {
+void unfix(Bitset* obj, int idx) {
+void flip(Bitset* obj) {
+int count(Bitset* obj) {
+char* toString(Bitset* obj) {
+int all(Bitset* obj) {
+int one(Bitset* obj) {
+void freeBitset(Bitset* obj) {
+char *smallestNumber(int num) {
+void sortEvenOdd(int* nums, int numsSize) {
+int maxSumRange(int* nums1, int nums1Size, int* nums2, int nums2Size, int k, int l, int lower, int upper) {
+    if (maxSum < lower || minSum > upper) {
+    while (left <= right) {
+                if (nums1[i] + nums2[j] <= mid) {
+int* getTripletsCount(int* nums1, int size1, int* nums2, int size2, int* returnSize) {
+int countGoodTriplets(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int* maximumEvenSplit(int finalSum, int* returnSize) {
+int countPairs(int* nums, int numsSize, int k) {
+UnionFind initUnionFind(int size) {
+int find(UnionFind *uf, int x) {
+void unionElements(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+char* findSubstring(char* s, int power, int modulo, int k, int hashValue) {
+    if (currentHash == hashValue) {
+        if (currentHash == hashValue) {
+int findFinalValue(int* nums, int numsSize, int original) {
+            if (nums[i] == result) {
+void pourWater(int *buckets, int n) {
+            if (buckets[i] > maxLevel) {
+            if (buckets[i] < minLevel) {
+int isValid(int** statements, int分配[], int n) {
+int 最大好人数目(int** statements, int n) {
+void rearrangeArray(int *nums, int numsSize, int *answer, int answerSize) {
+int countElements(int *nums, int numsSize) {
+bool removeOnes(int** grid, int gridRowSize, int gridColSize) {
+        if (count == gridColSize) {
+        if (count == gridRowSize) {
+int minimumDifference(int* nums, int numsSize) {
+int minCostSetTime(int startAt, int moveCost, int pushCost, int targetSeconds) {
+void partitionArray(int* nums, int numsSize, int pivot) {
+        if (nums[k] < pivot) {
+        } else if (nums[k] == pivot) {
+int minimumSum(int num) {
+void processQuery(int *nums, int *result, int val, int index, int numsSize) {
+    if (index < numsSize) {
+void init_airports() {
+void update_airport(int airport_id, int flights_count) {
+        if (airports[i].departure_count + airports[i].arrival_count > max_count) {
+int shareCandies(int candies[], int candiesSize, int k) {
+int largestEvenSum(int* nums, int numsSize, int k) {
+int countRichCustomers(Transaction* transactions, int transSize, int amount) {
+        if (customerSales[i] > amount) {
+int isInside(int x, int y, int n, int m) {
+int numberOfPaths(int n, int m, int** corridors, int corridorsSize, int* corridorsItemSize) {
+AccountBalance* accountBalanceCreate() {
+void accountBalanceDeposit(AccountBalance *obj, int account, char *day, int amount) {
+void accountBalanceWithdraw(AccountBalance *obj, int account, char *day, int amount) {
+        if (obj->transactions[i].account == account) {
+Direction rotate(Direction dir, char instruction) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+            if (nums[j] == complement) {
+        if (subs[i].account_id == account_id) {
+int countNoStreamAccounts(Subscription *subs, int subSize, int *stream_dates, int streamSize) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+int countNodesEqualTreeSum(TreeNode* root) {
+int binarySearchableNumbers(int* nums, int numsSize, int* returnSize) {
+int isValid(int x, int y) {
+            while (front < rear) {
+        if (strstr(word, pattern) != NULL) {
+int* findTheLongestObstacleCourseAtEachPosition(int* obstacles, int obstaclesSize, int* returnSize) {
+int minStoneSum(int piles[], int pilesSize, int k) {
+bool isPrefixString(char *s, char **words, int wordsSize) {
+int numberOfWays(char* num) {
+void dijkstra(int n, int roads[][3], int road_count, int *dist, int start) {
+    while (q[0] != start) {
+int countWays(int n, int roads[][3], int road_count) {
+int maxMatrixSum(int** matrix, int matrixSize, int* matrixColSize) {
+int minTimeToType(char* word) {
+int countSpecialSubsequences(int* nums, int numsSize) {
+int* rearrangeArray(int* nums, int numsSize, int* returnSize) {
+    while (left <= right) {
+int numberOfWeeks(int* milestones, int milestonesSize) {
+    while (i < milestonesSize) {
+        while (i < milestonesSize && i == lastProject) {
+        if (i < milestonesSize) {
+int minimumCost(char* sentence, int k) {
+int minSpaceWastedKResizing(int* nums, int numsSize, int k) {
+        if (nums[i] > currentSize) {
+FolderNode* buildFolderStructure(char** paths, int pathCount) {
+void markDuplicateFolders(FolderNode* root) {
+void deleteMarkedFolders(FolderNode* root) {
+                         int** mentors, int* mentorsRowSize, int* mentorsColSize) {
+char* largestNumberAfterMutatingSubstring(char* num, int change[], int numSize) {
+int sumOfDigitsOfStringAfterConvert(char *s, int k) {
+int brightestPosition(int n, Light lights[], int w) {
+        if (currentSum > maxBrightness) {
+void erectFence(Point* points, int pointsSize) {
+int maxOfMin(int* nums, int numsSize) {
+            if (cur == required) {
+int kthSmallestSubarraySum(int *nums, int numsSize, int k) {
+int* maxGeneticDifferenceQuery(int* parents, int parentsSize, int** queries, int queriesSize, int* queriesColSize) {
+int maxPoints(int** points, int m, int n) {
+int addRungs(int* rungs, int rungsSize, int dist) {
+int colorTheGrid(int m, int n) {
+TreeNode* mergeBSTsToCreateSingleBST(BstNode** trees, int n) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+            if (hashTable[i].value == complement) {
+IndexPair twoSum(int* nums, int numsSize, int target) {
+int* describeThePainting(Segment* segments, int segmentsSize, int* returnSize) {
+TreeNode* createNode(int val) {
+TreeNode* buildBST(int* order, int start, int end) {
+int maxDepthBST(TreeNode* root) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+int eliminateMaxMonsters(int dist[], int speed[], int n) {
+        if ((double)monsters[i].dist / monsters[i].speed > time) {
+int* buildArray(int* nums, int numsSize, int* ansSize) {
+int* findPeakElement(int* mat, int matSize, int* matLogSize, int* resultSize) {
+    while (low < high) {
+void quickSort(int* nums, int left, int right) {
+        if (nums[j] > pivot) {
+int cuttingRibbons(int* ribbons, int ribbonsSize, int k) {
+int countWonderfulSubstrings(char* word) {
+int maximumProductDifference(int* nums, int numsSize) {
+void dijkstra(int n, int maxTime, int startCity, int endCity) {
+HashTable *initHashTable(int size) {
+unsigned int hash(int key, int size) {
+void insert(HashTable *table, int key) {
+    while (table->keys[index] != 0 && table->keys[index] != key) {
+int find(HashTable *table, int key) {
+        if (table->keys[index] == key) {
+int countPairs(int* nums1, int nums1Size, int* nums2, int nums2Size, int value) {
+void preprocessDiff(int *diff, int *nums, int size) {
+int binarySearch(int *diff, int target, int size) {
+    while (left <= right) {
+        if (diff[mid] >= target) {
+int isOdd(char ch) {
+char* largestOddNumber(char* num) {
+    if (maxOdd == NULL) {
+int minProductSum(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+    if (lastProduct < minProduct) {
+int calculateLatestRound(int n, int firstPlayer, int secondPlayer) {
+int calculateEarliestRound(int n, int firstPlayer, int secondPlayer) {
+int* findEarliestAndLatestRound(int n, int firstPlayer, int secondPlayer, int returnSize) {
+int maximumRemovals(char* s, char* p, int* removable, int removableSize) {
+bool canBeEqual(char **words, int wordsSize) {
+int maxAlternatingSum(int* nums, int numsSize) {
+char* removeOccurrences(char* s, char* part) {
+    while (i < len_s) {
+bool canBeIncreasing(int* nums, int numsSize) {
+            if (nums[j] <= prev) {
+int reductionOperations(int* nums, int numsSize) {
+        if (nums[i] > maxVal) {
+        } else if (nums[i] > nextMax) {
+        if (orders[i].quantity > avg) {
+int minSkips(int dist[], int n, int speed, int hoursBefore) {
+    if (timeNeeded <= hoursBefore) {
+    if (dp[n][hoursBefore] < INT_MAX) {
+int* assignTasks(int* servers, int serversSize, int* tasks, int tasksSize, int* returnSize) {
+            if (serverArray[i].freeTime <= taskIndex) {
+char* maxValueAfterInsertion(char* n, int x) {
+int wordToValue(char* word) {
+bool isSumEqual(char* firstWord, char* secondWord, char* targetWord) {
+int findMaxCost(int city, int k) {
+int findStudentToReplaceChalk(int* chalk, int chalkSize, int k) {
+bool isCovered(int** ranges, int rangesSize, int* rangeColSize, int left, int right) {
+        if (currentStart > end) {
+        if (end >= right) {
+int* distinctNumbers(int* nums, int numsSize, int k, int* returnSize) {
+int stoneGameVIII(int* stones, int stonesSize) {
+int max(int a, int b) {
+bool canReach(char *s, int minJump, int maxJump) {
+    while (front < rear) {
+bool can_arrive_on_time(int* dist, int n, double hour, int speed) {
+int minSpeedOnTime(int* dist, int n, double hour) {
+    while (left < right) {
+int rearrangeSticks(int n, int k) {
+FindSumPairs* findSumPairs(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+void add(FindSumPairs* obj, int index, int val) {
+int count(FindSumPairs* obj, int tot) {
+int subsetXORSum(int *nums, int numsSize) {
+ListNode* findMiddle(ListNode* head) {
+ListNode* sortLinkedList(ListNode* head) {
+void calculatePrefixSums(int **prefixSums, int *grid, int m, int n) {
+int getRhombusSum(int **prefixSums, int m, int n, int row, int col, int size) {
+int* getBiggestThree(int** grid, int m, int n, int* returnSize) {
+                        if (maxSums[i] < currentSum) {
+ListNode* deleteDuplicatesUnsorted(ListNode* head) {
+    while (current != NULL) {
+void findTwoSum(int* nums, int numsSize, int target, int* indices) {
+int whatWasTheFirstLies(int* sensor1, int* sensor2, int size) {
+            } else if (sensor2[i] != unique) {
+int catchMaximumAmount(int* team, int teamSize, int dist) {
+    while (left < right) {
+        if (team[left] <= team[right] - dist) {
+int max(int a, int b) {
+TrieNode* newNode() {
+void insert(TrieNode* root, const char* word) {
+int countWordsEqualTo(TrieNode* root, const char* word) {
+int countWordsStartingWith(TrieNode* root, const char* prefix) {
+void erase(TrieNode* root, const char* word) {
+unsigned long hash(char* str) {
+int countQuadruples(char* firstString, char* secondString) {
+            if (distance < minDistance) {
+            } else if (distance == minDistance) {
+int maxBeauty(int* flowers, int flowersSize, int k) {
+    while (j < flowersSize) {
+        while (token != NULL) {
+void initMyArray(MyArray *a, int size) {
+void pushMyArray(MyArray *a, int val) {
+int checkBan(Account *accounts, int account_id, int size) {
+        if (accounts[i].account_id == account_id) {
+        if (accounts[i].account_id == id) {
+int[] twoSum(int[] nums, int numsSize, int target) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+TreeNode* createNode(int val) {
+int findMinDistance(TreeNode* root, int p, int q) {
+    while (front < rear) {
+        while (front < rear) {
+DistanceLimitedPathsExist* DistanceLimitedPathsExistConstructor(int n, int** edgeList, int edgeListSize) {
+bool DistanceLimitedPathsExistQuery(DistanceLimitedPathsExist* obj, int p, int q, int limit) {
+    while (front < rear) {
+void DistanceLimitedPathsExistFree(DistanceLimitedPathsExist* obj) {
+int maxRestDay(const char *dates[], int datesSize) {
+int largestSubarray(int* nums, int numsSize, int k) {
+int max(int a, int b) {
+TreeNode* lowestCommonAncestor(TreeNode* root, int p, int q) {
+    if (left && right) {
+TreeNode* changeRoot(TreeNode* root, int leaf) {
+int sumOfArithmeticSequence(int a, int d, int n) {
+int* sumOfSpecialEvenlySpacedElements(int* nums, int numsSize, int** queries, int queriesSize[], int* returnSize) {
+TreeNode* createNode(int val) {
+TreeNode* correctBinaryTree(TreeNode* root, int fromNode, int toNode) {
+    if (root == NULL) {
+    if (root->val == fromNode) {
+TreeNode* createNode(int val) {
+    if (left && right) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    if (left && right) {
+    while (poly1 != NULL || poly2 != NULL) {
+    while (head != NULL) {
+    while (p != NULL) {
+int evaluateTree(TreeNode* node) {
+    if (root1->left == NULL && root2->left == NULL) {
+struct TreeNode* findNearestRightNode(struct TreeNode* root, int target) {
+    void helper(struct TreeNode* node) {
+        if (diff < minDiff) {
+int precedence(char op) {
+struct BSTIterator* BSTIteratorCreate(struct TreeNode* root) {
+int BSTIteratorNext(struct BSTIterator* obj) {
+int BSTIteratorHasNext(struct BSTIterator* obj) {
+WarehouseManager* warehouseManagerCreate(int size) {
+void warehouseManagerAddProduct(WarehouseManager *obj, char *product, int amount) {
+int warehouseManagerShipProducts(WarehouseManager *obj, char *warehouseName, char *productName, int amount) {
+int dotProduct(SparseVector* v1, int v1Size, SparseVector* v2, int v2Size) {
+    while (i < v1Size && j < v2Size) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+int differByOne(char **dict, int dictSize) {
+Node* createGraph(int n, int** roads, int roadsSize) {
+void dfs(Node* graph, int current, int targetPathSize, char** targetPath, int* path, int pathSize, int* result) {
+int mostSimilarPath(int n, int** roads, int roadsSize, char** names, int namesSize, char** targetPath, int targetPathSize) {
+int getIndex(int* nums, int numsSize) {
+        if (nums[i] > maxVal) {
+int dfs(Node* root) {
+int diameterOfNAryTree(Node* root) {
+int minSwapsToArrangeBinaryGrid(int** grid, int gridRowSize, int gridColSize) {
+int getWinner(int arr[], int arrSize, int k) {
+    if (k >= arrSize) {
+int isGoodTriplet(int a, int b, int c, int x) {
+int countGoodTriplets(int *arr, int arrSize, int a, int b, int c) {
+int countPairs(TreeNode* root, int distance) {
+    void dfs(TreeNode* node, int depth) {
+            if (abs(leaves[i][1] - leaves[j][1]) <= distance) {
+int minFlipsToConvertString(char* target) {
+char* restoreString(char* s, int* indices, int indicesSize) {
+Node* findRoot(Node* tree) {
+        if (tree->children[i] != NULL) {
+int maxNonOverlapping(vector<int>& nums, int target) {
+        if (sum == target) {
+bool canConvertString(char *s, char *t, int k) {
+int findKthPositive(int* arr, int arrSize, int k) {
+    while (left <= right) {
+            if (arr[i] > mid) {
+int closestToTarget(int arr[], int target, int n) {
+        if (diff < minDiff) {
+TreeNode* createTreeNode(int val) {
+int* countSubTrees(int n, int edges[][2], char labels[], int returnSize) {
+int numWaterBottles(int numBottles, int numExchange) {
+    while (numBottles >= numExchange) {
+    void join(int userID, list<int> ownedChunks) {
+    void leave(int userID) {
+    list<int> request(int userID) {
+int isInsideCircle(Point center, double radiusSquare, Point p) {
+double findMinDistSum(Point positions[], int n, double left, double right, double bottom, double top) {
+        if (newDist < bestDist) {
+double getMinDistSum(Point positions[], int n) {
+int getLengthOfOptimalCompression(char *s, int k) {
+int min(int a, int b) {
+void initHashTable(HashTable *hashTable, int size) {
+int hash(int key, int size) {
+void insert(HashTable *hashTable, int key, int value) {
+    while (hashTable->keys[index] != -1 && hashTable->keys[index] != key) {
+int find(HashTable *hashTable, int key) {
+        if (hashTable->keys[index] == key) {
+int numIdenticalPairs(int* nums, int numsSize) {
+Node* cloneNode(Node* node) {
+    if (node == NULL) {
+Node* cloneTree(Node* root) {
+int minNumberOperations(int target[], int targetSize) {
+int numOfSubarrays(int* arr, int arrSize) {
+int countOdds(int low, int high) {
+char* minInteger(char* num, int k) {
+int numSubmat(int **mat, int matRowSize, int matColSize) {
+int getLastMoment(int n, int left[], int lLen, int right[], int rLen) {
+bool canMakeArithmeticProgression(int arr[], int arrSize) {
+        if (arr[i] - arr[i - 1] != diff) {
+void printProductsPerDate(Activity *activities, int size) {
+Node* cloneTree(Node* root) {
+int findMaxValueOfEquation(int **points, int pointsSize, int k) {
+int numSubseq(int* nums, int numsSize, int target) {
+    while (left <= right) {
+        if (nums[left] + nums[right] <= target) {
+bool canArrange(int arr[], int n, int k) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+int minDifference(int* nums, int numsSize) {
+int rangeSum(int* nums, int numsSize, int n, int left, int right) {
+void initUnionFind(UnionFind *uf, int size) {
+int find(UnionFind *uf, int x) {
+bool unionSets(UnionFind *uf, int x, int y) {
+    if (xRoot == yRoot) {
+void identifyCriticalAndPseudoCriticalEdges(int n, Edge edges[], int *critical, int *pseudoCritical, int edgesSize) {
+            if (mst[j] != edge) {
+char* getFolderNames(char **names, int namesSize) {
+int xorOperation(int n, int start) {
+void calculateAfterTaxSalaries(SalaryInfo* salaries, int size) {
+int countRectangles(int* points, int pointsSize, int target) {
+int minDays(int* bloomDay, int bloomDaySize, int m, int k) {
+    while (left < right) {
+int canMakeBouquets(int* bloomDay, int bloomDaySize, int m, int k, int day) {
+        if (bloomDay[i] <= day) {
+int leastNumberOfUniqueInts(int* arr, int arrSize, int k) {
+int* runningSum(int* nums, int numsSize, int* returnSize) {
+int findOrder(int numCourses, int** prerequisites, int prerequisitesSize, int* prerequisitesColSize, int k) {
+    while (front < rear) {
+                if (prerequisites[j][0] - 1 == current) { // 如果当前课程是先修课
+int longestSubarray(int* nums, int numsSize) {
+            if (start <= end) {
+int kthFactor(int n, int k) {
+    if (k > count) {
+double averageSalary(int salary[], int length) {
+int minCost(int* houses, int housesSize, int* cost, int m, int n, int target) {
+BrowserHistory* browserHistoryCreate(const char* homepage) {
+void browserHistoryVisit(BrowserHistory* obj, const char* url) {
+char* browserHistoryBack(BrowserHistory* obj, int steps) {
+char* browserHistoryForward(BrowserHistory* obj, int steps) {
+void browserHistoryFree(BrowserHistory* obj) {
+void shuffleTheArray(int* nums, int numsSize, int n) {
+int activeUsers(int *accounts, int accountsSize, int *logins, int loginsSize) {
+double getProbability(int balls[], int ballsSize) {
+    void dfs(int node) {
+int maxArea(int h, int w, int horizontalCuts[], int hSize, int verticalCuts[], int vSize) {
+int max(int a, int b) {
+int maxProduct(int* nums, int numsSize) {
+int minSumOfLengths(int* arr, int arrSize, int target) {
+SubrectangleQueries* subrectangleQueriesCreate(int** rectangle, int rows, int cols) {
+void subrectangleQueriesUpdate(SubrectangleQueries* obj, int row1, int col1, int row2, int col2, int newValue) {
+int subrectangleQueriesGetValue(SubrectangleQueries* obj, int row, int col) {
+void subrectangleQueriesFree(SubrectangleQueries* obj) {
+int minDistance(int houses[], int housesSize, int k) {
+int* finalPrices(int* prices, int pricesSize, int* returnSize) {
+int maxDotProduct(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+bool isPseudoPalindromic(int* path, int pathSize) {
+int pseudoPalindromicPaths (TreeNode* root) {
+void dfs(TreeNode* node, int* count, int path[], int pathSize) {
+int maxVowels(char *s, int k) {
+        if (strchr(vowels, s[i]) != NULL) {
+        if (strchr(vowels, s[i]) != NULL) {
+        if (strchr(vowels, s[i - k]) != NULL) {
+int isPrefixOfWord(char* sentence, char* searchWord) {
+    while (token != NULL) {
+VariableMap initVariableMap(char **variables, int *values, int size) {
+int numPoints(int **points, int pointsSize, int *pointsColSize, int r) {
+int* peopleIndexes(int** favoriteCompanies, int favoriteCompaniesSize, int* favoriteCompaniesLens, int* returnSize) {
+    while (word != NULL) {
+int busyStudent(int* startTime, int* endTime, int startTimeSize, int queryTime) {
+int cherryPickup(int** grid, int rows, int cols) {
+int max(int a, int b) {
+void initGraph(Graph *graph, int numCourses, int *prerequisites, int preSize) {
+int* checkIfPrerequisite(int numCourses, int *prerequisites, int preSize, int *queries, int querySize, int* returnSize) {
+bool hasAllCodes(char *s, int k) {
+bool allSeen(bool *seen, int size) {
+bool canBeEqual(int* target, int targetSize, int* arr, int arrSize) {
+bool contains(int* arr, int size, int value) {
+        if (arr[i] == value) {
+void sort(int* arr, int* end) {
+int ways(int rows, int cols, char** pizza, int k) {
+TreeNode* createTreeNode(int val) {
+int dfs(TreeNode* node, bool* hasApple, int* time) {
+int minTime(int n, int* edges, int* hasApple) {
+int countTriplets(int* arr, int arrSize) {
+int kthSmallest(int** matrix, int matrixSize, int* matrixColSize, int k) {
+int longestSubarray(int* nums, int numsSize, int limit) {
+    while (end < numsSize) {
+int max(int a, int b) {
+bool kLengthApart(int* nums, int numsSize, int k) {
+char* destCity(vector<vector<string>> paths) {
+int calculateTotalScore(StudentScore* studentScores, int length) {
+double findMedian(int* scores, int length) {
+void findMiddleStudents(StudentScore* studentScores, int* studentIDs, int length, int* result, int* returnSize) {
+char* largestNumber(int* cost, int costSize, int target, char* result) {
+int goodNodes(TreeNode* root, int maxVal) {
+    if (root->val >= maxVal) { // 判断当前节点是否为好节点
+int countGoodNodes(TreeNode* root) {
+int is_coprime(int a, int b) {
+void findParticipants(Activity *activities, int activitySize) {
+int isValidSequence(TreeNode* root, int* arr, int arrSize) {
+int countInversions(int* nums, int size) {
+int countNoninversions(int* nums, int size) {
+int minOperations(int* nums, int numsSize) {
+bool isConsecutive(int* nums, int numsSize) {
+void dfs(int employeeId, int managerId, Employee* employees, int* visited, int* result, int* count) {
+    if (employeeId == managerId) {
+int* getAllPeopleReportToTheGivenManager(Employee* employees, int totalEmployees, int managerId, int* resultSize) {
+void reversePrint(ListNode* head) {
+int countSubarraysWithSum(int *arr, int arrSize, int k) {
+int max(int a, int b) {
+int maxFontValue(char *text, int w, int h, int *fonts, int fontsSize) {
+    while (left <= right) {
+int isValidFontSize(char *text, int w, int h, int fontSize) {
+int countTriplets(int* nums, int numsSize) {
+                if ((long long)nums[k] * nums[k] + (long long)nums[l] * nums[l] == target) {
+                } else if ((long long)nums[k] * nums[k] + (long long)nums[l] * nums[l] < target) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+int max(int a, int b) {
+int getKthPalindrome(int k, int intLength) {
+int* findPalindromeWithFixedLength(int* queries, int queriesSize, int intLength, int* returnSize) {
+int gcd(int a, int b) {
+int findGCD(int *nums, int numsSize) {
+bool isGoodArray(int *nums, int numsSize) {
+int numberOfSubarrays(int *nums, int numsSize, int k) {
+int max(int a, int b) {
+int[] twoSum(int[] nums, int numsSize, int target) {
+        if (sum == target) {
+        } else if (sum < target) {
+int numTuples(int* nums, int numsSize) {
+int isLetter(char ch) {
+int tilingRectangle(int n, int m) {
+void backtrack(char* arr[], int arrSize, int index, char* current, int* maxLength) {
+    if (index == arrSize) {
+int maxLengthOfArr(char* arr[], int arrSize) {
+int* circularPermutation(int n, int start, int* returnSize) {
+    if (*result == NULL) {
+    while (left < right) {
+CharFrequency getCharFrequency(char* word) {
+char** removeAnagrams(char** words, int wordsSize, int* returnSize) {
+int jobScheduling(int startTime[], int endTime[], int profit[], int jobCount) {
+        if (dp[i] > maxProfit) {
+        while (isBalanced(count, expect) && start <= end) {
+bool isBalanced(count, expect) {
+        if (count[i] > expect) {
+        if (result[i] == NULL) {
+bool checkStraightLine(int[][] coordinates) {
+        if (current_slope != slope) {
+int maximumScore(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+int DFS(Node* graph[], int node, int visited[], int path[], int pathLen) {
+int* findShortestDistanceToCycle(int n, int** edges, int edgesSize, int* edgesColSize) {
+void initStack(Stack* s, int size) {
+void push(Stack* s, int value) {
+int maxTopAfterKMoves(int* nums, int numsSize, int k) {
+int max(int a, int b) {
+char* reverseStr(char* str, int start, int end) {
+    while (start < end) {
+char* stringShift(char* s, int* shift, int shiftSize) {
+int maxEqualFreq(int* nums, int numsSize) {
+int** queensThatCanAttackTheKing(int** queens, int queensSize, int* queensColSize, int* king, int* returnSize, int** returnColumnSizes) {
+        if (leftCount == rightCount) {
+void eat(int philosopher, int times) {
+void* philosopher(void* arg) {
+Skiplist* skiplistCreate() {
+bool skiplistSearch(Skiplist* obj, int target) {
+void skiplistAdd(Skiplist* obj, int num) {
+bool skiplistErase(Skiplist* obj, int num) {
+void skiplistFree(Skiplist* obj) {
+int getPalindromeLen(const char* s, int start, int end) {
+bool canAllocate(int* candies, int candiesSize, long k, int mid) {
+int maxCandies(int* candies, int candiesSize, long k) {
+    while (left <= right) {
+int minSetSize(int num, int k) {
+int dfs(int x, int y, int m, int n, int** grid, int** visited) {
+int getMaximumGold(int** grid, int m, int n) {
+int longestSubsequence(int *arr, int arrSize, int difference) {
+int minCostToMoveChips(int* position, int positionSize) {
+char* lastPersonToStruct(Passenger *queue, int n) {
+int sumOfFlooredPairs(int* nums, int numsSize) {
+double maxProbabilityDijkstra(int n, int start, int end) {
+    while (front < rear) {
+int* findBall(int** grid, int gridRowSize, int gridColSize, int* returnSize) {
+    while (head < tail) {
+int equalSubstring(s, t, maxCost) {
+    while (right < len) {
+        while (cost <= maxCost && right < len) {
+            if (right < len) {
+        if (cost > maxCost) {
+char* removeDuplicates(char* s, int k) {
+bool uniqueOccurrences(int* arr, int arrSize) {
+void printFizz() {
+void printBuzz() {
+void printFizzBuzz() {
+void printNumber(int number) {
+void* threadA(void* arg) {
+void* threadB(void* arg) {
+void* threadC(void* arg) {
+void* threadD(void* arg) {
+int countArtifacts(int n, int artifacts[][4], int dig[][2], int digSize) {
+int largestMagicSquare(int** grid, int m, int n) {
+bool isMagicSquare(int** grid, int prefixSum[][n + 1], int m, int n, int startRow, int startCol, int k) {
+            prefixSum[startRow + i][startCol + k - 1] - prefixSum[startRow + i - 1][startCol + k - 1] - prefixSum[startRow + i][startCol] + prefixSum[startRow + i - 1][startCol] != sum) {
+int wateringPlants(int plants[], int plantsSize, int capacity) {
+    while (i < plantsSize) {
+    while (q_front < q_rear) {
+UnionFind initUnionFind(int length) {
+int find(UnionFind *uf, int x) {
+void unionElements(UnionFind *uf, int x, int y) {
+    if (rootX != rootY) {
+int nthUglyNumber(int n, int a, int b, int c) {
+int min(int a, int b) {
+        if (diff < minDiff) {
+        if (diff == minDiff) {
+int* canSeePersonsCount(int* heights, int heightsSize, int* returnSize) {
+int minMoves(int target, int maxDoubles) {
+void dfs(int node, int parent, int time) {
+int maxSubArraySum(int arr[], int n) {
+        if (currentSum > maxSum) {
+int kConcatenationMaxSum(int arr[], int n, int k) {
+        if (tempSum > maxCrossingSum) {
+        } else if (i == n - 1 || maxEndingHere + maxCrossingSum > firstAndLastSum + maxEndingHere) {
+int min(int a, int b) {
+TreeNode* createNode(int val) {
+TreeAncestor* TreeAncestorCreate(int n, int* parent) {
+int TreeAncestorGetKthAncestor(TreeAncestor* obj, int node, int k) {
+    while (k > 0 && current != NULL) {
+void TreeAncestorFree(TreeAncestor* obj) {
+long long minimumPerimeter(long long neededApples) {
+        if (apples >= neededApples) {
+void initIndexList(IndexList *list, int size) {
+void addIndex(IndexList *list, int index) {
+int binarySearch(IndexList *list, int value) {
+    while (low <= high) {
+        if (list->list[mid] < value) {
+RangeFreqQuery* rangeFreqQuery_Create(int* arr, int arrSize) {
+int rangeFreqQuery_Query(RangeFreqQuery* obj, int left, int right, int value) {
+void rangeFreqQuery_Free(RangeFreqQuery* obj) {
+bool threeConsecutiveOdds(int* arr, int arrSize) {
+int makeArrayIncreasing(int* arr1, int arr1Size, int* arr2, int arr2Size) {
+int dayOfTheWeek(int day, int month, int year) {
+const char* getWeekDay(int day) {
+int maximumSum(int* arr, int arrSize) {
+int distanceBetweenBusStops(int distance[], int start, int destination, int n) {
+int constrainedSubsetSum(int* nums, int numsSize, int k) {
+int max(int a, int b) {
+void inorderTraversal(TreeNode* root, int** nodes, int* count) {
+TreeNode* buildBalancedBST(int* nodes, int start, int end) {
+TreeNode* balanceBST(TreeNode* root) {
+int sumFourDivisors(int* nums, int numsSize) {
+int monthToNumber(char* month) {
+char* reformatDate(char* date) {
+int countShips(int** ans, int ansSize, int* ansColSize, int* topRight, int* bottomLeft) {
+int findSpecialInteger(int* arr, int arrSize) {
+        if (i - (n - 1 - i) >= threshold) {
+void findHighestGrade(Enrollment *enrollments, int size) {
+        if (enrollments[i].grade > maxGrade) {
+int numberOfWays(int numPeople) {
+int* sequentialDigits(int low, int high, int* returnSize) {
+        while (current <= high) {
+            if (current >= low) {
+void init(BoundedBlockingQueue* bbq) {
+void enqueue(BoundedBlockingQueue* bbq, int x) {
+    while (bbq->count == MAX_SIZE) { // 等待空间
+int dequeue(BoundedBlockingQueue* bbq) {
+TreeNode* createNode(int value) {
+TreeNode* deleteTreeNodes(TreeNode* root, int target) {
+    if (root == NULL) {
+    if (root->val == target) {
+void printPreOrder(TreeNode* node) {
+    if (node == NULL) {
+int removeInterval(Interval *intervals, int intervalsSize, Interval toBeRemoved, Interval *result, int resultSize) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    if (indices != NULL) {
+int maximizeSweetness(int* sweetness, int sweetnessSize, int k) {
+int max(int a, int b) {
+Node* createNode(char* word) {
+void addEdge(Node* graph[], int index, char* word) {
+    if (graph[index]->neighbors == NULL) {
+void dfs(Node* graph[], Node* node) {
+void findComponents(Node* graph[], int size) {
+void freeGraph(Node* graph[], int size) {
+int findIndex(char** regions, int len, char* target) {
+char* encode(int num) {
+bool isPalindrome(const char* s, int start, int end) {
+    while (start < end) {
+int countSubstrings(const char* s, int k) {
+int findSubstrings(const char* s, int k) {
+int treeDiameter(int** edges, int edgesSize, int* edgesColSize) {
+        if (maxDepth > diameter) {
+TwoSumResult twoSum(int* nums, int numsSize, int target) {
+int minIncrementForUnique(int* A, int ASize) {
+int calculateTime(int* blocks, int n, int split) {
+        if (i < split) {
+int binarySearch(int* blocks, int n) {
+    while (left < right) {
+        if (curTime < bestTime) {
+int minBuildTime(int* blocks, int n, int split) {
+double probabilityOfHeads(double* prob, int probSize, int target) {
+int minAvailableDuration(int *slots1, int slots1Size, int *slots2, int slots2Size, int duration) {
+        if (end - start >= duration) {
+int missingNumber(int first, int k, int d) {
+void findSteppingNumbers(int low, int high) {
+int* createHashTable(TreeNode* root, int* size) {
+void inorderTraversal(TreeNode* node, int* hashTable) {
+int twoSumBSTs(TreeNode* root1, TreeNode* root2, int target) {
+void add(ArrayList *arrList, int val) {
+ArrayList intersectionOfThree(int *arr1, int arr1Size, int *arr2, int arr2Size, int *arr3, int arr3Size) {
+    while (i < arr1Size && j < arr2Size && k < arr3Size) {
+        if (mat[i * cols] < min_element) {
+        if (min_elements[i] == min_element) {
+int maxNumberOfApples(int* weight, int weightSize, int target) {
+        if (totalWeight - weight[i] * (apples + 1) <= target) {
+int max(int a, int b) {
+void initQueue(Queue *q, int size) {
+void enqueue(Queue *q, int node, int dist) {
+int shortestDistanceColor(int* colors, int colorsSize, int* queries, int queriesSize) {
+            if (!visited[next] && colors[next] != currColor) {
+int* beforeAndAfterPuzzles(char** phrases, int phrasesSize, int* returnSize) {
+int connectSticks(int* sticks, int sticksSize) {
+void downAdjust(int* heap, int size, int index) {
+int calculateTime(char **keyboard, int keyboardSize, char **words, int wordsSize) {
+bool canDivideIntoSubsequences(int* nums, int numsSize, int k) {
+int countCharacters(char* words[], int wordsSize, char* chars) {
+int minScoreTriangulation(int* values, int valuesSize) {
+int hash(char* pattern) {
+int mostVisitedPattern(char** username, int usernameSize, int* timestamp, char** website) {
+        if (hashTable[i].count > maxCount) {
+int minSwaps(int* nums, int numsSize) {
+bool isEscapePossible(int** blocked, int blockedRowSize, int blockedColSize, int* source, int* target) {
+    bool inBlock(int x, int y) {
+    while (front < rear) {
+int maxUncrossedLines(int* nums1, int nums1Size, int* nums2, int nums2Size) {
+void dfs(int m, int n, int color, int row, int col) {
+int* numMovesStones(int a, int b, int c, int* returnSize) {
+unsigned int hash(int key, int size) {
+HashItem* initHashTable(int size) {
+void insert(HashItem* table, int key) {
+int find(HashItem* table, int key) {
+        if (table[index].key == key) {
+int checkMajorityElement(int* nums, int numsSize) {
+int minimumCost(int n, int connections[][3], int connectionsSize) {
+int largestUniqueNumber(int* nums, int numsSize, int k) {
+int max(int a, int b) {
+TrieNode* newNode() {
+void insert(TrieNode* root, const char* word) {
+bool query(TrieNode* root, char letter) {
+StreamChecker* streamCheckerCreate(char** words, int wordsSize) {
+void streamCheckerFree(StreamChecker* obj) {
+int maxSumTwoNoOverlap(int* nums, int numsSize, int firstLen, int secondLen) {
+int twoCitySchedCost(CityCosts* costs, int costsSize) {
+int** allCellsDistOrder(int rows, int cols, int rCenter, int cCenter, int* returnSize, int** returnColumnSizes) {
+int maxAncestorDiffHelper(TreeNode* node, int* minVal, int* maxDiff) {
+int maxAncestorDiff(TreeNode* root) {
+double maxAverageSubtree(TreeNode* root) {
+    double dfs(TreeNode* node) {
+int isLeapYear(int year) {
+int longestArithSeqLength(int* nums, int numsSize) {
+int numKLenSubstrNoRepeats(char* s, int k) {
+int[] twoSumLessThanK(int* nums, int numsSize, int k) {
+    while (left < right) {
+int sumOfDigits(int num) {
+int sumOfDigitsInMinimumNumber(int* nums, int numsSize) {
+        if (nums[i] < minNum) {
+int videoStitching(int clipsSize, int clips[][2], int time) {
+int sumRootToLeafHelper(TreeNode* node, int currentSum) {
+int sumRootToLeaf(TreeNode* root) {
+void highFive(int* points, int pointsSize, int* result) {
+void dfs(int **grid, int visited[][2], int m, int n, int i, int j) {
+int numEnclaves(int** grid, int m, int n) {
+int* nextLargerNodes(struct ListNode* head, int* returnSize) {
+bool prefixesDivBy5(int* nums, int numsSize, bool* answer) {
+int digitCount(int d, int low, int high) {
+unsigned int hash(int key, int size) {
+KeyValuePair* initHashTable(int size) {
+void insert(KeyValuePair* hashTable, int key, int value, int size) {
+int search(KeyValuePair* hashTable, int key, int size) {
+    while (hashTable[index].key != key) {
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+bool hasAllCodes(char *s, int n) {
+int maxScoreSightseeingPair(int* values, int valuesSize) {
+bool canThreePartsEqualSum(int* arr, int arrSize) {
+        if (j == oneThirdSum) {
+void buildPrefixSum(int *nums, int *prefixSum, int n) {
+int countValidSubarrays(int *prefixSum, int n, int k) {
+        while (left < right) {
+int numberOfValidSubarrays(int *nums, int numsSize, int k) {
+int findMissingElement(int* nums, int numsSize, int k) {
+    while (left <= right) {
+void union_sets(int x, int y) {
+    if (rootX != rootY) {
+int canShipWithinDays(int* weights, int weightsSize, int capacity, int days) {
+        if (currentWeight + weights[i] > capacity) {
+int shipWithinDays(int* weights, int weightsSize, int days) {
+    while (left < right) {
+int numPairsDivisibleBy60(int *time, int timeSize) {
+int findComplement(int num) {
+int round_half_up(float num) {
+int minimizeRoundingError(int* prices, int pricesSize, int target) {
+int distance(Position a, Position b) {
+int assignBikes(Position workers[], Position bikes[], int workersSize, int bikesSize) {
+            if (distances[j] == minDist) {
+        if (distances[i] < INT_MAX) {
+TreeNode* bstFromPreorder(int* preorder, int* end, int rootVal) {
+    if (*end < 0 || preorder[*end] > rootVal) {
+TreeNode* buildTree(int* preorder, int preorderSize) {
+int minDominoRotations(int* tops, int* bottoms, int length) {
+        if (maxCountTop[i] > maxCount) {
+        if (maxCountBottom[i] > maxCount) {
+        if (tops[i] == maxTop && bottoms[i] != maxTop) {
+        if (bottoms[i] == maxBottom && tops[i] != maxBottom) {
+int largestSumAfterKNegations(int* nums, int numsSize, int k) {
+int longestOnes(int* nums, int numsSize, int k) {
+    while (right < numsSize) {
+int max(int a, int b) {
+int* gridIllumination(int n, Light* lamps, int lampsSize, int** queries, int queriesSize, int* queriesRowSize, int* queriesColSize) {
+void turnOffLights(int** grid, int n, int row, int col) {
+int mergeStones(int* stones, int stonesSize, int k) {
+int min(int a, int b) {
+int searchTwoSum(int *nums, int numsSize, int target) {
+    while (left < right) {
+        if (sum == target) {
+        } else if (sum < target) {
+TreeNode* insertIntoMaxTree(TreeNode* root, int val) {
+int findJudge(int n, int trust[][2], int trustSize) {
+int isPerfectSquare(int num) {
+int isSquareful(int *arr, int n) {
+int numSquarefulPerms(int *nums, int numsSize) {
+int minKBitFlips(int* nums, int numsSize, int k) {
+int orangesRotting(int** grid, int m, int n) {
+    while (queueHead < queueTail) {
+bool isCousins(TreeNode* root, int x, int y) {
+        if (foundX && foundY) {
+int subarraysWithKDistinct(int* nums, int numsSize, int k) {
+int brokenCalculator(int startValue, int target) {
+    while (startValue != target) {
+        if (startValue > target) {
+            if ((startValue << 1) <= target) { // Check if double operation is beneficial
+bool equationsPossible(char **equations, int equationsSize) {
+    UnionFind() {
+    void unionSet(int x, int y) {
+int* addToArrayForm(int* num, int numSize, int k) {
+    while (k > 0 || i >= 0 || carry) {
+char findSmallestString(TreeNode* root) {
+void dfs(TreeNode* node, char* minString, int pathLen) {
+void InitQueue(Queue *q, int size) {
+void EnQueue(Queue *q, TreeNode *node, int row, int col) {
+TreeNode* sortedArrayToBST(int* nums, int l, int r) {
+void verticalTraversal(TreeNode* root, int* col, int* row) {
+int** intervalIntersection(int** firstList, int* firstListSize, int** secondList, int* secondListSize, int* returnSize, int** returnColumnSizes) {
+void sumEvenAfterQueries(int* A, int ASize, int** queries, int queriesSize[ASize], int* answer) {
+char* strWithout3a3b(int a, int b) {
+int min(int a, int b) {
+int countTriplets(int* nums, int numsSize) {
+OrderedMap* orderedMapCreate() {
+char* orderedMapGet(OrderedMap *map, int timestamp) {
+        if (map->data[i]->timestamp <= timestamp) {
+TimeMap* timeMapCreate() {
+void timeMapSet(TimeMap* obj, char *key, char *value, int timestamp) {
+char* timeMapGet(TimeMap* obj, char *key, int timestamp) {
+void timeMapFree(TimeMap* obj) {
+int dfs(int x, int y, int* grid, int m, int n, int* visited, int remaining) {
+int distributeCoins(struct TreeNode* root) {
+void dfs(struct TreeNode* node, int* moves) {
+int maxTurbulenceSize(int *arr, int arrSize) {
+int* sortedSquares(int* nums, int numsSize, int* returnSize) {
+int largestPerimeter(int* nums, int numsSize) {
+int* nextGreaterOdd(int* arr, int arrSize) {
+int* nextGreaterEven(int* arr, int arrSize) {
+int oddEvenJumps(int* arr, int arrSize) {
+int subarraysDivByK(int* nums, int numsSize, int k) {
+int** kClosest(int** points, int *pointsSize, int k, int* returnSize, int** returnColumnSizes) {
+int helper(TreeNode* node, int* voyage, int* len, int* index, int* flipped) {
+int* flipMatchVoyage(TreeNode* root, int* voyage, int voyageSize, int* returnSize) {
+void initIntArray(IntArray *array, int capacity) {
+void addToArray(IntArray *array, int num) {
+    while (sum <= bound) {
+        if (sum <= bound) {
+void flip(int arr[], int k) {
+int* pancakeSort(int* arr, int arrSize, int* returnSize) {
+int minCameraCover(struct TreeNode* root) {
+void initList(List *list, int capacity) {
+void add(List *list, int num) {
+void backtrack(List *list, int n, int k, int current, int pos) {
+SpellChecker* createSpellChecker(char **wordlist, int wordlistSize, char **queries, int queriesSize) {
+void toLowerCase(char* str) {
+int isVowel(char ch) {
+void replaceVowels(char* word, char vowel) {
+char* spellCheck(SpellChecker* obj, char* query) {
+void destroySpellChecker(SpellChecker* obj) {
+bool isUnivalTree(TreeNode* root) {
+    if (root == NULL) {
+int leastOpsExpressTarget(int x, int target) {
+    while (expr < target) {
+    while (expr > target) {
+        if (expr % x == 0 && expr / x * x == expr) {
+double minAreaFreeRect(Point* points, int pointsSize) {
+int maxWidthRamp(int *A, int length) {
+int repeatedNTimes(int* nums, int numsSize) {
+void dfs(int i, int j, std::vector<std::vector<char>>& room) {
+void cleanRoom(std::vector<std::vector<int>>& room) {
