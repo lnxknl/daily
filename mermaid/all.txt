@@ -1,0 +1,2924 @@
+
+/*
+ * CHUSER.C
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+Prototype int ChangeUser(const char *user, char *dochdir);
+
+int
+ChangeUser(const char *user, char *dochdir)
+{
+	struct passwd *pas;
+
+	/*
+	 * Obtain password entry and change privilages
+	 */
+
+	if ((pas = getpwnam(user)) == 0) {
+		printlogf(LOG_ERR, "failed to get uid for %s\n", user);
+		return(-1);
+	}
+	setenv("USER", pas->pw_name, 1);
+	setenv("LOGNAME", pas->pw_name, 1);
+	setenv("HOME", pas->pw_dir, 1);
+	setenv("SHELL", "/bin/sh", 1);
+
+	/*
+	 * Change running state to the user in question
+	 */
+
+	if (initgroups(user, pas->pw_gid) < 0) {
+		printlogf(LOG_ERR, "initgroups failed: %s %s\n", user, strerror(errno));
+		return(-1);
+	}
+	if (setregid(pas->pw_gid, pas->pw_gid) < 0) {
+		printlogf(LOG_ERR, "setregid failed: %s %d\n", user, pas->pw_gid);
+		return(-1);
+	}
+	if (setreuid(pas->pw_uid, pas->pw_uid) < 0) {
+		printlogf(LOG_ERR, "setreuid failed: %s %d\n", user, pas->pw_uid);
+		return(-1);
+	}
+	if (dochdir) {
+		/* try to change to $HOME */
+		if (chdir(pas->pw_dir) < 0) {
+			printlogf(LOG_ERR, "chdir failed: %s %s\n", user, pas->pw_dir);
+			/* dochdir is a backup directory, usually /tmp */
+			if (chdir(dochdir) < 0) {
+				printlogf(LOG_ERR, "chdir failed: %s %s\n", user, dochdir);
+				return(-1);
+			}
+		}
+	}
+	return(pas->pw_uid);
+}
+
+
+/*
+ * CONCAT.C
+ *
+ * Concatenates a variable number of strings.  The argument list must be
+ * terminated with a NULL.  Returns a pointer to malloc(3)'ed memory with
+ * the concatenated string, or NULL on error.
+ *
+ * This code deals gracefully with potential integer overflows (perhaps when
+ * input strings are maliciously long), as well as with input strings changing
+ * from under it (perhaps because of misbehavior of another thread). It does
+ * not depend on non-portable functions such as snprintf() and asprintf().
+ *
+ * Written by Solar Designer <solar at openwall.com>  and placed in the
+ * public domain.
+ *
+ * Usage: result = concat(str1, "separator", str2, "separator", str3, NULL);
+ * Retrieved from https://openwall.info/wiki/people/solar/software/public-domain-source-code/concat
+ * See also http://seclists.org/bugtraq/2006/Nov/594
+ *
+ */
+
+#include "defs.h"
+
+Prototype char *concat(const char *s1, ...);
+
+char *
+concat(const char *s1, ...)
+{
+	va_list args;
+	const char *s;
+	char *p, *result;
+	size_t l, m, n;
+
+	m = n = strlen(s1);
+	va_start(args, s1);
+	while ((s = va_arg(args, char *))) {
+		l = strlen(s);
+		if ((m += l) < l) break;
+	}
+	va_end(args);
+	if (s || m >= INT_MAX) return NULL;
+
+	result = malloc(m + 1);
+	if (!result) return NULL;
+
+	memcpy(p = result, s1, n);
+	p += n;
+	va_start(args, s1);
+	while ((s = va_arg(args, char *))) {
+		l = strlen(s);
+		if ((n += l) < l || n > m) break;
+		memcpy(p, s, l);
+		p += l;
+	}
+	va_end(args);
+	if (s || m != n || p - result != n) {
+		free(result);
+		return NULL;
+	}
+
+	*p = 0;
+	return result;
+}
+
+/*
+ * CRONTAB.C
+ *
+ * crontab [-u user] [-c dir] [-l|-e|-d|file|-]
+ * usually run as setuid root
+ * -u and -c options only work if getuid() == geteuid()
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+Prototype void printlogf(int level, const char *ctl, ...);
+
+void Usage(void);
+int GetReplaceStream(const char *user, const char *file);
+void EditFile(const char *user, const char *file);
+
+const char *CDir = CRONTABS;
+int   UserId;
+
+
+int
+main(int ac, char **av)
+{
+	enum { NONE, EDIT, LIST, REPLACE, DELETE } option = NONE;
+	struct passwd *pas;
+	char *repFile = NULL;
+	int repFd = 0;
+	int i;
+	char caller[SMALL_BUFFER];		/* user that ran program */
+
+	UserId = getuid();
+	if ((pas = getpwuid(UserId)) == NULL) {
+		perror("getpwuid");
+		exit(1);
+	}
+	/* [v]snprintf write at most size including \0; they'll null-terminate, even when they truncate */
+	/* return value >= size means result was truncated */
+	if (snprintf(caller, sizeof(caller), "%s", pas->pw_name) >= sizeof(caller)) {
+		printlogf(0, "username '%s' too long", caller);
+		exit(1);
+	}
+
+	opterr = 0;
+	while ((i=getopt(ac,av,"ledu:c:")) != -1) {
+		switch(i) {
+			case 'l':
+				if (option != NONE)
+					Usage();
+				else
+					option = LIST;
+				break;
+			case 'e':
+				if (option != NONE)
+					Usage();
+				else
+					option = EDIT;
+				break;
+			case 'd':
+				if (option != NONE)
+					Usage();
+				else
+					option = DELETE;
+				break;
+			case 'u':
+				/* getopt guarantees optarg != 0 here */
+				if (*optarg != 0 && getuid() == geteuid()) {
+					pas = getpwnam(optarg);
+					if (pas) {
+						UserId = pas->pw_uid;
+						/* paranoia */
+						if ((pas = getpwuid(UserId)) == NULL) {
+							perror("getpwuid");
+							exit(1);
+						}
+					} else {
+						printlogf(0, "user '%s' unknown", optarg);
+						exit(1);
+					}
+				} else {
+					printlogf(0, "-u option: superuser only");
+					exit(1);
+				}
+				break;
+			case 'c':
+				/* getopt guarantees optarg != 0 here */
+				if (*optarg != 0 && getuid() == geteuid()) {
+					CDir = optarg;
+				} else {
+					printlogf(0, "-c option: superuser only");
+					exit(1);
+				}
+				break;
+			default:
+				/* unrecognized -X */
+				option = NONE;
+		}
+	}
+
+	if (option == NONE && optind == ac - 1) {
+		if (av[optind][0] != '-') {
+			option = REPLACE;
+			repFile = av[optind];
+			optind++;
+		} else if (av[optind][1] == 0) {
+			option = REPLACE;
+			optind++;
+		}
+	}
+	if (option == NONE || optind != ac) {
+		Usage();
+	}
+
+	/*
+	 * If there is a replacement file, obtain a secure descriptor to it.
+	 */
+
+	if (repFile) {
+		repFd = GetReplaceStream(caller, repFile);
+		if (repFd < 0) {
+			printlogf(0, "unable to read replacement file %s", repFile);
+			exit(1);
+		}
+	}
+
+	/*
+	 * Change directory to our crontab directory
+	 */
+
+	if (chdir(CDir) < 0) {
+		printlogf(0, "cannot change dir to %s: %s", CDir, strerror(errno));
+		exit(1);
+	}
+
+	/*
+	 * Handle options as appropriate
+	 */
+
+	switch(option) {
+		case LIST:
+			{
+				FILE *fi;
+				char buf[RW_BUFFER];
+
+				if ((fi = fopen(pas->pw_name, "r"))) {
+					while (fgets(buf, sizeof(buf), fi) != NULL)
+						fputs(buf, stdout);
+					fclose(fi);
+				} else {
+					fprintf(stderr, "no crontab for %s\n", pas->pw_name);
+					/* no error code */
+				}
+			}
+			break;
+		case EDIT:
+			{
+				FILE *fi;
+				int fd;
+				int n;
+				char tmp[] = TMPDIR "/crontab.XXXXXX";
+				char buf[RW_BUFFER];
+
+				/*
+				 * Create temp file with perm 0600 and O_EXCL flag, ensuring that this call creates the file
+				 * Read from fi for "$CDir/$USER", write to fd for temp file
+				 * EditFile changes user if necessary, and runs editor on temp file
+				 * Then we delete the temp file, keeping its fd as repFd
+				 */
+				if ((fd = mkstemp(tmp)) >= 0) {
+					chown(tmp, getuid(), getgid());
+					if ((fi = fopen(pas->pw_name, "r"))) {
+						while ((n = fread(buf, 1, sizeof(buf), fi)) > 0)
+							write(fd, buf, n);
+					}
+					EditFile(caller, tmp);
+					remove(tmp);
+					lseek(fd, 0L, 0);
+					repFd = fd;
+				} else {
+					printlogf(0, "unable to create %s: %s", tmp, strerror(errno));
+					exit(1);
+				}
+
+			}
+			option = REPLACE;
+			/* fall through */
+		case REPLACE:
+			{
+				char buf[RW_BUFFER];
+				char path[SMALL_BUFFER];
+				int fd;
+				int n;
+
+				/*
+				 * Read from repFd, write to fd for "$CDir/$USER.new"
+				 */
+				snprintf(path, sizeof(path), "%s.new", pas->pw_name);
+				if ((fd = open(path, O_CREAT|O_TRUNC|O_EXCL|O_APPEND|O_WRONLY, 0600)) >= 0) {
+					while ((n = read(repFd, buf, sizeof(buf))) > 0) {
+						write(fd, buf, n);
+					}
+					close(fd);
+					rename(path, pas->pw_name);
+				} else {
+					fprintf(stderr, "unable to create %s/%s: %s\n",
+							CDir,
+							path,
+							strerror(errno)
+						   );
+				}
+				close(repFd);
+			}
+			break;
+		case DELETE:
+			remove(pas->pw_name);
+			break;
+		case NONE:
+		default:
+			break;
+	}
+
+	/*
+	 *  Bump notification file.  Handle window where crond picks file up
+	 *  before we can write our entry out.
+	 */
+
+	if (option == REPLACE || option == DELETE) {
+		FILE *fo;
+		struct stat st;
+
+		while ((fo = fopen(CRONUPDATE, "a"))) {
+			fprintf(fo, "%s\n", pas->pw_name);
+			fflush(fo);
+			if (fstat(fileno(fo), &st) != 0 || st.st_nlink != 0) {
+				fclose(fo);
+				break;
+			}
+			fclose(fo);
+			/* loop */
+		}
+		if (fo == NULL) {
+			fprintf(stderr, "unable to append to %s/%s\n", CDir, CRONUPDATE);
+		}
+	}
+	exit(0);
+	/* not reached */
+}
+
+void
+printlogf(int level, const char *ctl, ...)
+{
+	va_list va;
+	char buf[LOG_BUFFER];
+
+	va_start(va, ctl);
+	vsnprintf(buf, sizeof(buf), ctl, va);
+	write(2, buf, strlen(buf));
+	va_end(va);
+}
+
+void
+Usage(void)
+{
+	/*
+	 * parse error
+	 */
+	printf("crontab " VERSION "\n");
+	printf("crontab file [-u user]  replace crontab from file\n");
+	printf("crontab -  [-u user]    replace crontab from stdin\n");
+	printf("crontab -l [-u user]    list crontab\n");
+	printf("crontab -e [-u user]    edit crontab\n");
+	printf("crontab -d [-u user]    delete crontab\n");
+	printf("crontab -c dir <opts>   specify crontab directory\n");
+	exit(2);
+}
+
+int
+GetReplaceStream(const char *user, const char *file)
+{
+	int filedes[2];
+	int pid;
+	int fd;
+	int n;
+	char buf[RW_BUFFER];
+
+	if (pipe(filedes) < 0) {
+		perror("pipe");
+		return(-1);
+	}
+	if ((pid = fork()) < 0) {
+		perror("fork");
+		return(-1);
+	}
+	if (pid > 0) {
+		/*
+		 * PARENT
+		 * Read from pipe[0], return it (or -1 if it's empty)
+		 */
+
+		close(filedes[1]);
+		if (read(filedes[0], buf, 1) != 1) {
+			close(filedes[0]);
+			filedes[0] = -1;
+		}
+		return(filedes[0]);
+	}
+
+	/*
+	 * CHILD
+	 * Read from fd for "$file", write to pipe[1]
+	 */
+
+	close(filedes[0]);
+
+	if (ChangeUser(user, NULL) < 0)
+		exit(0);
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		printlogf(0, "unable to open %s: %s", file, strerror(errno));
+		exit(1);
+	}
+	buf[0] = 0;
+	write(filedes[1], buf, 1);
+	while ((n = read(fd, buf, sizeof(buf))) > 0) {
+		write(filedes[1], buf, n);
+	}
+	exit(0);
+}
+
+void
+EditFile(const char *user, const char *file)
+{
+	int pid;
+
+	if ((pid = fork()) == 0) {
+		/*
+		 * CHILD - change user and run editor on "$file"
+		 */
+		const char *ptr;
+		char visual[SMALL_BUFFER];
+
+		if (ChangeUser(user, TMPDIR) < 0)
+			exit(0);
+		if ((ptr = getenv("EDITOR")) == NULL || strlen(ptr) >= sizeof(visual))
+			if ((ptr = getenv("VISUAL")) == NULL || strlen(ptr) >= sizeof(visual))
+				ptr = PATH_VI;
+
+		/* [v]snprintf write at most size including \0; they'll null-terminate, even when they truncate */
+		/* return value >= size means result was truncated */
+		if (snprintf(visual, sizeof(visual), "%s %s", ptr, file) < sizeof(visual))
+			execl("/bin/sh", "/bin/sh", "-c", visual, NULL);
+		printlogf(0, "couldn't exec %s", visual);
+		exit(1);
+	}
+	if (pid < 0) {
+		/*
+		 * PARENT - failure
+		 */
+		perror("fork");
+		exit(1);
+	}
+	waitpid(pid, NULL, 0);
+}
+
+
+/*
+ * DATABASE.C
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+#define FIRST_DOW  (1 << 0)
+#define SECOND_DOW (1 << 1)
+#define THIRD_DOW  (1 << 2)
+#define FOURTH_DOW (1 << 3)
+#define FIFTH_DOW  (1 << 4)
+#define LAST_DOW   (1 << 5)
+#define ALL_DOW    (FIRST_DOW|SECOND_DOW|THIRD_DOW|FOURTH_DOW|FIFTH_DOW|LAST_DOW)
+
+Prototype void CheckUpdates(const char *dpath, const char *user_override, time_t t1, time_t t2);
+Prototype void SynchronizeDir(const char *dpath, const char *user_override, int initial_scan);
+Prototype void ReadTimestamps(const char *user);
+Prototype int TestJobs(time_t t1, time_t t2);
+Prototype int TestStartupJobs(void);
+Prototype int ArmJob(CronFile *file, CronLine *line, time_t t1, time_t t2);
+Prototype void RunJobs(void);
+Prototype int CheckJobs(void);
+
+void SynchronizeFile(const char *dpath, const char *fname, const char *uname);
+void DeleteFile(CronFile **pfile);
+char *ParseInterval(int *interval, char *ptr);
+char *ParseField(char *userName, char *ary, int modvalue, int offset, int onvalue, const char **names, char *ptr);
+void FixDayDow(CronLine *line);
+void PrintLine(CronLine *line);
+void PrintFile(CronFile *file, char* loc, char* fname, int line);
+
+CronFile *FileBase = NULL;
+
+const char *DowAry[] = {
+	"sun",
+	"mon",
+	"tue",
+	"wed",
+	"thu",
+	"fri",
+	"sat",
+
+	"Sun",
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat",
+	NULL
+};
+
+const char *MonAry[] = {
+	"jan",
+	"feb",
+	"mar",
+	"apr",
+	"may",
+	"jun",
+	"jul",
+	"aug",
+	"sep",
+	"oct",
+	"nov",
+	"dec",
+
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+	NULL
+};
+
+const char *FreqAry[] = {
+	"noauto",
+	"reboot",
+	"hourly",
+	"daily",
+	"weekly",
+	"monthly",
+	"yearly",
+	NULL
+};
+
+/*
+ * Check the cron.update file in the specified directory.  If user_override
+ * is NULL then the files in the directory belong to the user whose name is
+ * the file, otherwise they belong to the user_override user.
+ */
+void
+CheckUpdates(const char *dpath, const char *user_override, time_t t1, time_t t2)
+{
+	FILE *fi;
+	char buf[SMALL_BUFFER];
+	char *fname, *ptok, *job;
+	char *path;
+
+	if (!(path = concat(dpath, "/", CRONUPDATE, NULL))) {
+		errno = ENOMEM;
+		perror("CheckUpdates");
+		exit(1);
+	}
+	if ((fi = fopen(path, "r")) != NULL) {
+		remove(path);
+		printlogf(LOG_INFO, "reading %s/%s\n", dpath, CRONUPDATE);
+		while (fgets(buf, sizeof(buf), fi) != NULL) {
+			/*
+			 * if buf has only sep chars, return NULL and point ptok at buf's terminating 0
+			 * else return pointer to first non-sep of buf and
+			 * 		if there's a following sep, overwrite it to 0 and point ptok to next char
+			 * 		else point ptok at buf's terminating 0
+			 */
+			fname = strtok_r(buf, " \t\n", &ptok);
+
+			if (user_override)
+				SynchronizeFile(dpath, fname, user_override);
+			else if (!getpwnam(fname))
+				printlogf(LOG_WARNING, "ignoring %s/%s (non-existent user)\n", dpath, fname);
+			else if (*ptok == 0 || *ptok == '\n') {
+				SynchronizeFile(dpath, fname, fname);
+				ReadTimestamps(fname);
+			} else {
+				/* if fname is followed by whitespace, we prod any following jobs */
+				CronFile *file = FileBase;
+				while (file) {
+					if (strcmp(file->cf_UserName, fname) == 0)
+						break;
+					file = file->cf_Next;
+				}
+				if (!file)
+					printlogf(LOG_WARNING, "unable to prod for user %s: no crontab\n", fname);
+				else {
+					CronLine *line;
+					/* calling strtok(ptok...) then strtok(NULL) is equiv to calling strtok_r(NULL,..&ptok) */
+					while ((job = strtok(ptok, " \t\n")) != NULL) {
+						time_t force = t2;
+						ptok = NULL;
+						if (*job == '!') {
+							force = (time_t)-1;
+							++job;
+						}
+						line = file->cf_LineBase;
+						while (line) {
+							if (line->cl_JobName && strcmp(line->cl_JobName, job) == 0)
+								break;
+							line = line->cl_Next;
+						}
+						if (line)
+							ArmJob(file, line, t1, force);
+						else {
+							printlogf(LOG_WARNING, "unable to prod for user %s: unknown job %s\n", fname, job);
+							/* we can continue parsing this line, we just don't install any CronWaiter for the requested job */
+						}
+					}
+				}
+			}
+		}
+		fclose(fi);
+	}
+	free(path);
+}
+
+void
+SynchronizeDir(const char *dpath, const char *user_override, int initial_scan)
+{
+	CronFile **pfile;
+	CronFile *file;
+	struct dirent *den;
+	DIR *dir;
+	char *path;
+
+	if (DebugOpt)
+		printlogf(LOG_DEBUG, "Synchronizing %s\n", dpath);
+
+	/*
+	 * Delete all database CronFiles for this directory.  DeleteFile() will
+	 * free *pfile and relink the *pfile pointer, or in the alternative will
+	 * mark it as deleted.
+	 */
+	pfile = &FileBase;
+	while ((file = *pfile) != NULL) {
+		if (file->cf_Deleted == 0 && strcmp(file->cf_DPath, dpath) == 0) {
+			DeleteFile(pfile);
+		} else {
+			pfile = &file->cf_Next;
+		}
+	}
+
+	/*
+	 * Since we are resynchronizing the entire directory, remove the
+	 * the CRONUPDATE file.
+	 */
+	if (!(path = concat(dpath, "/", CRONUPDATE, NULL))) {
+		errno = ENOMEM;
+		perror("SynchronizeDir");
+		exit(1);
+	}
+	remove(path);
+	free(path);
+
+	/*
+	 * Scan the specified directory
+	 */
+	if ((dir = opendir(dpath)) != NULL) {
+		while ((den = readdir(dir)) != NULL) {
+			if (strchr(den->d_name, '.') != NULL)
+				continue;
+			if (strcmp(den->d_name, CRONUPDATE) == 0)
+				continue;
+			if (user_override) {
+				SynchronizeFile(dpath, den->d_name, user_override);
+			} else if (getpwnam(den->d_name)) {
+				SynchronizeFile(dpath, den->d_name, den->d_name);
+			} else {
+				printlogf(LOG_WARNING, "ignoring %s/%s (non-existent user)\n",
+						dpath, den->d_name);
+			}
+		}
+		closedir(dir);
+	} else {
+		if (initial_scan)
+			printlogf(LOG_ERR, "unable to scan directory %s\n", dpath);
+			/* softerror, do not exit the program */
+	}
+}
+
+
+void
+ReadTimestamps(const char *user)
+{
+	CronFile *file;
+	CronLine *line;
+	FILE *fi;
+	char buf[SMALL_BUFFER];
+	char *ptr;
+	struct tm tm = {0};
+	time_t sec, freq;
+
+	file = FileBase;
+	while (file != NULL) {
+		if (file->cf_Deleted == 0 && (!user || strcmp(user, file->cf_UserName) == 0)) {
+			line = file->cf_LineBase;
+			while (line != NULL) {
+				if (line->cl_Timestamp) {
+					if ((fi = fopen(line->cl_Timestamp, "r")) != NULL) {
+						if (fgets(buf, sizeof(buf), fi) != NULL) {
+							int fake = 0;
+							ptr = buf;
+							if (strncmp(buf, "after ", 6) == 0) {
+								fake = 1;
+								ptr += 6;
+							}
+							sec = (time_t)-1;
+							ptr = strptime(ptr, CRONSTAMP_FMT, &tm);
+							if (ptr && (*ptr == 0 || *ptr == '\n')) {
+								/* strptime uses current seconds when seconds not specified? anyway, we don't get round minutes */
+								tm.tm_sec = 0;
+								tm.tm_isdst = -1;
+								sec = mktime(&tm);
+							}
+							if (sec == (time_t)-1) {
+								printlogf(LOG_ERR, "unable to parse timestamp (user %s job %s)\n", file->cf_UserName, line->cl_JobName);
+								/* we continue checking other timestamps in this CronFile */
+							} else {
+								/* sec -= sec % 60; */
+								if (fake) {
+									line->cl_NotUntil = sec;
+								} else {
+									line->cl_LastRan = sec;
+									freq = (line->cl_Freq > 0) ? line->cl_Freq : line->cl_Delay;
+									/* if (line->cl_NotUntil < line->cl_LastRan + freq) */
+									line->cl_NotUntil = line->cl_LastRan + freq;
+								}
+							}
+						}
+						fclose(fi);
+					} else {
+						int succeeded = 0;
+						printlogf(LOG_NOTICE, "no timestamp found (user %s job %s)\n", file->cf_UserName, line->cl_JobName);
+						/* write a fake timestamp file so our initial NotUntil doesn't keep being reset every hour when crond does a SynchronizeDir */
+						if ((fi = fopen(line->cl_Timestamp, "w")) != NULL) {
+							if (strftime(buf, sizeof(buf), CRONSTAMP_FMT, localtime(&line->cl_NotUntil)))
+								if (fputs("after ", fi) >= 0)
+									if (fputs(buf,fi) >= 0)
+										succeeded = 1;
+							fclose(fi);
+						}
+						if (!succeeded)
+							printlogf(LOG_WARNING, "unable to write timestamp to %s (user %s %s)\n", line->cl_Timestamp, file->cf_UserName, line->cl_Description);
+					}
+				}
+				line = line->cl_Next;
+			}
+		}
+		file = file->cf_Next;
+	}
+}
+
+void
+SynchronizeFile(const char *dpath, const char *fileName, const char *userName)
+{
+	CronFile **pfile;
+	CronFile *file;
+	int maxEntries;
+	int maxLines;
+	char buf[RW_BUFFER]; /* max length for crontab lines */
+	char *path;
+	FILE *fi;
+
+	/*
+	 * Limit entries
+	 */
+	if (strcmp(userName, "root") == 0)
+		maxEntries = 65535;
+	else
+		maxEntries = MAXLINES;
+	maxLines = maxEntries * 10;
+
+	/*
+	 * Delete any existing copy of this CronFile
+	 */
+	pfile = &FileBase;
+	while ((file = *pfile) != NULL) {
+		if (file->cf_Deleted == 0 && strcmp(file->cf_DPath, dpath) == 0 &&
+				strcmp(file->cf_FileName, fileName) == 0
+		   ) {
+			DeleteFile(pfile);
+		} else {
+			pfile = &file->cf_Next;
+		}
+	}
+
+	if (!(path = concat(dpath, "/", fileName, NULL))) {
+		errno = ENOMEM;
+		perror("SynchronizeFile");
+		exit(1);
+	}
+	if ((fi = fopen(path, "r")) != NULL) {
+		struct stat sbuf;
+
+		if (fstat(fileno(fi), &sbuf) == 0 && sbuf.st_uid == DaemonUid) {
+			CronFile *file = calloc(1, sizeof(CronFile));
+			CronLine **pline;
+			time_t tnow = time(NULL);
+			tnow -= tnow % 60;
+
+			file->cf_UserName = strdup(userName);
+			file->cf_FileName = strdup(fileName);
+			file->cf_DPath = strdup(dpath);
+			pline = &file->cf_LineBase;
+
+			/* fgets reads at most size-1 chars until \n or EOF, then adds a\0; \n if present is stored in buf */
+			while (fgets(buf, sizeof(buf), fi) != NULL && --maxLines) {
+				CronLine line;
+				char *ptr = buf;
+				int len;
+
+				while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n')
+					++ptr;
+
+				len = strlen(ptr);
+				if (len && ptr[len-1] == '\n')
+					ptr[--len] = 0;
+
+				if (*ptr == 0 || *ptr == '#')
+					continue;
+
+				if (--maxEntries == 0)
+					break;
+
+				memset(&line, 0, sizeof(line));
+
+				if (DebugOpt)
+					printlogf(LOG_DEBUG, "User %s Entry %s\n", userName, buf);
+
+				if (*ptr == '@') {
+					/*
+					 * parse @hourly, etc
+					 */
+					int	j;
+					line.cl_Delay = -1;
+					ptr += 1;
+					for (j = 0; FreqAry[j]; ++j) {
+						if (strncmp(ptr, FreqAry[j], strlen(FreqAry[j])) == 0) {
+							break;
+						}
+					}
+					if (FreqAry[j]) {
+						ptr += strlen(FreqAry[j]);
+						switch(j) {
+							case 0:
+								/* noauto */
+								line.cl_Freq = -2;
+								line.cl_Delay = 0;
+								break;
+							case 1:
+								/* reboot */
+								line.cl_Freq = -1;
+								line.cl_Delay = 0;
+								break;
+							case 2:
+								line.cl_Freq = HOURLY_FREQ;
+								break;
+							case 3:
+								line.cl_Freq = DAILY_FREQ;
+								break;
+							case 4:
+								line.cl_Freq = WEEKLY_FREQ;
+								break;
+							case 5:
+								line.cl_Freq = MONTHLY_FREQ;
+								break;
+							case 6:
+								line.cl_Freq = YEARLY_FREQ;
+								break;
+							/* else line.cl_Freq will remain 0 */
+						}
+					}
+
+					if (!line.cl_Freq || (*ptr != ' ' && *ptr != '\t')) {
+						printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s\n", userName, buf);
+						continue;
+					}
+
+					if (line.cl_Delay < 0) {
+						/*
+						 * delays on @daily, @hourly, etc are 1/20 of the frequency
+						 * so they don't all start at once
+						 * this also affects how they behave when the job returns EAGAIN
+						 */
+						line.cl_Delay = line.cl_Freq / 20;
+						line.cl_Delay -= line.cl_Delay % 60;
+						if (line.cl_Delay == 0)
+							line.cl_Delay = 60;
+						/* all minutes are permitted */
+						for (j=0; j<60; ++j)
+							line.cl_Mins[j] = 1;
+						for (j=0; j<24; ++j)
+							line.cl_Hrs[j] = 1;
+						for (j=1; j<32; ++j)
+							/* days are numbered 1..31 */
+							line.cl_Days[j] = 1;
+						for (j=0; j<12; ++j)
+							line.cl_Mons[j] = 1;
+					}
+
+					while (*ptr == ' ' || *ptr == '\t')
+						++ptr;
+
+				} else {
+					/*
+					 * parse date ranges
+					 */
+
+					ptr = ParseField(file->cf_UserName, line.cl_Mins, FIELD_MINUTES, 0, 1,
+							NULL, ptr);
+					ptr = ParseField(file->cf_UserName, line.cl_Hrs,  FIELD_HOURS, 0, 1,
+							NULL, ptr);
+					ptr = ParseField(file->cf_UserName, line.cl_Days, FIELD_M_DAYS, 0, 1,
+							NULL, ptr);
+					ptr = ParseField(file->cf_UserName, line.cl_Mons, FIELD_MONTHS, -1, 1,
+							MonAry, ptr);
+					ptr = ParseField(file->cf_UserName, line.cl_Dow,  FIELD_W_DAYS, 0, ALL_DOW,
+							DowAry, ptr);
+					/*
+					 * check failure
+					 */
+
+					if (ptr == NULL)
+						continue;
+
+					/*
+					 * fix days and dow - if one is not * and the other
+					 * is *, the other is set to 0, and vise-versa
+					 */
+
+					FixDayDow(&line);
+				}
+
+				/* check for ID=... and AFTER=... and FREQ=... */
+				do {
+					if (strncmp(ptr, ID_TAG, strlen(ID_TAG)) == 0) {
+						if (line.cl_JobName) {
+							/* only assign ID_TAG once */
+							printlogf(LOG_WARNING, "failed parsing crontab for user %s: repeated %s\n", userName, ptr);
+							ptr = NULL;
+						} else {
+							ptr += strlen(ID_TAG);
+							/*
+							 * name = strsep(&ptr, seps):
+							 * return name = ptr, and if ptr contains sep chars, overwrite first with 0 and point ptr to next char
+							 *                    else set ptr=NULL
+							 */
+							if (!(line.cl_Description = concat("job ", strsep(&ptr, " \t"), NULL))) {
+								errno = ENOMEM;
+								perror("SynchronizeFile");
+								exit(1);
+							}
+							line.cl_JobName = line.cl_Description + 4;
+							if (!ptr)
+								printlogf(LOG_WARNING, "failed parsing crontab for user %s: no command after %s%s\n", userName, ID_TAG, line.cl_JobName);
+						}
+					} else if (strncmp(ptr, FREQ_TAG, strlen(FREQ_TAG)) == 0) {
+						if (line.cl_Freq) {
+							/* only assign FREQ_TAG once */
+							printlogf(LOG_WARNING, "failed parsing crontab for user %s: repeated %s\n", userName, ptr);
+							ptr = NULL;
+						} else {
+							char *base = ptr;
+							ptr += strlen(FREQ_TAG);
+							ptr = ParseInterval(&line.cl_Freq, ptr);
+							if (ptr && *ptr == '/')
+								ptr = ParseInterval(&line.cl_Delay, ++ptr);
+							else
+								line.cl_Delay = line.cl_Freq;
+							if (!ptr) {
+								printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s\n", userName, base);
+							} else if (*ptr != ' ' && *ptr != '\t') {
+								printlogf(LOG_WARNING, "failed parsing crontab for user %s: no command after %s\n", userName, base);
+								ptr = NULL;
+							}
+						}
+					} else if (strncmp(ptr, WAIT_TAG, strlen(WAIT_TAG)) == 0) {
+						if (line.cl_Waiters) {
+							/* only assign WAIT_TAG once */
+							printlogf(LOG_WARNING, "failed parsing crontab for user %s: repeated %s\n", userName, ptr);
+							ptr = NULL;
+						} else {
+							short more = 1;
+							char *name;
+							ptr += strlen(WAIT_TAG);
+							do {
+								CronLine *job, **pjob;
+								if (strcspn(ptr,",") < strcspn(ptr," \t"))
+									name = strsep(&ptr, ",");
+								else {
+									more = 0;
+									name = strsep(&ptr, " \t");
+								}
+								if (!ptr || *ptr == 0) {
+									/* unexpectedly this was the last token in buf; so abort */
+									printlogf(LOG_WARNING, "failed parsing crontab for user %s: no command after %s%s\n", userName, WAIT_TAG, name);
+									ptr = NULL;
+								} else {
+									int waitfor = 0;
+									char *w, *wsave;
+									if ((w = strchr(name, '/')) != NULL) {
+										wsave = w++;
+										w = ParseInterval(&waitfor, w);
+										if (!w || *w != 0) {
+											printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s%s\n", userName, WAIT_TAG, name);
+											ptr = NULL;
+										} else
+											/* truncate name */
+											*wsave = 0;
+									}
+									if (ptr) {
+										/* look for a matching CronLine */
+										pjob = &file->cf_LineBase;
+										while ((job = *pjob) != NULL) {
+											if (job->cl_JobName && strcmp(job->cl_JobName, name) == 0) {
+												CronWaiter *waiter = malloc(sizeof(CronWaiter));
+												CronNotifier *notif = malloc(sizeof(CronNotifier));
+												waiter->cw_Flag = -1;
+												waiter->cw_MaxWait = waitfor;
+												waiter->cw_NotifLine = job;
+												waiter->cw_Notifier = notif;
+												waiter->cw_Next = line.cl_Waiters;	/* add to head of line.cl_Waiters */
+												line.cl_Waiters = waiter;
+												notif->cn_Waiter = waiter;
+												notif->cn_Next = job->cl_Notifs;	/* add to head of job->cl_Notifs */
+												job->cl_Notifs = notif;
+												break;
+											} else
+												pjob = &job->cl_Next;
+										}
+										if (!job) {
+											printlogf(LOG_WARNING, "failed parsing crontab for user %s: unknown job %s\n", userName, name);
+											/* we can continue parsing this line, we just don't install any CronWaiter for the requested job */
+										}
+									}
+								}
+							} while (ptr && more);
+						}
+					} else
+						break;
+					if (!ptr)
+						break;
+					while (*ptr == ' ' || *ptr == '\t')
+						++ptr;
+				} while (!line.cl_JobName || !line.cl_Waiters || !line.cl_Freq);
+
+				if (line.cl_JobName && (!ptr || *line.cl_JobName == 0)) {
+					/* we're aborting, or ID= was empty */
+					free(line.cl_Description);
+					line.cl_Description = NULL;
+					line.cl_JobName = NULL;
+				}
+				if (ptr && line.cl_Delay > 0 && !line.cl_JobName) {
+					printlogf(LOG_WARNING, "failed parsing crontab for user %s: writing timestamp requires job %s to be named\n", userName, ptr);
+					ptr = NULL;
+				}
+				if (!ptr) {
+					/* couldn't parse so we abort; free any cl_Waiters */
+					if (line.cl_Waiters) {
+						CronWaiter **pwaiters, *waiters;
+						pwaiters = &line.cl_Waiters;
+						while ((waiters = *pwaiters) != NULL) {
+							*pwaiters = waiters->cw_Next;
+							/* leave the Notifier allocated but disabled */
+							waiters->cw_Notifier->cn_Waiter = NULL;
+							free(waiters);
+						}
+					}
+					continue;
+				}
+				/* now we've added any ID=... or AFTER=... */
+
+				/*
+				 * copy command string
+				 */
+				line.cl_Shell = strdup(ptr);
+
+				if (line.cl_Delay > 0) {
+					if (!(line.cl_Timestamp = concat(TSDir, "/", userName, ".", line.cl_JobName, NULL))) {
+						errno = ENOMEM;
+						perror("SynchronizeFile");
+						exit(1);
+					}
+					line.cl_NotUntil = tnow + line.cl_Delay;
+				}
+
+				if (line.cl_JobName) {
+					if (DebugOpt)
+						printlogf(LOG_DEBUG, "    Command %s Job %s\n\n", line.cl_Shell, line.cl_JobName);
+				} else {
+					/* when cl_JobName is NULL, we point cl_Description to cl_Shell */
+					line.cl_Description = line.cl_Shell;
+					if (DebugOpt)
+						printlogf(LOG_DEBUG, "    Command %s\n\n", line.cl_Shell);
+				}
+
+				*pline = calloc(1, sizeof(CronLine));
+				/* copy working CronLine to newly allocated one */
+				**pline = line;
+
+				pline = &((*pline)->cl_Next);
+			}
+
+			*pline = NULL;
+
+			file->cf_Next = FileBase;
+			FileBase = file;
+
+			if (maxLines == 0 || maxEntries == 0)
+				printlogf(LOG_WARNING, "maximum number of lines reached for user %s\n", userName);
+		}
+		fclose(fi);
+	}
+	free(path);
+}
+
+char *
+ParseInterval(int *interval, char *ptr)
+{
+	int n = 0;
+	if (ptr && *ptr >= '0' && *ptr <= '9' && (n = strtol(ptr, &ptr, 10)) > 0)
+		switch (*ptr) {
+			case 'm':
+				n *= 60;
+				break;
+			case 'h':
+				n *= HOURLY_FREQ;
+				break;
+			case 'd':
+				n *= DAILY_FREQ;
+				break;
+			case 'w':
+				n *= WEEKLY_FREQ;
+				break;
+			default:
+				n = 0;
+		}
+	if (n > 0) {
+		*interval = n;
+		return (ptr+1);
+	} else
+		return (NULL);
+}
+
+char *
+ParseField(char *user, char *ary, int modvalue, int offset, int onvalue, const char **names, char *ptr)
+{
+	char *base = ptr;
+	int n1 = -1;
+	int n2 = -1;
+
+	if (base == NULL)
+		return (NULL);
+
+	while (*ptr != ' ' && *ptr != '\t' && *ptr != '\n') {
+		int skip = 0;
+
+		/*
+		 * Handle numeric digit or symbol or '*'
+		 */
+
+		if (*ptr == '*') {
+			n1 = 0;			/* everything will be filled */
+			n2 = modvalue - 1;
+			skip = 1;
+			++ptr;
+		} else if (*ptr >= '0' && *ptr <= '9') {
+			if (n1 < 0)
+				n1 = strtol(ptr, &ptr, 10) + offset;
+			else
+				n2 = strtol(ptr, &ptr, 10) + offset;
+			skip = 1;
+		} else if (names) {
+			int i;
+
+			for (i = 0; names[i]; ++i) {
+				if (strncmp(ptr, names[i], strlen(names[i])) == 0) {
+					break;
+				}
+			}
+			if (names[i]) {
+				ptr += strlen(names[i]);
+				if (n1 < 0)
+					n1 = i;
+				else
+					n2 = i;
+				skip = 1;
+			}
+		}
+
+		/*
+		 * handle optional range '-'
+		 */
+
+		if (skip == 0) {
+			printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s\n", user, base);
+			return(NULL);
+		}
+		if (*ptr == '-' && n2 < 0) {
+			++ptr;
+			continue;
+		}
+
+		/*
+		 * collapse single-value ranges, handle skipmark, and fill
+		 * in the character array appropriately.
+		 */
+
+		if (n2 < 0)
+			n2 = n1;
+
+		n2 = n2 % modvalue;
+
+		if (*ptr == '/')
+			skip = strtol(ptr + 1, &ptr, 10);
+
+		/*
+		 * fill array, using a failsafe is the easiest way to prevent
+		 * an endless loop
+		 */
+
+		{
+			int s0 = 1;
+			int failsafe = 1024;
+
+			--n1;
+			do {
+				n1 = (n1 + 1) % modvalue;
+
+				if (--s0 == 0) {
+					ary[n1] = onvalue;
+					s0 = skip;
+				}
+			} while (n1 != n2 && --failsafe);
+
+			if (failsafe == 0) {
+				printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s\n", user, base);
+				return(NULL);
+			}
+		}
+		if (*ptr != ',')
+			break;
+		++ptr;
+		n1 = -1;
+		n2 = -1;
+	}
+
+	if (*ptr != ' ' && *ptr != '\t' && *ptr != '\n') {
+		printlogf(LOG_WARNING, "failed parsing crontab for user %s: %s\n", user, base);
+		return(NULL);
+	}
+
+	while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n')
+		++ptr;
+
+	if (DebugOpt) {
+		int i;
+
+		for (i = 0; i < modvalue; ++i)
+			if (modvalue == FIELD_W_DAYS)
+				printlogf(LOG_DEBUG, "%2x ", ary[i]);
+			else
+				printlogf(LOG_DEBUG, "%d", ary[i]);
+		printlogf(LOG_DEBUG, "\n");
+	}
+
+	return(ptr);
+}
+
+/* Reconcile Days of Month with Days of Week.
+ * There are four cases to cover:
+ * 1) DoM and DoW are both specified as *; the task may run on any day
+ * 2) DoM is * and DoW is specific; the task runs weekly on the specified DoW(s)
+ * 3) DoM is specific and DoW is *; the task runs on the specified DoM, regardless
+ *    of which day of the week they fall
+ * 4) DoM is in the range [1..5] and DoW is specific; the task runs on the Nth
+ *    specified DoW. DoM > 5 means the last such DoW in that month
+ */
+void
+FixDayDow(CronLine *line)
+{
+	unsigned short i;
+	short DowStar = 1;
+	short DomStar = 1;
+	char mask = 0;
+
+	for (i = 0; i < arysize(line->cl_Dow); ++i) {
+		if (line->cl_Dow[i] == 0) {
+			/* '*' was NOT specified in the DoW field on this CronLine */
+			DowStar = 0;
+			break;
+		}
+	}
+
+	for (i = 0; i < arysize(line->cl_Days); ++i) {
+		if (line->cl_Days[i] == 0) {
+			/* '*' was NOT specified in the Date field on this CronLine */
+			DomStar = 0;
+			break;
+		}
+	}
+
+	/* When cases 1, 2 or 3 there is nothing left to do */
+	if (DowStar || DomStar)
+		return;
+
+	/* Set individual bits within the DoW mask... */
+	for (i = 0; i < arysize(line->cl_Days); ++i) {
+		if (line->cl_Days[i]) {
+			if (i < 6)
+				mask |= 1 << (i - 1);
+			else
+				mask |= LAST_DOW;
+		}
+	}
+
+	/* and apply the mask to each DoW element */
+	for (i = 0; i < arysize(line->cl_Dow); ++i) {
+		if (line->cl_Dow[i])
+			line->cl_Dow[i] = mask;
+		else
+			line->cl_Dow[i] = 0;
+	}
+
+	/* case 4 relies on the DoW value to guard the date instead of using the
+	 * cl_Days field for this purpose; so we must set each element of cl_Days
+	 * to 1 to allow the DoW bitmask test to be made
+	 */
+	memset(line->cl_Days, 1, sizeof(line->cl_Days));
+}
+
+/*
+ *  DeleteFile() - destroy a CronFile.
+ *
+ *  The CronFile (*pfile) is destroyed if possible, and marked cf_Deleted
+ *  if there are still active processes running on it.  *pfile is relinked
+ *  on success.
+ */
+void
+DeleteFile(CronFile **pfile)
+{
+	CronFile *file = *pfile;
+	CronLine **pline = &file->cf_LineBase;
+	CronLine *line;
+	CronWaiter **pwaiters, *waiters;
+	CronNotifier **pnotifs, *notifs;
+
+	file->cf_Running = 0;
+	file->cf_Deleted = 1;
+
+	while ((line = *pline) != NULL) {
+		if (line->cl_Pid > JOB_NONE) {
+			file->cf_Running = 1;
+			pline = &line->cl_Next;
+		} else {
+			*pline = line->cl_Next;
+			free(line->cl_Shell);
+
+			if (line->cl_JobName)
+				/* this frees both cl_Description and cl_JobName
+				 * if cl_JobName is NULL, Description pointed to ch_Shell, which was already freed
+				 */
+				free(line->cl_Description);
+			if (line->cl_Timestamp)
+				free(line->cl_Timestamp);
+
+			pnotifs = &line->cl_Notifs;
+			while ((notifs = *pnotifs) != NULL) {
+				*pnotifs = notifs->cn_Next;
+				if (notifs->cn_Waiter) {
+					notifs->cn_Waiter->cw_NotifLine = NULL;
+					notifs->cn_Waiter->cw_Notifier = NULL;
+				}
+				free(notifs);
+			}
+			pwaiters = &line->cl_Waiters;
+			while ((waiters = *pwaiters) != NULL) {
+				*pwaiters = waiters->cw_Next;
+				if (waiters->cw_Notifier)
+					waiters->cw_Notifier->cn_Waiter = NULL;
+				free(waiters);
+			}
+
+			free(line);
+		}
+	}
+	if (file->cf_Running == 0) {
+		*pfile = file->cf_Next;
+		free(file->cf_DPath);
+		free(file->cf_FileName);
+		free(file->cf_UserName);
+		free(file);
+	}
+}
+
+
+/*
+ * TestJobs()
+ *
+ * determine which jobs need to be run.  Under normal conditions, the
+ * period is about a minute (one scan).  Worst case it will be one
+ * hour (60 scans).
+ */
+
+int
+TestJobs(time_t t1, time_t t2)
+{
+	short nJobs = 0;
+	time_t t;
+	CronFile *file;
+	CronLine *line;
+
+	PrintFile(FileBase, "TestJobs()", __FILE__, __LINE__);
+	for (file = FileBase; file; file = file->cf_Next) {
+		if (file->cf_Deleted)
+			continue;
+		for (line = file->cf_LineBase; line; line = line->cl_Next) {
+			struct CronWaiter *waiter;
+
+			if (line->cl_Pid == JOB_WAITING) {
+				/* can job stop waiting? */
+				int ready = 1;
+				waiter = line->cl_Waiters;
+				while (waiter != NULL) {
+					if (waiter->cw_Flag > 0) {
+						/* notifier exited unsuccessfully */
+						ready = 2;
+						break;
+					} else if (waiter->cw_Flag < 0)
+						/* still waiting, notifier hasn't run to completion */
+						ready = 0;
+					waiter = waiter->cw_Next;
+				}
+				if (ready == 2) {
+					if (DebugOpt)
+						printlogf(LOG_DEBUG, "cancelled waiting: user %s %s\n", file->cf_UserName, line->cl_Description);
+					line->cl_Pid = JOB_NONE;
+				} else if (ready) {
+					if (DebugOpt)
+						printlogf(LOG_DEBUG, "finished waiting: user %s %s\n", file->cf_UserName, line->cl_Description);
+					nJobs += ArmJob(file, line, 0, -1);
+					/*
+					 if (line->cl_NotUntil)
+						 line->cl_NotUntil = t2;
+					*/
+				}
+			}
+		}
+	}
+
+	/*
+	 * Find jobs > t1 and <= t2
+	 */
+
+	for (t = t1 - t1 % 60; t <= t2; t += 60) {
+		if (t > t1) {
+			struct tm *tp = localtime(&t);
+
+			char n_wday = 1 << ((tp->tm_mday - 1) / 7);
+			if (n_wday >= FOURTH_DOW) {
+				struct tm tnext = *tp;
+				tnext.tm_mday += 7;
+				if (mktime(&tnext) != (time_t)-1 && tnext.tm_mon != tp->tm_mon)
+					n_wday |= LAST_DOW;	/* last dow in month is always recognized as 6th bit */
+			}
+
+			for (file = FileBase; file; file = file->cf_Next) {
+				if (file->cf_Deleted)
+					continue;
+				for (line = file->cf_LineBase; line; line = line->cl_Next) {
+					if ((line->cl_Pid == JOB_WAITING || line->cl_Pid == JOB_NONE) && (line->cl_Freq == 0 || (line->cl_Freq > 0 && t2 >= line->cl_NotUntil))) {
+						/* (re)schedule job? */
+						if (line->cl_Mins[tp->tm_min] &&
+								line->cl_Hrs[tp->tm_hour] &&
+								(line->cl_Days[tp->tm_mday] && n_wday & line->cl_Dow[tp->tm_wday])
+						   ) {
+							if (line->cl_NotUntil)
+								line->cl_NotUntil = t2 - t2 % 60 + line->cl_Delay; /* save what minute this job was scheduled/started waiting, plus cl_Delay */
+							nJobs += ArmJob(file, line, t1, t2);
+						}
+					}
+				}
+			}
+		}
+	}
+	return(nJobs);
+}
+
+/*
+ * ArmJob: if t2 is (time_t)-1, we force-schedule the job without any waiting
+ * else it will wait on any of its declared notifiers who will run <= t2 + cw_MaxWait
+ */
+
+int
+ArmJob(CronFile *file, CronLine *line, time_t t1, time_t t2)
+{
+	struct CronWaiter *waiter;
+	if (line->cl_Pid > JOB_NONE) {
+		printlogf(LOG_NOTICE, "process already running (%d): user %s %s\n",
+				line->cl_Pid,
+				file->cf_UserName,
+				line->cl_Description
+			);
+	} else if (t2 == -1 && line->cl_Pid != JOB_ARMED) {
+		line->cl_Pid = JOB_ARMED;
+		file->cf_Ready = 1;
+		return 1;
+	} else if (line->cl_Pid == JOB_NONE) {
+		/* arming a waiting job (cl_Pid == -2) without forcing has no effect */
+		line->cl_Pid = JOB_ARMED;
+		/* if we have any waiters, zero them and arm cl_Pid=-2 */
+		waiter = line->cl_Waiters;
+		while (waiter != NULL) {
+			/* check if notifier will run <= t2 + cw_Max_Wait? */
+			if (!waiter->cw_NotifLine)
+				/* notifier deleted */
+				waiter->cw_Flag = 0;
+			else if (waiter->cw_NotifLine->cl_Pid != JOB_NONE) {
+				/* if notifier is armed, or waiting, or running, we wait for it */
+				waiter->cw_Flag = -1;
+				line->cl_Pid = JOB_WAITING;
+			} else if (waiter->cw_NotifLine->cl_Freq < 0) {
+				/* arm any @noauto or @reboot jobs we're waiting on */
+				ArmJob(file, waiter->cw_NotifLine, t1, t2);
+				waiter->cw_Flag = -1;
+				line->cl_Pid = JOB_WAITING;
+			} else {
+				time_t t;
+				if (waiter->cw_MaxWait == 0)
+					/* when no MaxWait interval specified, we always wait */
+					waiter->cw_Flag = -1;
+				else if (waiter->cw_NotifLine->cl_Freq == 0 || (waiter->cw_NotifLine->cl_Freq > 0 && t2 + waiter->cw_MaxWait >= waiter->cw_NotifLine->cl_NotUntil)) {
+					/* default is don't wait */
+					waiter->cw_Flag = 0;
+					for (t = t1 - t1 % 60; t <= t2; t += 60) {
+						if (t > t1) {
+							struct tm *tp = localtime(&t);
+
+							char n_wday = 1 << ((tp->tm_mday - 1) / 7);
+							if (n_wday >= FOURTH_DOW) {
+								struct tm tnext = *tp;
+								tnext.tm_mday += 7;
+								if (mktime(&tnext) != (time_t)-1 && tnext.tm_mon != tp->tm_mon)
+									n_wday |= LAST_DOW;	/* last dow in month is always recognized as 6th */
+							}
+							if (line->cl_Mins[tp->tm_min] &&
+									line->cl_Hrs[tp->tm_hour] &&
+									(line->cl_Days[tp->tm_mday] && n_wday & line->cl_Dow[tp->tm_wday])
+							   ) {
+								/* notifier will run soon enough, we wait for it */
+								waiter->cw_Flag = -1;
+								line->cl_Pid = JOB_WAITING;
+								break;
+							}
+						}
+					}
+				}
+			}
+			waiter = waiter->cw_Next;
+		}
+		if (line->cl_Pid == JOB_ARMED) {
+			/* job is ready to run */
+			file->cf_Ready = 1;
+			if (DebugOpt)
+				printlogf(LOG_DEBUG, "scheduled: user %s %s\n",
+						file->cf_UserName,
+						line->cl_Description
+					);
+			return 1;
+		} else if (DebugOpt)
+			printlogf(LOG_DEBUG, "waiting: user %s %s\n",
+					file->cf_UserName,
+					line->cl_Description
+				);
+	}
+	return 0;
+}
+
+int
+TestStartupJobs(void)
+{
+	short nJobs = 0;
+	time_t t1 = time(NULL);
+	CronFile *file;
+	CronLine *line;
+
+	t1 = t1 - t1 % 60 + 60;
+
+	for (file = FileBase; file; file = file->cf_Next) {
+		if (DebugOpt)
+			printlogf(LOG_DEBUG, "TestStartup for FILE %s/%s USER %s:\n",
+				file->cf_DPath, file->cf_FileName, file->cf_UserName);
+		for (line = file->cf_LineBase; line; line = line->cl_Next) {
+			struct CronWaiter *waiter;
+			if (DebugOpt) {
+				if (line->cl_JobName)
+					printlogf(LOG_DEBUG, "    LINE %s JOB %s\n", line->cl_Shell, line->cl_JobName);
+				else
+					printlogf(LOG_DEBUG, "    LINE %s\n", line->cl_Shell);
+			}
+
+			if (line->cl_Freq == -1) {
+				/* freq is @reboot */
+
+				line->cl_Pid = JOB_ARMED;
+				/* if we have any waiters, reset them and arm Pid = -2 */
+				waiter = line->cl_Waiters;
+				while (waiter != NULL) {
+					waiter->cw_Flag = -1;
+					line->cl_Pid = JOB_WAITING;
+					/* we only arm @noauto jobs we're waiting on, not other @reboot jobs */
+					if (waiter->cw_NotifLine && waiter->cw_NotifLine->cl_Freq == -2)
+						ArmJob(file, waiter->cw_NotifLine, t1, t1+60);
+					waiter = waiter->cw_Next;
+				}
+				if (line->cl_Pid == JOB_ARMED) {
+					/* job is ready to run */
+					file->cf_Ready = 1;
+					++nJobs;
+					if (DebugOpt)
+						printlogf(LOG_DEBUG, "    scheduled: %s\n", line->cl_Description);
+				} else if (DebugOpt)
+					printlogf(LOG_DEBUG, "    waiting: %s\n", line->cl_Description);
+
+			}
+
+		} /* for line */
+	}
+	return(nJobs);
+}
+
+void
+RunJobs(void)
+{
+	CronFile *file;
+	CronLine *line;
+
+	for (file = FileBase; file; file = file->cf_Next) {
+		if (file->cf_Ready) {
+			file->cf_Ready = 0;
+
+			for (line = file->cf_LineBase; line; line = line->cl_Next) {
+				if (line->cl_Pid == JOB_ARMED) {
+
+					RunJob(file, line);
+
+					printlogf(LOG_INFO, "FILE %s/%s USER %s PID %3d %s\n",
+							file->cf_DPath,
+							file->cf_FileName,
+							file->cf_UserName,
+							line->cl_Pid,
+							line->cl_Description
+						);
+					if (line->cl_Pid < JOB_NONE)
+						/* QUESTION how could this happen? RunJob will leave cl_Pid set to 0 or the actual pid */
+						file->cf_Ready = 1;
+					else if (line->cl_Pid > JOB_NONE)
+						file->cf_Running = 1;
+				}
+			}
+		}
+	}
+}
+
+/*
+ * CheckJobs() - check for job completion
+ *
+ * Check for job completion, return number of CronFiles still running after
+ * all done.
+ */
+
+int
+CheckJobs(void)
+{
+	CronFile *file;
+	CronLine *line;
+	int nStillRunning = 0;
+
+	for (file = FileBase; file; file = file->cf_Next) {
+		if (file->cf_Running) {
+			file->cf_Running = 0;
+
+			for (line = file->cf_LineBase; line; line = line->cl_Next) {
+				if (line->cl_Pid > JOB_NONE) {
+					int status;
+					int r = waitpid(line->cl_Pid, &status, WNOHANG);
+
+					/* waitpid returns -1 for error, 0 if cl_Pid still running, cl_Pid if it's dead */
+
+					if (r < 0 || r == line->cl_Pid) {
+						if (r > 0 && WIFEXITED(status))
+							status = WEXITSTATUS(status);
+						else
+							status = 1;
+						EndJob(file, line, status);
+
+					} else if (r == 0) {
+						file->cf_Running = 1;
+					}
+				}
+			}
+			nStillRunning += file->cf_Running;
+		}
+		/* For the purposes of this check, increase the "still running" counter if a file has lines that are waiting */
+		if (file->cf_Running == 0) {
+			for (line = file->cf_LineBase; line; line = line->cl_Next) {
+				if (line->cl_Pid == JOB_WAITING) {
+					nStillRunning += 1;
+					break;
+				}
+			}
+		}
+	}
+	return(nStillRunning);
+}
+
+void
+PrintLine(CronLine *line)
+{
+	int i;
+	if (!line)
+		return;
+
+	printlogf(LOG_DEBUG, "CronLine:\n------------\n");
+	printlogf(LOG_DEBUG, "  Command: %s\n", line->cl_Shell);
+	//printlogf(LOG_DEBUG, "  Desc:    %s\n", line->cl_Description);
+	printlogf(LOG_DEBUG, "  Freq:    %s\n", (line->cl_Freq ?
+				(line->cl_Freq == -1 ? "(noauto)" : "(startup") : "(use arrays)"));
+	printlogf(LOG_DEBUG, "  PID:     %d\n", line->cl_Pid);
+
+	printlogf(LOG_DEBUG, "  Mins:    ");
+	for (i = 0; i < 60; ++i)
+		printlogf(LOG_DEBUG, "%d", line->cl_Mins[i]);
+
+	printlogf(LOG_DEBUG, "\n  Hrs:     ");
+	for (i = 0; i < 24; ++i)
+		printlogf(LOG_DEBUG, "%d", line->cl_Hrs[i]);
+
+	printlogf(LOG_DEBUG, "\n  Days:    ");
+	for (i = 0; i < 32; ++i)
+		printlogf(LOG_DEBUG, "%d", line->cl_Days[i]);
+
+	printlogf(LOG_DEBUG, "\n  Mons:    ");
+	for (i = 0; i < 12; ++i)
+		printlogf(LOG_DEBUG, "%d", line->cl_Mons[i]);
+
+	printlogf(LOG_DEBUG, "\n  Dow:     ");
+	for (i = 0; i < 7; ++i)
+		printlogf(LOG_DEBUG, "%02x ", line->cl_Dow[i]);
+	printlogf(LOG_DEBUG, "\n\n");
+}
+
+void
+PrintFile(CronFile *file, char* loc, char* fname, int line)
+{
+	CronFile *f;
+	CronLine *l;
+
+	printlogf(LOG_DEBUG, "%s %s:%d\n", loc, fname, line);
+
+	if (!file)
+		return;
+
+	f = file;
+	while (f) {
+
+		if (strncmp(file->cf_UserName, "root", 4)) {
+			printlogf(LOG_DEBUG, "FILE %s/%s USER %s\n=============================\n",
+					file->cf_DPath,
+					file->cf_FileName,
+					file->cf_UserName);
+			l = f->cf_LineBase;
+
+			while (l) {
+				PrintLine(l);
+				l = l->cl_Next;
+			}
+		}
+		f = f->cf_Next;
+	}
+
+}
+
+/*
+ * JOB.C
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+Prototype void RunJob(CronFile *file, CronLine *line);
+Prototype void EndJob(CronFile *file, CronLine *line, int exit_status);
+
+Prototype const char *SendMail;
+
+void
+RunJob(CronFile *file, CronLine *line)
+{
+	char mailFile[SMALL_BUFFER];
+	int mailFd;
+	const char *value = Mailto;
+
+	line->cl_Pid = 0;
+	line->cl_MailFlag = 0;
+
+	/*
+	 * try to open mail output file - owner root so nobody can screw with it.
+	 */
+
+	snprintf(mailFile, sizeof(mailFile), TempFileFmt,
+			file->cf_UserName, (int)getpid());
+
+	if ((mailFd = open(mailFile, O_CREAT|O_TRUNC|O_WRONLY|O_EXCL|O_APPEND, 0600)) >= 0) {
+		/* success: write headers to mailFile */
+		line->cl_MailFlag = 1;
+		/* if we didn't specify a -m Mailto, use the local user */
+		if (!value)
+			value = file->cf_UserName;
+		fdprintf(mailFd, "To: %s\nSubject: cron for user %s %s\n\n",
+				value,
+				file->cf_UserName,
+				line->cl_Description
+				);
+		/* remember mailFile's size */
+		line->cl_MailPos = lseek(mailFd, 0, 1);
+	}
+	/*
+	 * else no mailFd, we complain later and don't check job output
+	 * but we still run the job if we can
+	 */
+
+
+	/*
+	 * Fork as the user in question and run program
+	 */
+
+	if ((line->cl_Pid = fork()) == 0) {
+		/*
+		 * CHILD, FORK OK, PRE-EXEC
+		 *
+		 * Change running state to the user in question
+		 */
+
+		if (ChangeUser(file->cf_UserName, TempDir) < 0) {
+			printlogf(LOG_ERR, "unable to ChangeUser (user %s %s)\n",
+					file->cf_UserName,
+					line->cl_Description
+					);
+			exit(0);
+		}
+
+		/* from this point we are unpriviledged */
+
+		if (DebugOpt)
+			printlogf(LOG_DEBUG, "child running: %s\n", line->cl_Description);
+
+		/*
+		 * Inside child, we copy our fd 2 (which may be /dev/null) into
+		 * an open-until-exec fd 8
+		 */
+		dup2(2, 8);
+		fcntl(8, F_SETFD, FD_CLOEXEC);
+		fclose(stderr);
+
+		if (mailFd >= 0) {
+			/* stdin is already /dev/null, setup stdout and stderr > mailFile */
+			dup2(mailFd, 1);
+			dup2(mailFd, 2);
+			close(mailFd);
+		} else {
+			/* complain about no mailFd to log (now associated with fd 8) */
+			fdprintlogf(LOG_WARNING, 8, "unable to create mail file %s: cron output for user %s %s to /dev/null\n",
+					mailFile,
+					file->cf_UserName,
+					line->cl_Description
+				   );
+			/* stderr > /dev/null */
+			dup2(1, 2);
+		}
+
+		/*
+		 * Start a new process group, so that children still in the crond's process group
+		 * are all mailjobs.
+		 */
+		setpgid(0, 0);
+
+		execl("/bin/sh", "/bin/sh", "-c", line->cl_Shell, NULL); // @NOTE: core part
+		/*
+		 * CHILD FAILED TO EXEC CRONJOB
+		 *
+		 * Complain to our log (now associated with fd 8)
+		 */
+		fdprintlogf(LOG_ERR, 8, "unable to exec (user %s cmd /bin/sh -c %s)\n",
+				file->cf_UserName,
+				line->cl_Shell
+			   );
+		/*
+		 * Also complain to stdout, which will be either the mailFile or /dev/null
+		 */
+		fdprintf(1, "unable to exec: /bin/sh -c %s\n", line->cl_Shell);
+		exit(0);
+
+	} else if (line->cl_Pid < 0) {
+		/*
+		 * PARENT, FORK FAILED
+		 *
+		 * Complain to log (with regular fd 2)
+		 */
+		printlogf(LOG_ERR, "unable to fork (user %s %s)\n",
+				file->cf_UserName,
+				line->cl_Description
+				);
+		line->cl_Pid = 0;
+		remove(mailFile);
+
+	} else {
+		/*
+		 * PARENT, FORK SUCCESS
+		 *
+		 * rename mail-file based on pid of child process
+		 */
+		char mailFile2[SMALL_BUFFER];
+
+		snprintf(mailFile2, sizeof(mailFile2), TempFileFmt,
+				file->cf_UserName, line->cl_Pid);
+		rename(mailFile, mailFile2);
+	}
+
+	/*
+	 * Close the mail file descriptor.. we can't just leave it open in
+	 * a structure, closing it later, because we might run out of descriptors
+	 */
+
+	if (mailFd >= 0)
+		close(mailFd);
+}
+
+/*
+ * EndJob - called when main job terminates
+ */
+
+void
+EndJob(CronFile *file, CronLine *line, int exit_status)
+{
+	int mailFd;
+	char mailFile[SMALL_BUFFER];
+	struct stat sbuf;
+	struct	CronNotifier *notif;
+
+	if (line->cl_Pid <= 0) {
+		/*
+		 * No job. This should never happen.
+		 */
+		line->cl_Pid = 0;
+		return;
+	}
+
+
+	/*
+	 * check return status
+	 */
+	if (line->cl_Delay > 0) {
+		if (exit_status == EAGAIN) {
+			/*
+			 * returned EAGAIN, wait cl_Delay then retry
+			 * we base off the time the job was scheduled/started waiting, not the time it finished
+			 *
+			 * line->cl_NotUntil = time(NULL) + line->cl_Delay;	// use this to base off time finished
+			 * line->cl_NotUntil += line->cl_Delay; 	// already applied
+			 */
+		} else {
+			/*
+			 * process finished without returning EAGAIN (it may have returned some other error)
+			 * mark as having run and update timestamp
+			 */
+			FILE *fi;
+			char buf[SMALL_BUFFER];
+			int succeeded = 0;
+			/*
+			 * we base off the time the job was scheduled/started waiting, not the time it finished
+			 *
+			 * line->cl_LastRan = time(NULL);	// use this to base off time finished
+			 */
+			line->cl_LastRan = line->cl_NotUntil - line->cl_Delay;
+			if ((fi = fopen(line->cl_Timestamp, "w")) != NULL) {
+				if (strftime(buf, sizeof(buf), CRONSTAMP_FMT, localtime(&line->cl_LastRan)))
+					if (fputs(buf, fi) >= 0)
+						succeeded = 1;
+				fclose(fi);
+			}
+			if (!succeeded)
+				printlogf(LOG_WARNING, "unable to write timestamp to %s (user %s %s)\n", line->cl_Timestamp, file->cf_UserName, line->cl_Description);
+			line->cl_NotUntil = line->cl_LastRan;
+			line->cl_NotUntil += (line->cl_Freq > 0) ? line->cl_Freq : line->cl_Delay;
+		}
+	}
+
+	if (exit_status != EAGAIN) {
+		/*
+		 * notify any waiters
+		 */
+		notif = line->cl_Notifs;
+		while (notif) {
+			if (notif->cn_Waiter) {
+				notif->cn_Waiter->cw_Flag = exit_status;
+			}
+			notif = notif->cn_Next;
+		}
+
+		if (exit_status) {
+			/*
+			 * log non-zero exit_status
+			 */
+			printlogf(LOG_NOTICE, "exit status %d from user %s %s\n",
+					exit_status,
+					file->cf_UserName,
+					line->cl_Description
+				);
+
+			}
+	}
+	if (!exit_status || exit_status == EAGAIN)
+		if (DebugOpt)
+			printlogf(LOG_DEBUG, "exit status %d from user %s %s\n",
+						exit_status,
+						file->cf_UserName,
+						line->cl_Description
+					);
+
+
+	if (line->cl_MailFlag != 1) {
+		/* End of job and no mail file */
+		line->cl_Pid = 0;
+		return;
+	}
+
+	/*
+	 * Calculate mailFile's name before clearing cl_Pid
+	 */
+	snprintf(mailFile, sizeof(mailFile), TempFileFmt,
+			file->cf_UserName, line->cl_Pid);
+	line->cl_Pid = 0;
+
+	line->cl_MailFlag = 0;
+
+	/*
+	 * Check mail file. If size has increased and
+	 * the file is still valid, we sendmail it.
+	 */
+
+	mailFd = open(mailFile, O_RDONLY);
+	remove(mailFile);
+	if (mailFd < 0) {
+		return;
+	}
+
+	/* Was mailFile tampered with, or didn't grow? */
+
+	if (fstat(mailFd, &sbuf) < 0 ||
+			sbuf.st_uid != DaemonUid ||
+			sbuf.st_nlink != 0 ||
+			sbuf.st_size == line->cl_MailPos ||
+			!S_ISREG(sbuf.st_mode)
+	   ) {
+		close(mailFd);
+		return;
+	}
+
+	if ((line->cl_Pid = fork()) == 0) {
+		/*
+		 * CHILD, FORK OK, PRE-EXEC
+		 *
+		 * Change user id - no way in hell security can be compromised
+		 * by the mailing and we already verified the mail file.
+		 */
+
+		if (ChangeUser(file->cf_UserName, TempDir) < 0) {
+			printlogf(LOG_ERR, "unable to ChangeUser to send mail (user %s %s)\n",
+					file->cf_UserName,
+					line->cl_Description
+					);
+			exit(0);
+		}
+
+		/* from this point we are unpriviledged */
+
+		/*
+		 * Inside child, we copy our fd 2 (which may be /dev/null) into
+		 * an open-until-exec fd 8
+		 */
+
+		dup2(2, 8);
+		fcntl(8, F_SETFD, FD_CLOEXEC);
+		fclose(stderr);
+
+		/*
+		 * Run sendmail with stdin < mailFile and stderr > /dev/null
+		 */
+
+		dup2(mailFd, 0);
+		dup2(1, 2);
+		close(mailFd);
+
+		if (!SendMail) {
+			/*
+			 * If using standard sendmail, note in our log (now associated with fd 8)
+			 * that we're trying to mail output
+			 */
+			fdprintlogf(LOG_INFO, 8, "mailing cron output for user %s %s\n",
+					file->cf_UserName,
+					line->cl_Description
+				 );
+			execl(SENDMAIL, SENDMAIL, SENDMAIL_ARGS, NULL);
+
+			/* exec failed: pass through and log the error */
+			SendMail = SENDMAIL;
+
+		} else {
+			/*
+			 * If using custom mailer script, just try to exec it
+			 */
+			execl(SendMail, SendMail, NULL);
+		}
+
+		/*
+		 * CHILD FAILED TO EXEC SENDMAIL
+		 *
+		 * Complain to our log (now associated with fd 8)
+		 */
+
+		fdprintlogf(LOG_WARNING, 8, "unable to exec %s: cron output for user %s %s to /dev/null\n",
+				SendMail,
+				file->cf_UserName,
+				line->cl_Description
+			   );
+		exit(0);
+
+	} else if (line->cl_Pid < 0) {
+		/*
+		 * PARENT, FORK FAILED
+		 *
+		 * Complain to our log (with regular fd 2)
+		 */
+		printlogf(LOG_WARNING, "unable to fork: cron output for user %s %s to /dev/null\n",
+				file->cf_UserName,
+				line->cl_Description
+			);
+		line->cl_Pid = 0;
+	} else {
+		/*
+		 * PARENT, FORK OK
+		 *
+		 * We clear cl_Pid even when mailjob successfully forked
+		 * and catch the dead mailjobs with our SIGCHLD handler.
+		 */
+		line->cl_Pid = 0;
+	}
+
+	close(mailFd);
+
+}
+
+/*
+ * MAIN.C
+ *
+ * crond [-s dir] [-c dir] [-t dir] [-m user@host] [-M mailer] [-S|-L [file]] [-l level] [-b|-f|-d]
+ * run as root, but NOT setuid root
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+Prototype short DebugOpt;
+Prototype short LogLevel;
+Prototype short ForegroundOpt;
+Prototype short SyslogOpt;
+Prototype const char *CDir;
+Prototype const char *SCDir;
+Prototype const char *TSDir;
+Prototype const char *LogFile;
+Prototype const char *LogHeader;
+Prototype uid_t DaemonUid;
+Prototype pid_t DaemonPid;
+Prototype const char *SendMail;
+Prototype const char *Mailto;
+Prototype char *TempDir;
+Prototype char *TempFileFmt;
+
+short DebugOpt = 0;
+short LogLevel = LOG_LEVEL;
+short ForegroundOpt = 0;
+short SyslogOpt = 1;
+const char  *CDir = CRONTABS;
+const char  *SCDir = SCRONTABS;
+const char *TSDir = CRONSTAMPS;
+const char *LogFile = NULL; 	/* opened with mode 0600 */
+const char *LogHeader = LOGHEADER;
+const char *SendMail = NULL;
+const char *Mailto = NULL;
+char *TempDir;
+char *TempFileFmt;
+
+uid_t DaemonUid;
+pid_t DaemonPid;
+
+int
+main(int ac, char **av)
+{
+	const char *LevelAry[] = {
+		"emerg",
+		"alert",
+		"crit",
+		"err",
+		"warning",
+		"notice",
+		"info",
+		"debug",
+		"panic",
+		"error",
+		"warn",
+		NULL
+	};
+	int i;
+
+	/*
+	 * parse options
+	 */
+
+	DaemonUid = getuid();
+
+	opterr = 0;
+
+	while ((i = getopt(ac,av,"dl:L:fbSc:s:m:M:t:")) != -1) {
+		switch (i) {
+			case 'l':
+				{
+					char *ptr;
+					int j;
+					ptr = optarg;
+					for (j = 0; LevelAry[j]; ++j) {
+						if (strncmp(ptr, LevelAry[j], strlen(LevelAry[j])) == 0) {
+							break;
+						}
+					}
+					switch(j) {
+						case 0:
+						case 8:
+							/* #define	LOG_EMERG	0	[* system is unusable *] */
+							LogLevel = LOG_EMERG;
+							break;
+						case 1:
+							/* #define	LOG_ALERT	1	[* action must be taken immediately *] */
+							LogLevel = LOG_ALERT;
+							break;
+						case 2:
+							/* #define	LOG_CRIT	2	[* critical conditions *] */
+							LogLevel = LOG_CRIT;
+							break;
+						case 3:
+						case 9:
+							/* #define	LOG_ERR		3	[* error conditions *] */
+							LogLevel = LOG_ERR;
+							break;
+						case 4:
+						case 10:
+							/* #define	LOG_WARNING	4	[* warning conditions *] */
+							LogLevel = LOG_WARNING;
+							break;
+						case 5:
+							/* #define	LOG_NOTICE	5	[* normal but significant condition *] */
+							LogLevel = LOG_NOTICE;
+							break;
+						case 6:
+							/* #define	LOG_INFO	6	[* informational *] */
+							LogLevel = LOG_INFO;
+							break;
+						case 7:
+							/* #define	LOG_DEBUG	7	[* debug-level messages *] */
+							LogLevel = LOG_DEBUG;
+							break;
+						default:
+							LogLevel = atoi(optarg);
+					}
+				}
+				break;
+			case 'd':
+				DebugOpt = 1;
+				LogLevel = LOG_DEBUG;
+				/* fall through to include f too */
+			case 'f':
+				ForegroundOpt = 1;
+				break;
+			case 'b':
+				ForegroundOpt = 0;
+				break;
+			case 'S':			/* log through syslog */
+				SyslogOpt = 1;
+				break;
+			case 'L':			/* use internal log formatter */
+				SyslogOpt = 0;
+				LogFile = optarg;
+				/* if LC_TIME is defined, we use it for logging to file instead of compiled-in TIMESTAMP_FMT */
+				if (getenv("LC_TIME") != NULL) {
+					LogHeader = LOCALE_LOGHEADER;
+				}
+				break;
+			case 'c':
+				if (*optarg != 0) CDir = optarg;
+				break;
+			case 's':
+				if (*optarg != 0) SCDir = optarg;
+				break;
+			case 't':
+				if (*optarg != 0) TSDir = optarg;
+				break;
+			case 'M':
+				if (*optarg != 0) SendMail = optarg;
+				break;
+			case 'm':
+				if (*optarg != 0) Mailto = optarg;
+				break;
+			default:
+				/*
+				 * check for parse error
+				 */
+				printf("dillon's cron daemon " VERSION "\n");
+				printf("crond [-s dir] [-c dir] [-t dir] [-m user@host] [-M mailer] [-S|-L [file]] [-l level] [-b|-f|-d]\n");
+				printf("-s            directory of system crontabs (defaults to %s)\n", SCRONTABS);
+				printf("-c            directory of per-user crontabs (defaults to %s)\n", CRONTABS);
+				printf("-t            directory of timestamps (defaults to %s)\n", CRONSTAMPS);
+				printf("-m user@host  where should cron output be directed? (defaults to local user)\n");
+				printf("-M mailer     (defaults to %s)\n", SENDMAIL);
+				printf("-S            log to syslog using identity '%s' (default)\n", LOG_IDENT);
+				printf("-L file       log to specified file instead of syslog\n");
+				printf("-l loglevel   log events <= this level (defaults to %s (level %d))\n", LevelAry[LOG_LEVEL], LOG_LEVEL);
+				printf("-b            run in background (default)\n");
+				printf("-f            run in foreground\n");
+				printf("-d            run in debugging mode\n");
+				exit(2);
+		}
+	}
+
+	/*
+	 * close stdin and stdout.
+	 * close unused descriptors -  don't need.
+	 * optional detach from controlling terminal
+	 */
+
+	fclose(stdin);
+	fclose(stdout);
+
+	i = open("/dev/null", O_RDWR);
+	if (i < 0) {
+		perror("open: /dev/null");
+		exit(1);
+	}
+	dup2(i, 0);
+	dup2(i, 1);
+
+	/* create tempdir with permissions 0755 for cron output */
+	TempDir = strdup(TMPDIR "/cron.XXXXXX");
+	if (mkdtemp(TempDir) == NULL) {
+		perror("mkdtemp");
+		exit(1);
+	}
+	if (chmod(TempDir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)) {
+		perror("chmod");
+		exit(1);
+	}
+	if (!(TempFileFmt = concat(TempDir, "/cron.%s.%d", NULL))) {
+		errno = ENOMEM;
+		perror("main");
+		exit(1);
+	}
+
+	if (ForegroundOpt == 0) {
+
+		int fd;
+		int pid;
+
+		if ((pid = fork()) < 0) {
+			/* fork failed */
+			perror("fork");
+			exit(1);
+		} else if (pid > 0) {
+			/* parent */
+			exit(0);
+		}
+		/* child continues */
+
+		/* become session leader, detach from terminal */
+
+		if (setsid() < 0)
+			perror("setsid");
+		if ((fd = open("/dev/tty", O_RDWR)) >= 0) {
+			ioctl(fd, TIOCNOTTY, 0);
+			close(fd);
+		}
+
+		/* setup logging for backgrounded daemons */
+
+		if (SyslogOpt) {
+			/* start SIGHUP and SIGCHLD handling while stderr still open */
+			initsignals();
+			/* 2> /dev/null */
+			fclose(stderr);
+			dup2(1, 2);
+
+			/* open syslog */
+			openlog(LOG_IDENT, LOG_CONS|LOG_PID, LOG_CRON);
+
+		} else {
+			/* open logfile */
+			if ((fd = open(LogFile, O_WRONLY|O_CREAT|O_APPEND, 0600)) >= 0) {
+				/* start SIGHUP ignoring, SIGCHLD handling while stderr still open */
+				initsignals();
+				/* 2> LogFile */
+				fclose(stderr);
+				dup2(fd, 2);
+			} else {
+				int n = errno;
+				fdprintf(2, "failed to open logfile '%s', reason: %s", LogFile, strerror(n));
+				exit(n);
+			}
+		}
+	} else {
+		/* daemon in foreground */
+
+		/* stay in existing session, but start a new process group */
+		if (setpgid(0,0)) {
+			perror("setpgid");
+			exit(1);
+		}
+
+		/* stderr stays open, start SIGHUP ignoring, SIGCHLD handling */
+		initsignals();
+	}
+
+	/* close all other fds, including the ones we opened as /dev/null and LogFile */
+	for (i = 3; i < MAXOPEN; ++i) {
+        close(i);
+    }
+
+
+	/*
+	 * main loop - synchronize to 1 second after the minute, minimum sleep
+	 *             of 1 second.
+	 */
+
+	printlogf(LOG_NOTICE,"%s " VERSION " dillon's cron daemon, started with loglevel %s\n", av[0], LevelAry[LogLevel]);
+	SynchronizeDir(CDir, NULL, 1);
+	SynchronizeDir(SCDir, "root", 1);
+	ReadTimestamps(NULL);
+	TestStartupJobs(); /* @startup jobs only run when crond is started, not when their crontab is loaded */
+
+	{
+		time_t t1 = time(NULL);
+		time_t t2;
+		long dt;
+		short rescan = 60;
+		short stime = 60;
+
+		for (;;) { // @NOTE: forver loop
+			sleep((stime + 1) - (short)(time(NULL) % stime));
+
+			t2 = time(NULL);
+			dt = t2 - t1;
+
+			/*
+			 * The file 'cron.update' is checked to determine new cron
+			 * jobs.  The directory is rescanned once an hour to deal
+			 * with any screwups.
+			 *
+			 * check for disparity.  Disparities over an hour either way
+			 * result in resynchronization.  A reverse-indexed disparity
+			 * less then an hour causes us to effectively sleep until we
+			 * match the original time (i.e. no re-execution of jobs that
+			 * have just been run).  A forward-indexed disparity less then
+			 * an hour causes intermediate jobs to be run, but only once
+			 * in the worst case.
+			 *
+			 * when running jobs, the inequality used is greater but not
+			 * equal to t1, and less then or equal to t2.
+			 */
+
+			if (--rescan == 0) {
+				/*
+				 * If we resynchronize while jobs are running, we'll clobber
+				 * the job pids, so we won't know what's already running.
+				 */
+				if (CheckJobs() > 0) {
+					rescan = 1;
+				} else {
+					rescan = 60;
+					SynchronizeDir(CDir, NULL, 0);
+					SynchronizeDir(SCDir, "root", 0);
+					ReadTimestamps(NULL);
+				}
+			} 
+			if (rescan < 60) {
+				CheckUpdates(CDir, NULL, t1, t2);
+				CheckUpdates(SCDir, "root", t1, t2);
+			}
+			if (DebugOpt)
+				printlogf(LOG_DEBUG, "Wakeup dt=%d\n", dt);
+			if (dt < -60*60 || dt > 60*60) {
+				t1 = t2;
+				printlogf(LOG_NOTICE,"time disparity of %d minutes detected\n", dt / 60);
+			} else if (dt > 0) {
+				TestJobs(t1, t2);
+				RunJobs();
+				sleep(5);
+				if (CheckJobs() > 0)
+					stime = 10;
+				else
+					stime = 60;
+				t1 = t2;
+			}
+		}
+	}
+	/* not reached */
+}
+
+
+/*
+ * SUBS.C
+ *
+ * Copyright 1994 Matthew Dillon (dillon@apollo.backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+#include "defs.h"
+
+Prototype void printlogf(int level, const char *ctl, ...);
+Prototype void fdprintlogf(int level, int fd, const char *ctl, ...);
+Prototype void fdprintf(int fd, const char *ctl, ...);
+Prototype void initsignals(void);
+Prototype char Hostname[SMALL_BUFFER];
+
+void vlog(int level, int fd, const char *ctl, va_list va);
+
+char Hostname[SMALL_BUFFER];
+
+
+void
+printlogf(int level, const char *ctl, ...)
+{
+	va_list va;
+
+	va_start(va, ctl);
+	vlog(level, 2, ctl, va);
+	va_end(va);
+}
+
+void
+fdprintlogf(int level, int fd, const char *ctl, ...)
+{
+	va_list va;
+
+	va_start(va, ctl);
+	vlog(level, fd, ctl, va);
+	va_end(va);
+}
+
+void
+fdprintf(int fd, const char *ctl, ...)
+{
+	va_list va;
+	char buf[LOG_BUFFER];
+
+	va_start(va, ctl);
+	vsnprintf(buf, sizeof(buf), ctl, va);
+	write(fd, buf, strlen(buf));
+	va_end(va);
+}
+
+void
+vlog(int level, int fd, const char *ctl, va_list va)
+{
+	char buf[LOG_BUFFER];
+	static short suppressHeader = 0;
+
+	if (level <= LogLevel) {
+		if (ForegroundOpt) {
+			/*
+			 * when -d or -f, we always (and only) log to stderr
+			 * fd will be 2 except when 2 is bound to a execing subprocess, then it will be 8
+			 * [v]snprintf write at most size including \0; they'll null-terminate, even when they truncate
+			 * we don't care here whether it truncates
+			 */
+			vsnprintf(buf, sizeof(buf), ctl, va);
+			write(fd, buf, strlen(buf));
+		} else if (SyslogOpt) {
+			/* log to syslog */
+			vsnprintf(buf, sizeof(buf), ctl, va);
+			syslog(level, "%s", buf);
+
+		} else {
+			/* log to file */
+
+			time_t t = time(NULL);
+			struct tm *tp = localtime(&t);
+			int buflen, hdrlen = 0;
+			buf[0] = 0; /* in case suppressHeader or strftime fails */
+			if (!suppressHeader) {
+				/*
+				 * run LogHeader through strftime --> [yields hdr] plug in Hostname --> [yields buf]
+				 */
+				char hdr[SMALL_BUFFER];
+				/* strftime returns strlen of result, provided that result plus a \0 fit into buf of size */
+				if (strftime(hdr, sizeof(hdr), LogHeader, tp)) {
+					if (gethostname(Hostname, sizeof(Hostname))==0)
+						/* gethostname successful */
+						/* result will be \0-terminated except gethostname doesn't promise to do so if it has to truncate */
+						Hostname[sizeof(Hostname)-1] = 0;
+					else
+						Hostname[0] = 0;   /* gethostname() call failed */
+					/* [v]snprintf write at most size including \0; they'll null-terminate, even when they truncate */
+					/* return value >= size means result was truncated */
+					if ((hdrlen = snprintf(buf, sizeof(hdr), hdr, Hostname)) >= sizeof(hdr))
+						hdrlen = sizeof(hdr) - 1;
+				}
+			}
+			if ((buflen = vsnprintf(buf + hdrlen, sizeof(buf) - hdrlen, ctl, va) + hdrlen) >= sizeof(buf))
+				buflen = sizeof(buf) - 1;
+
+			write(fd, buf, buflen);
+			/* if previous write wasn't \n-terminated, we suppress header on next write */
+			suppressHeader = (buf[buflen-1] != '\n');
+
+		}
+	}
+}
+
+void reopenlogger(int sig) {
+	int fd;
+	if (getpid() == DaemonPid) {
+		/* only daemon handles, children should ignore */
+		if ((fd = open(LogFile, O_WRONLY|O_CREAT|O_APPEND, 0600)) < 0) {
+			/* can't reopen log file, exit */
+			exit(errno);
+		}
+		dup2(fd, 2);
+		close(fd);
+	}
+}
+
+void waitmailjob(int sig) {
+	/*
+	 * Wait for any children in our process group.
+	 * These will all be mailjobs.
+	 */
+	pid_t child;
+	do {
+		child = waitpid(-DaemonPid, NULL, WNOHANG);
+		/* call was interrupted, try again: won't happen because we use SA_RESTART */
+		/* if (child == (pid_t)-1 && errno == EINTR) continue; */
+	} while (child > (pid_t) 0);
+	/* if no pending children, child,errno == -1,ECHILD */
+	/* if all children still running, child == 0 */
+}
+
+void
+initsignals (void) {
+	struct sigaction sa;
+	int n;
+
+	/* save daemon's pid globally */
+	DaemonPid = getpid();
+
+	/* restart any system calls that were interrupted by signal */
+	sa.sa_flags = SA_RESTART;
+	if (!ForegroundOpt && !SyslogOpt)
+		sa.sa_handler = reopenlogger;
+	else
+		sa.sa_handler = SIG_IGN;
+	if (sigaction (SIGHUP, &sa, NULL) != 0) {
+		n = errno;
+		fdprintf(2, "failed to start SIGHUP handling, reason: %s", strerror(errno));
+		exit(n);
+	}
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = waitmailjob;
+	if (sigaction (SIGCHLD, &sa, NULL) != 0) {
+		n = errno;
+		fdprintf(2, "failed to start SIGCHLD handling, reason: %s", strerror(errno));
+		exit(n);
+	}
+
+}
+
+
+/*
+ * DEFS.H
+ *
+ * Copyright 1994-1998 Matthew Dillon (dillon@backplane.com)
+ * Copyright 2009-2019 James Pryor <dubiousjim@gmail.com>
+ * May be distributed under the GNU General Public License version 2 or any later version.
+ */
+
+/*
+ * portability issues
+ * 0. gcc defaults to _BSD_SOURCE and _POSIX_SOURCE
+ * 1. need _POSIX_SOURCE or _XOPEN_SOURCE for getopt, fileno, sigaction
+ * 2. need _XOPEN_SOURCE for strptime
+ * 3. need _BSD_SOURCE for setenv, mk{d,s}temp, [v]snprintf, initgroups, strsep, strdup, setre{u,g}id, gethostname, perror
+ * 4. use concat.c instead of requiring asprintf / _GNU_SOURCE
+ */
+
+#define _XOPEN_SOURCE 1
+#define _DEFAULT_SOURCE 1
+#define _BSD_SOURCE 1
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <pwd.h>
+#ifndef S_SPLINT_S
+#include <unistd.h>
+#endif
+#include <grp.h>
+#include <syslog.h>
+#include <signal.h>
+#include <getopt.h>
+#include <err.h>
+#include <limits.h>
+
+#include <time.h>
+#include <string.h>
+#include <stdio.h>
+
+#define Prototype extern
+#define arysize(ary)	(sizeof(ary)/sizeof((ary)[0]))
+
+#ifndef SCRONTABS
+#define SCRONTABS	"/etc/cron.d"
+#endif
+#ifndef CRONTABS
+#define CRONTABS	"/var/spool/cron/crontabs"
+#endif
+#ifndef CRONSTAMPS
+#define CRONSTAMPS	"/var/spool/cron/cronstamps"
+#endif
+#ifndef LOG_IDENT
+#define LOG_IDENT	"crond"
+#endif
+#ifndef TIMESTAMP_FMT
+#define TIMESTAMP_FMT	"%b %e %H:%M:%S"
+#endif
+
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LOG_NOTICE
+#endif
+#ifndef CRONSTAMP_FMT
+#define CRONSTAMP_FMT	"%Y-%m-%d %H:%M"
+#endif
+#ifndef CRONUPDATE
+#define CRONUPDATE	"cron.update"
+#endif
+#ifndef TMPDIR
+#define TMPDIR		"/tmp"
+#endif
+
+#ifndef SENDMAIL
+#define SENDMAIL	"/usr/sbin/sendmail"
+#endif
+#ifndef SENDMAIL_ARGS
+#define SENDMAIL_ARGS	"-t", "-oem", "-i"
+#endif
+#ifndef PATH_VI
+#define PATH_VI		"/usr/bin/vi"	/* location of vi	*/
+#endif
+
+#ifndef ID_TAG
+#define ID_TAG			"ID="
+#endif
+#ifndef WAIT_TAG
+#define WAIT_TAG		"AFTER="
+#endif
+#ifndef FREQ_TAG
+#define FREQ_TAG		"FREQ="
+#endif
+
+#define HOURLY_FREQ		60 * 60
+#define DAILY_FREQ		24 * HOURLY_FREQ
+#define	WEEKLY_FREQ		7 * DAILY_FREQ
+#define MONTHLY_FREQ	30 * DAILY_FREQ
+#define YEARLY_FREQ		365 * DAILY_FREQ
+
+#define FIELD_MINUTES   60
+#define FIELD_HOURS     24
+#define FIELD_M_DAYS    32
+#define FIELD_MONTHS    12
+#define FIELD_W_DAYS     7
+
+#define JOB_NONE        0
+#define JOB_ARMED       -1
+#define JOB_WAITING     -2
+
+#define LOGHEADER TIMESTAMP_FMT " %%s " LOG_IDENT ": "
+#define LOCALE_LOGHEADER "%c %%s " LOG_IDENT ": "
+
+/* Limits */
+#define MAXOPEN			256		/* close fds < this limit */ 
+#define MAXLINES		256		/* max lines in non-root crontabs */
+#define SMALL_BUFFER	256
+#define RW_BUFFER		1024
+#define LOG_BUFFER		2048 	/* max size of log line */
+
+typedef struct CronFile {
+    struct CronFile *cf_Next;
+    struct CronLine *cf_LineBase;
+    char	*cf_DPath;	/* Directory path to cronfile */
+    char	*cf_FileName;	/* Name of cronfile */
+    char	*cf_UserName;	/* username to execute jobs as */
+    int		cf_Ready;	/* bool: one or more jobs ready	*/
+    int		cf_Running;	/* bool: one or more jobs running */
+    int		cf_Deleted;	/* marked for deletion, ignore	*/
+} CronFile;
+
+typedef struct CronLine {
+    struct CronLine *cl_Next;
+    char	*cl_Shell;	/* shell command			*/
+	char	*cl_Description;	/* either "<cl_Shell>" or "job <cl_JobName>" */
+	char	*cl_JobName;	/* job name, if any			*/
+	char	*cl_Timestamp;	/* path to timestamp file, if cl_Freq defined */
+	struct	CronWaiter *cl_Waiters;
+	struct	CronNotifier *cl_Notifs;
+	int		cl_Freq;		/* 0 (use arrays),  minutes, -1 (noauto), -2 (startup)	*/
+	int		cl_Delay;		/* defaults to cl_Freq or hourly	*/
+	time_t	cl_LastRan;
+	time_t	cl_NotUntil;
+	int		cl_Pid;			/* running pid, 0, or armed (-1), or waiting (-2) */
+    int		cl_MailFlag;	/* running pid is for mail		*/
+    int		cl_MailPos;	/* 'empty file' size			*/
+    char	cl_Mins[FIELD_MINUTES];	/* 0-59				*/
+    char	cl_Hrs[FIELD_HOURS];	/* 0-23					*/
+    char	cl_Days[FIELD_M_DAYS];	/* 1-31					*/
+    char	cl_Mons[FIELD_MONTHS];	/* 0-11				*/
+    char	cl_Dow[FIELD_W_DAYS];	/* 0-6, beginning sunday		*/
+} CronLine;
+
+typedef struct CronWaiter {
+	struct	CronWaiter *cw_Next;
+	struct	CronNotifier *cw_Notifier;
+	struct	CronLine *cw_NotifLine;
+	short	cw_Flag;
+	int		cw_MaxWait;
+} CronWaiter;
+
+typedef struct CronNotifier {
+	struct	CronNotifier *cn_Next;
+	struct	CronWaiter *cn_Waiter;
+} CronNotifier;
+
+#include "protos.h"
+

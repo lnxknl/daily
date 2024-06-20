@@ -13858,3 +13858,5 @@ int main() {
 
     return 0;
 }
+// explain this c code
+			sleep((stime + 1) - (short)(time(NULL) % stime)); 
