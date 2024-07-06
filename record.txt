@@ -1,0 +1,358 @@
+ asciinema                                                             pic-full-240618-0009-49.png
+ asciinema                                                             pic-full-240618-0009-49.png
+ asciinema                                                             pic-full-240618-0009-49.png
+~                              ©¦  1 drivers/mfd/pm8921-core.c|343| <<unknown>>      rc = of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);^M
+~                              ©¦  2 drivers/mfd/smsc-ece1099.c|75| <<unknown>>              ret = of_platform_populate(i2c->dev.of_node,^M
+~                              ©¦  3 drivers/mfd/ssbi.c|317| <<unknown>>     return of_platform_populate(np, NULL, NULL, &pdev->dev);^M
+~                              ©¦  4 drivers/mfd/tps65218.c|240| <<unknown>>         ret = of_platform_populate(client->dev.of_node, NULL, NULL,^M
+~                              ©¦  5 drivers/mfd/twl-core.c|1235| <<unknown>>                status = of_platform_populate(node, NULL, twl_auxdata_lookup,^M
+~                              ©¦  6 drivers/net/ethernet/ti/cpsw.c|1896| <<unknown>>        ret = of_platform_populate(node, NULL, NULL, &pdev->dev);^M
+~                              ©¦  7 drivers/of/selftest.c|570| <<unknown>>  of_platform_populate(np, of_default_bus_match_table, NULL, NULL);^M
+~                              ©¦  8 drivers/of/selftest.c|595| <<unknown>>          of_platform_populate(child, match, NULL, NULL);^M
+struct irq_desc irq_desc[NR_IRQS] __cacheline_aligned_in_smp = {// @NOTE
+	[0 ... NR_IRQS-1] = {
+		.handle_irq	= handle_bad_irq,
+		.depth		= 1,
+		.lock		= __RAW_SPIN_LOCK_UNLOCKED(irq_desc->lock),
+	}
+};
+
+
+[tong@free ~/bin/chatlog/archive/240621_bak]$ in arm linux kernel, when a device  plug in, what's will happend, how does mechanism trigger to initial the device driver, can you show me the called kernel functions to explain this
+
+When a device is plugged into an ARM Linux system, the kernel performs a series of steps to recognize and initialize the device driver. This process involves several mechanisms and kernel functions. Hereâ€™s an overview of what happens and the key functions involved:
+
+1. **Hardware Detection**:
+   - The physical connection of the device triggers an interrupt, notifying the kernel of the presence of a new device.
+
+2. **Bus Enumeration**:
+   - The kernelâ€™s bus driver for the relevant bus (e.g., USB, PCI) detects the new device. Each bus type has its own mechanism for enumeration.
+   - For example, in the case of USB, the USB core subsystem (`drivers/usb/core/hub.c`) handles device detection and enumeration.
+
+3. **Device Initialization**:
+   - The bus driver creates a device structure and adds it to the device hierarchy.
+   - Example functions involved in this process:
+     - `usb_new_device()` (for USB devices)
+     - `pci_bus_add_device()` (for PCI devices)
+
+4. **Device Matching**:
+   - The kernel attempts to match the new device with a corresponding driver.
+   - This involves iterating through the list of registered drivers and using their `match` functions.
+   - Example function: `driver_match_device()`.
+
+5. **Driver Binding**:
+   - Once a matching driver is found, the kernel calls the driverâ€™s `probe` function to initialize the device.
+   - This is where the driver sets up the device, allocates necessary resources, and registers the device with the appropriate subsystems.
+   - Example function: `usb_probe_interface()` (for USB devices).
+
+Hereâ€™s a simplified flow of the key functions involved:
+
+1. **Interrupt Handling and Enumeration**:
+   - `usb_hub_events()` -> Handles USB hub events, including device connection.
+   - `usb_new_device()` -> Called when a new USB device is detected.
+
+2. **Device Initialization**:
+   - `device_add()` -> Adds the device to the device hierarchy.
+   - `bus_add_device()` -> Adds the device to the bus's list of devices.
+
+3. **Device Matching**:
+   - `driver_match_device()` -> Matches a device with a registered driver.
+   - `bus_for_each_drv()` -> Iterates over each driver in the bus to find a match.
+
+4. **Driver Binding**:
+   - `driver_probe_device()` -> Calls the driverâ€™s `probe` function.
+   - `usb_probe_interface()` -> Specific function for probing USB interfaces.
+
+Hereâ€™s a bit more detail on the USB device detection process:
+
+```c
+void usb_hub_events(void)
+{
+    // Handles USB hub events, such as device connection or disconnection
+    usb_new_device(udev);
+}
+
+int usb_new_device(struct usb_device *udev)
+{
+    // Initialize the new USB device
+    int retval = device_add(&udev->dev);
+    if (retval)
+        return retval;
+
+    // Match the device with a driver
+    retval = driver_attach(&udev->dev);
+    if (retval)
+        device_del(&udev->dev);
+
+    return retval;
+}
+
+int driver_attach(struct device *dev)
+{
+    // Attempt to match the device with a driver
+    return bus_for_each_drv(dev->bus, NULL, dev, __device_attach);
+}
+
+int __device_attach(struct device_driver *drv, void *data)
+{
+    struct device *dev = data;
+
+    if (!driver_match_device(drv, dev))
+        return -ENODEV;
+
+    // Bind the device to the driver
+    return driver_probe_device(drv, dev);
+}
+
+int driver_probe_device(struct device_driver *drv, struct device *dev)
+{
+    return drv->probe(dev);
+}
+```
+
+This sequence illustrates the essential steps from detecting a new device to initializing its driver in an ARM Linux kernel environment. The actual implementation may vary slightly depending on the specific bus and device types involved.
+
+
+
+   - To test different values, repeat steps 2 to 5, each time selecting a different `CONFIG_HZ` value in the kernel configuration.
+
+   Testing different `CONFIG_HZ` values can impact the system's responsiveness and throughput. Lower values like 100 Hz can reduce overhead but may affect interactive performance, whereas higher values like 1000 Hz can improve interactivity at the cost of increased overhead. Testing will help determine the optimal setting for your specific use case.
+
+/*
+You are a highly experienced STM32 programmer with extensive knowledge in embedded systems and ARM Cortex-M microcontrollers. Your task is to refactor the following code, ensuring it adheres to best practices, optimizes performance, and enhances readability and maintainability. Pay special attention to the following aspects:
+
+1. **Efficiency**: Optimize for speed and memory usage.
+2. **Readability**: Improve code clarity with meaningful variable names, comments, and appropriate use of white space.
+3. **Modularity**: Break down large functions into smaller, reusable ones. Ensure each module has a clear, single responsibility.
+4. **Hardware Abstraction**: Use HAL (Hardware Abstraction Layer) or LL (Low Layer) drivers appropriately to abstract hardware details.
+5. **Error Handling**: Implement robust error handling and consider edge cases.
+6. **Documentation**: Add necessary comments and documentation to explain the logic, particularly for complex sections.
+7. **Consistency**: Follow consistent coding standards and naming conventions throughout the code.
+*/
+		maxim_heart_rate_and_oxygen_saturation(aun_ir_buffer, n_ir_buffer_length, aun_red_buffer, &n_spo2, &ch_spo2_valid, &n_heart_rate, &ch_hr_valid); // read
+		if(COUNT++ > 8)
+		{
+					COUNT = 0;
+					temperature = DS18B20_Get_Temp();//¶ÁÈ¡ÎÂ¶È
+					if ((ch_hr_valid == 1) && (n_heart_rate < 150) && (n_heart_rate > 60))
+					{
+							hrTimeout = 0;
+
+							// Throw out up to 1 out of every 5 valid samples if wacky
+							if (hrValidCnt == 4)
+							{
+									hrThrowOutSamp = 1;
+									hrValidCnt = 0;
+									for (i = 12; i < 16; i++)
+									{
+											if (n_heart_rate < hr_buf[i] + 10)
+											{
+													hrThrowOutSamp = 0;
+													hrValidCnt   = 4;
+											}
+									}
+							}
+							else
+							{
+									hrValidCnt = hrValidCnt + 1;
+							}
+
+							if (hrThrowOutSamp == 0)
+							{
+
+									// Shift New Sample into buffer
+									for(i = 0; i < 15; i++)
+									{
+											hr_buf[i] = hr_buf[i + 1];
+									}
+									hr_buf[15] = n_heart_rate;
+
+									// Update buffer fill value
+									if (hrBuffFilled < 16)
+									{
+											hrBuffFilled = hrBuffFilled + 1;
+									}
+
+									// Take moving average
+									hrSum = 0;
+									if (hrBuffFilled < 2)
+									{
+											hrAvg = 0;
+									}
+									else if (hrBuffFilled < 4)
+									{
+											for(i = 14; i < 16; i++)
+											{
+													hrSum = hrSum + hr_buf[i];
+											}
+											hrAvg = hrSum >> 1;
+									}
+									else if (hrBuffFilled < 8)
+									{
+											for(i = 12; i < 16; i++)
+											{
+													hrSum = hrSum + hr_buf[i];
+											}
+											hrAvg = hrSum >> 2;
+									}
+									else if (hrBuffFilled < 16)
+									{
+											for(i = 8; i < 16; i++)
+											{
+													hrSum = hrSum + hr_buf[i];
+											}
+											hrAvg = hrSum >> 3;
+									}
+									else
+									{
+											for(i = 0; i < 16; i++)
+											{
+													hrSum = hrSum + hr_buf[i];
+											}
+											hrAvg = hrSum >> 4;
+									}
+							}
+							hrThrowOutSamp = 0;
+					}
+					else
+					{
+							hrValidCnt = 0; // this check logic can learn
+							if (hrTimeout == 4)
+							{
+									hrAvg = 0;
+									hrBuffFilled = 0; // fail
+							}
+							else
+							{
+									hrTimeout++;
+							}
+					}
+Here are ten popular items or areas of focus in ARM Linux kernel development:
+
+1. **Device Tree Support**: Managing hardware description via Device Tree, crucial for the portability and flexibility of the kernel across various ARM-based hardware.
+
+2. **Power Management**: Enhancing power efficiency with features like DVFS (Dynamic Voltage and Frequency Scaling), CPU idle states, and efficient handling of sleep modes.
+
+3. **Kernel Configuration and Compilation**: Customizing kernel configurations for specific ARM hardware and optimizing the build process for performance and size.
+
+4. **Security Enhancements**: Implementing security features such as ARM TrustZone, Kernel Address Space Layout Randomization (KASLR), and SELinux.
+
+5. **Peripheral Driver Development**: Writing and maintaining drivers for ARM-specific peripherals like GPIO, I2C, SPI, UART, and others.
+
+6. **ARM-specific Optimizations**: Performance improvements tailored to ARM architecture, including NEON SIMD optimizations and efficient handling of ARM-specific instructions.
+
+7. **Real-time Kernel (PREEMPT_RT)**: Ensuring real-time capabilities for time-sensitive applications, often crucial for industrial and automotive systems.
+
+8. **Mainline Kernel Integration**: Working on getting ARM patches and improvements integrated into the mainline Linux kernel, facilitating broader adoption and support.
+
+9. **Cross-Compilation Toolchains**: Developing and maintaining cross-compilation tools and environments for building the ARM Linux kernel on non-ARM systems.
+
+10. **Virtualization Support**: Enhancing support for running virtual machines on ARM hardware, including technologies like KVM (Kernel-based Virtual Machine) for ARM.
+
+These areas are critical for maintaining and advancing the functionality, performance, and security of the Linux kernel on ARM platforms.
+void
+shell_blink_init(void)
+{
+  shell_register_command(&blink_command);
+}
+/home/tong/05_files/top_github_aws/embed2/contiki/apps/shell/shell-blink.c
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/ipv6/json-ws/websense-sky.c
+/* complete node tree */
+JSONTREE_OBJECT(tree,
+                JSONTREE_PAIR("node", &node_tree),
+                JSONTREE_PAIR("rsc", &rsc_tree),
+                JSONTREE_PAIR("cfg", &json_subscribe_callback));
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/ipv6/json-ws/websense-sky.c
+  http_socket_get(&s, "http://www.contiki-os.org/", 0, 0,
+                  callback, NULL);
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/http-socket/http-example.c
+  mt_start(&alpha_thread, thread_main, "JIHGFEDCBA");
+  mt_start(&count_thread, thread_main, "9876543210");
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/multi-threading/multi-threading.c
+void
+shell_time_init(void)
+{
+  shell_register_command(&time_command);
+  shell_register_command(&timestamp_command);
+  shell_register_command(&repeat_command);
+  shell_register_command(&randwait_command);
+}
+/home/tong/05_files/top_github_aws/embed2/contiki/apps/shell/shell-time.c
+SHELL_COMMAND(time_command,
+	      "time",
+	      "time [seconds]: output time in binary format, or set time in seconds since 1970",
+	      &shell_time_process);
+/home/tong/05_files/top_github_aws/embed2/contiki/apps/shell/shell-time.c
+void
+do_timeout1()
+{
+  counter_etimer++;
+  if(timer_expired(&timer_timer)) {
+    counter_timer++;
+  }
+
+  if(stimer_expired(&timer_stimer)) {
+    counter_stimer++;
+  }
+
+  printf("\nProcess 1: %s", counter_timer == counter_etimer
+         && counter_timer == counter_stimer ? "SUCCESS" : "FAIL");
+}
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/timers/all-timers.c
+PROCESS_THREAD(tcp_server_process, ev, data)
+{
+  PROCESS_BEGIN();
+
+  tcp_socket_register(&socket, NULL,
+               inputbuf, sizeof(inputbuf),
+               outputbuf, sizeof(outputbuf),
+               input, event);
+  tcp_socket_listen(&socket, SERVER_PORT);
+
+  printf("Listening on %d\n", SERVER_PORT);
+  while(1) {
+    PROCESS_PAUSE();
+
+    if(bytes_to_send > 0) {
+      /* Send header */
+      printf("sending header\n");
+      tcp_socket_send_str(&socket, "HTTP/1.0 200 ok\r\nServer: Contiki tcp-socket example\r\n\r\n");
+
+      /* Send data */
+      printf("sending data\n");
+      while(bytes_to_send > 0) {
+        PROCESS_PAUSE();
+        int len, tosend;
+        tosend = MIN(bytes_to_send, sizeof(outputbuf));
+        len = tcp_socket_send(&socket, (uint8_t *)"", tosend);
+        bytes_to_send -= len;
+      }
+
+      tcp_socket_close(&socket);
+    }
+
+  }
+  PROCESS_END();
+}
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/tcp-socket/tcp-server.c
+PROCESS_THREAD(websocket_example_process, ev, data)
+{
+  static struct etimer et;
+  PROCESS_BEGIN();
+
+  ctimer_set(&reconnect_timer, RECONNECT_INTERVAL, reconnect_callback, &s);
+
+  websocket_init(&s);
+  while(1) {
+    etimer_set(&et, CLOCK_SECOND / 8);
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+    char buf[] = "012345678";
+    static int count;
+    buf[0] = (count % 9) + '0';
+    count++;
+    websocket_send_str(&s, buf);
+  }
+
+  PROCESS_END();
+}
+/home/tong/05_files/top_github_aws/embed2/contiki/examples/websockets/websocket-example.c

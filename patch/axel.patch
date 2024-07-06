@@ -1,0 +1,263 @@
+diff --git a/src/abuf.c b/src/abuf.c
+index e9474a4..eca9b9d 100644
+--- a/src/abuf.c
++++ b/src/abuf.c
+@@ -51,7 +51,7 @@
+  * @returns 0 if OK, a negative value on error.
+  */
+ int
+-abuf_setup(abuf_t *abuf, size_t len)
++abuf_setup(abuf_t *abuf, size_t len)// @NOTE 
+ {
+ 	char *p = realloc(abuf->p, len);
+ 	if (!p && len)
+@@ -85,7 +85,7 @@ abuf_printf(abuf_t *abuf, const char *fmt, ...)
+  * @returns 0 if OK, or negative value on error.
+  */
+ int
+-abuf_strcat(abuf_t *abuf, const char *src)
++abuf_strcat(abuf_t *abuf, const char *src)// @NOTE 
+ {
+ 	size_t nread = strlcat(abuf->p, src, abuf->len);
+ 	if (nread > abuf->len) {
+diff --git a/src/axel.c b/src/axel.c
+index 88be74e..6794589 100644
+--- a/src/axel.c
++++ b/src/axel.c
+@@ -563,7 +563,7 @@ axel_do(axel_t *axel)
+ 
+ 		axel->conn[i].last_transfer = axel_gettime();
+ 		size =
+-		    tcp_read(axel->conn[i].tcp, buffer,
++		    tcp_read(axel->conn[i].tcp, buffer,// @NOTE 
+ 			     axel->conf->buffer_size);
+ 		if (size == -1) {
+ 			if (axel->conf->verbose) {
+@@ -585,7 +585,7 @@ axel_do(axel_t *axel)
+ 						     i);
+ 				} else {
+ 					axel_message(axel,
+-						     _("Connection %i finished"),
++						     _("Connection %i finished"),// @NOTE 
+ 						     i);
+ 				}
+ 			}
+@@ -616,7 +616,7 @@ axel_do(axel_t *axel)
+ 			pthread_mutex_unlock(&axel->conn[i].lock);
+ 			return;
+ 		}
+-		axel->conn[i].currentbyte += size;
++		axel->conn[i].currentbyte += size;// @NOTE 
+ 		axel->bytes_done += size;
+ 		if (remaining == size)
+ 			reactivate_connection(axel, i);
+diff --git a/src/conf.c b/src/conf.c
+index 4343512..9803952 100644
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -58,7 +58,7 @@ static int parse_interfaces(conf_t *conf, char *s);
+ __attribute__((format(scanf, 2, 3)))
+ #endif /* __GNUC__ */
+ static int
+-axel_fscanf(FILE *fp, const char *format, ...)
++axel_fscanf(FILE *fp, const char *format, ...)// @NOTE 
+ {
+ 	va_list params;
+ 	int ret;
+diff --git a/src/conn.c b/src/conn.c
+index c24110a..5d15557 100644
+--- a/src/conn.c
++++ b/src/conn.c
+@@ -319,7 +319,7 @@ conn_setup(conn_t *conn)
+ 		abuf_setup(conn->http->request, 2048);
+ 		http_get(conn->http, s);
+ 		for (i = 0; i < conn->conf->add_header_count; i++)
+-			http_addheader(conn->http, "%s",
++			http_addheader(conn->http, "%s",// @NOTE 
+ 				       conn->conf->add_header[i]);
+ 	}
+ 	return 1;
+@@ -342,7 +342,7 @@ conn_exec(conn_t *conn)
+ 
+ static
+ int
+-conn_info_ftp(conn_t *conn)
++conn_info_ftp(conn_t *conn)// @NOTE 
+ {
+ 	ftp_command(conn->ftp, "REST %d", 1);
+ 	if (ftp_wait(conn->ftp) / 100 == 3 ||
+diff --git a/src/hash.c b/src/hash.c
+index 095fb35..64f5ba1 100644
+--- a/src/hash.c
++++ b/src/hash.c
+@@ -80,7 +80,7 @@ FORCE_INLINE static void SIPROUND(uint32_t v[4]);
+  * Computes a SipHash-like value.
+  */
+ uint32_t
+-axel_hash32(const void *src, size_t len, const uint64_t *kk)
++axel_hash32(const void *src, size_t len, const uint64_t *kk)// @NOTE 
+ {
+ 	const uint8_t *ni = src;
+ 
+diff --git a/src/http.c b/src/http.c
+index 074b416..7876f98 100644
+--- a/src/http.c
++++ b/src/http.c
+@@ -176,7 +176,7 @@ http_get(http_t *conn, char *lurl)
+ 	} else {
+ 		http_addheader(conn, "GET %s HTTP/1.0", lurl);
+ 		if (is_default_port(conn->proto, conn->port)) {
+-			http_addheader(conn, "Host: %s%s%s", prefix,
++			http_addheader(conn, "Host: %s%s%s", prefix,// @NOTE 
+ 					conn->host, postfix);
+ 		} else {
+ 			http_addheader(conn, "Host: %s%s%s:%i", prefix,
+@@ -200,7 +200,7 @@ http_get(http_t *conn, char *lurl)
+ }
+ 
+ void
+-http_addheader(http_t *conn, const char *format, ...)
++http_addheader(http_t *conn, const char *format, ...)// @NOTE 
+ {
+ 	char s[MAX_STRING];
+ 	va_list params;
+@@ -210,7 +210,7 @@ http_addheader(http_t *conn, const char *format, ...)
+ 	strlcat(s, "\r\n", sizeof(s));
+ 	va_end(params);
+ 
+-	if (abuf_strcat(conn->request, s) < 0) {
++	if (abuf_strcat(conn->request, s) < 0) {// @NOTE 
+ 		fprintf(stderr, "Out of memory\n");
+ 	}
+ }
+diff --git a/src/random.c b/src/random.c
+index 20a7378..8eba43f 100644
+--- a/src/random.c
++++ b/src/random.c
+@@ -4,7 +4,7 @@
+ #include "axel.h"
+ 
+ ssize_t
+-axel_rand64(uint64_t *out)
++axel_rand64(uint64_t *out)// @NOTE 
+ {
+ 	static int fd = -1;
+ 	if (fd == -1) {
+diff --git a/src/sleep.c b/src/sleep.c
+index 00bc91c..935db07 100644
+--- a/src/sleep.c
++++ b/src/sleep.c
+@@ -47,6 +47,6 @@ int
+ axel_sleep(struct timespec delay)
+ {
+ 	int res;
+-	while ((res = nanosleep(&delay, &delay)) && errno == EINTR) ;
++	while ((res = nanosleep(&delay, &delay)) && errno == EINTR) ;// @NOTE 
+ 	return res;
+ }
+diff --git a/src/ssl.c b/src/ssl.c
+index dd589eb..d9a5f3c 100644
+--- a/src/ssl.c
++++ b/src/ssl.c
+@@ -79,7 +79,7 @@ ssl_startup(void)
+ }
+ 
+ SSL *
+-ssl_connect(int fd, char *hostname)
++ssl_connect(int fd, char *hostname)// @NOTE 
+ {
+ 	X509 *server_cert;
+ 	SSL_CTX *ssl_ctx;
+diff --git a/src/tcp.c b/src/tcp.c
+index edc1fb3..c92bd9b 100644
+--- a/src/tcp.c
++++ b/src/tcp.c
+@@ -196,11 +196,13 @@ tcp_connect(tcp_t *tcp, char *hostname, int port, int secure, char *local_if,
+ }
+ 
+ ssize_t
+-tcp_read(tcp_t *tcp, void *buffer, int size)
++tcp_read(tcp_t *tcp, void *buffer, int size)// @NOTE // @NOTE 
+ {
+ #ifdef HAVE_SSL
+ 	if (tcp->ssl != NULL)
+ 		return SSL_read(tcp->ssl, buffer, size);
++	// write a SSL_read function usage example
++	// write a ssl server and client example c language usage example
+ 	else
+ #endif				/* HAVE_SSL */
+ 		return read(tcp->fd, buffer, size);
+diff --git a/src/text.c b/src/text.c
+index eb5b4b0..b9baf06 100644
+--- a/src/text.c
++++ b/src/text.c
+@@ -131,7 +131,7 @@ main(int argc, char *argv[])
+ 	opterr = 0;
+ 
+ 	j = -1;
+-	while (1) {
++	while (1) {// @NOTE 
+ 		int option = getopt_long(argc, argv,
+ 					 "s:n:o:S::46NqvhVapkcH:U:T:",
+ 					 axel_options, NULL);
+@@ -158,7 +158,7 @@ main(int argc, char *argv[])
+ 				goto free_conf;
+ 			}
+ 			break;
+-		case 'n':
++		case 'n':// @NOTE 
+ 			if (!sscanf(optarg, "%hu", &conf->num_connections)) {
+ 				print_help();
+ 				goto free_conf;
+@@ -279,9 +279,9 @@ main(int argc, char *argv[])
+ 	}
+ 
+ 	if (conf->progress_style != AXEL_PROGRESS_STYLE_PERCENTAGE)
+-		printf(_("Initializing download: %s\n"), s);
++		printf(_("Initializing download: %s\n"), s);// @NOTE 
+ 
+-	if (do_search) {
++	if (do_search) {// @NOTE 
+ 		search = calloc(conf->search_amount + 1, sizeof(search_t));
+ 		if (!search)
+ 			goto free_conf;
+@@ -313,7 +313,7 @@ main(int argc, char *argv[])
+ 				       search[i].speed);
+ 			printf("\n");
+ 		}
+-		axel = axel_new(conf, j, search);
++		axel = axel_new(conf, j, search);// @NOTE 
+ 		free(search);
+ 		if (!axel || axel->ready == -1) {
+ 			print_messages(axel);
+@@ -410,10 +410,10 @@ main(int argc, char *argv[])
+ 	axel->start_byte = axel->bytes_done;
+ 
+ 	/* Install save_state signal handler for resuming support */
+-	signal(SIGINT, stop);
++	signal(SIGINT, stop);// @NOTE 
+ 	signal(SIGTERM, stop);
+ 
+-	while (!axel->ready && run) {
++	while (!axel->ready && run) { // @NOTE 
+ 		off_t prev;
+ 
+ 		prev = axel->bytes_done;
+@@ -472,7 +472,7 @@ RETSIGTYPE
+ stop(int signal)
+ {
+ 	(void)signal;
+-	run = 0;
++	run = 0;// @NOTE 
+ }
+ 
+ /**
+@@ -582,7 +582,7 @@ alt_id(int n)
+ }
+ 
+ static void
+-print_alternate_output_progress(axel_t *axel, char *progress, int width,
++print_alternate_output_progress(axel_t *axel, char *progress, int width,// @NOTE 
+ 				off_t done, off_t total,
+ 				double now)
+ {

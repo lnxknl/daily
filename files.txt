@@ -1,0 +1,4 @@
+/home/tong/05_files/top_github_aws/embed2/contiki/apps/shell
+/home/tong/.config/nvim
+/home/tong/05_files/workspace
+/home/tong/05_files/workspace//home/tong/.config/nvim/init.vim
